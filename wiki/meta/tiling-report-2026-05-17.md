@@ -1,0 +1,354 @@
+# Semantic Tiling Report
+
+- generated: 2026-05-17T21:34:02Z
+- model: nomic-embed-text
+- ollama_url: http://127.0.0.1:11434
+- thresholds: error>=0.9, review=0.8-0.9
+- calibrated: False (using uncalibrated defaults)
+- pages scanned: 237; embedded: 128; skipped: 109
+- skipped reasons: embed_error=101, excluded filename=3, symlink=1, under wiki/meta/=4
+- cache hits: 50; recomputed: 78; orphans pruned: 0
+
+## Errors (similarity >= 0.9)
+
+- `0.9416` wiki/concepts/Photo Aesthetic Features.md -- wiki/sources/Datta - Studying Aesthetics in Photographic Images.md
+- `0.9213` wiki/concepts/OKLCH.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.9097` wiki/concepts/Chiaroscuro.md -- wiki/questions/Research - Tonal Foundations in Classical Painting.md
+- `0.9066` wiki/questions/Research - Tonal Foundations in Classical Painting.md -- wiki/sources/The Art Story - Chiaroscuro Tenebrism Sfumato.md
+- `0.9043` wiki/concepts/Rule of Thirds.md -- wiki/sources/Wikipedia - Rule of Thirds.md
+- `0.9021` wiki/tools/TensorFlow.js.md -- wiki/tools/Transformers.js.md
+- `0.9003` wiki/concepts/Emotion Psychology.md -- wiki/concepts/Face Perception.md
+
+## Review (0.8 <= similarity < 0.9)
+
+- `0.8977` wiki/tools/Live Coding Tools Survey.md -- wiki/tools/Strudel.md
+- `0.8972` wiki/concepts/Tenebrism.md -- wiki/sources/DailyArt - Tenebrism 101.md
+- `0.8937` wiki/concepts/CIEDE2000.md -- wiki/sources/Techkon - CIE Delta E 2000 Formula.md
+- `0.8929` wiki/concepts/Tenebrism.md -- wiki/questions/Research - Tonal Foundations in Classical Painting.md
+- `0.8924` wiki/concepts/Hue Brightness Saturation.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8904` wiki/concepts/Fractal Dimension.md -- wiki/sources/Spehar Taylor - Universal Aesthetic of Fractals.md
+- `0.8872` wiki/concepts/Perceptual Constants.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8861` wiki/sources/PetaPixel - True Photographic History.md -- wiki/sources/Wikipedia - Rule of Thirds.md
+- `0.8859` wiki/tools/p5.js.md -- wiki/tools/paper.js.md
+- `0.8817` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Physiognomic Perception.md
+- `0.8816` wiki/concepts/Birkhoff's Aesthetic Measure.md -- wiki/concepts/Computational Aesthetics.md
+- `0.8807` wiki/concepts/WCAG Contrast Ratios.md -- wiki/sources/W3C WCAG 22 - Contrast Minimum.md
+- `0.8807` wiki/concepts/Color Psychology.md -- wiki/concepts/Emotion Psychology.md
+- `0.8797` wiki/concepts/Birkhoff's Aesthetic Measure.md -- wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md
+- `0.8787` wiki/concepts/Light Quality Direction and Motivation.md -- wiki/concepts/Three-Point Lighting and Key-Fill Ratio.md
+- `0.8786` wiki/concepts/Negative Space.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8785` wiki/concepts/Emotion Psychology.md -- wiki/concepts/Empirical Aesthetics.md
+- `0.8781` wiki/concepts/Perceptual Concepts.md -- wiki/concepts/Physiognomic Perception.md
+- `0.8778` wiki/concepts/Empirical Aesthetics.md -- wiki/concepts/Face Perception.md
+- `0.8768` wiki/concepts/Face Perception.md -- wiki/concepts/Perceptual Constants.md
+- `0.8765` wiki/concepts/The Munsell and CIELAB Color Systems.md -- wiki/sources/Wikipedia - Munsell color system.md
+- `0.8748` wiki/concepts/Chiaroscuro.md -- wiki/sources/The Art Story - Chiaroscuro Tenebrism Sfumato.md
+- `0.8723` wiki/concepts/Color Psychology.md -- wiki/concepts/Ecological Valence Theory.md
+- `0.8715` wiki/concepts/OKLCH.md -- wiki/sources/Bottosson - Oklab Color Space.md
+- `0.8714` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Three-Point Lighting and Key-Fill Ratio.md
+- `0.8713` wiki/concepts/Empirical Aesthetics.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8711` wiki/sources/Datta - Studying Aesthetics in Photographic Images.md -- wiki/sources/NIMA - Neural Image Assessment.md
+- `0.8709` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8698` wiki/concepts/LLM-as-Judge for Visual Quality.md -- wiki/sources/MLLM-as-a-Judge.md
+- `0.8696` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Time-based Composition.md
+- `0.8688` wiki/concepts/Color Psychology.md -- wiki/concepts/Empirical Aesthetics.md
+- `0.8686` wiki/concepts/Time-based Composition.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8683` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Materials and Texture.md
+- `0.8681` wiki/concepts/Movement Rhythm and Repetition.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8681` wiki/concepts/Sfumato.md -- wiki/questions/Research - Tonal Foundations in Classical Painting.md
+- `0.8676` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Face Perception.md
+- `0.8671` wiki/concepts/Perceptual Concepts.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8665` wiki/concepts/Perceptual Forces.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8664` wiki/tools/Strudel.md -- wiki/tools/Tone.js.md
+- `0.8653` wiki/concepts/Computational Aesthetics.md -- wiki/sources/Datta - Studying Aesthetics in Photographic Images.md
+- `0.8653` wiki/concepts/Materials and Texture.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8647` wiki/concepts/Depth by Overlapping.md -- wiki/concepts/Figure and Ground.md
+- `0.8646` wiki/tools/Pts.js.md -- wiki/tools/paper.js.md
+- `0.8646` wiki/tools/Pts.js.md -- wiki/tools/p5.js.md
+- `0.8619` wiki/concepts/Rule of Thirds.md -- wiki/sources/PetaPixel - True Photographic History.md
+- `0.8612` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Negative Space.md
+- `0.8606` wiki/concepts/Chiaroscuro.md -- wiki/concepts/Tenebrism.md
+- `0.8602` wiki/concepts/Figure and Ground.md -- wiki/concepts/Shading and Volume.md
+- `0.8601` wiki/concepts/Visual Entropy.md -- wiki/sources/Rigau Feixas Sbert - Birkhoff Shannon Kolmogorov.md
+- `0.8600` wiki/concepts/Compositional Grids.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8598` wiki/concepts/Computational Aesthetics.md -- wiki/sources/NIMA - Neural Image Assessment.md
+- `0.8592` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/Cloud Inference APIs.md
+- `0.8588` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Negative Space.md
+- `0.8581` wiki/concepts/Empirical Aesthetics.md -- wiki/concepts/Perceptual Constants.md
+- `0.8578` wiki/concepts/Materials and Texture.md -- wiki/concepts/Negative Space.md
+- `0.8573` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8573` wiki/concepts/Color Psychology.md -- wiki/concepts/Face Perception.md
+- `0.8571` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8568` wiki/concepts/Negative Space.md -- wiki/concepts/Time-based Composition.md
+- `0.8564` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Procedural Content Generation.md
+- `0.8561` wiki/concepts/Color Harmony.md -- wiki/concepts/Complementary Colors.md
+- `0.8558` wiki/concepts/Light Quality Direction and Motivation.md -- wiki/concepts/Light Vocabulary.md
+- `0.8556` wiki/concepts/Computational Aesthetics.md -- wiki/sources/Rigau Feixas Sbert - Birkhoff Shannon Kolmogorov.md
+- `0.8554` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Materials and Texture.md
+- `0.8547` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Empirical Aesthetics.md
+- `0.8546` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/concepts/Shading and Volume.md
+- `0.8545` wiki/concepts/Rule of Thirds.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8544` wiki/concepts/Computational Aesthetics.md -- wiki/concepts/Photo Aesthetic Features.md
+- `0.8537` wiki/concepts/Artificial Life Art.md -- wiki/concepts/Procedural Content Generation.md
+- `0.8530` wiki/concepts/Materials and Texture.md -- wiki/concepts/Perceptual Constants.md
+- `0.8526` wiki/questions/Research - Tonal Foundations in Classical Painting.md -- wiki/sources/DailyArt - Tenebrism 101.md
+- `0.8523` wiki/concepts/Movement Rhythm and Repetition.md -- wiki/concepts/Time-based Composition.md
+- `0.8519` wiki/concepts/Procedural Content Generation.md -- wiki/tools/PCG Toolkit.md
+- `0.8517` wiki/concepts/Tenebrism.md -- wiki/sources/The Art Story - Chiaroscuro Tenebrism Sfumato.md
+- `0.8505` wiki/concepts/Directed Tension.md -- wiki/concepts/Expression as Configuration of Forces.md
+- `0.8502` wiki/concepts/Color Psychology.md -- wiki/concepts/Perceptual Constants.md
+- `0.8498` wiki/concepts/Aerial Perspective.md -- wiki/concepts/Central Perspective.md
+- `0.8490` wiki/concepts/Chiaroscuro.md -- wiki/concepts/Sfumato.md
+- `0.8490` wiki/concepts/Perceptual Concepts.md -- wiki/concepts/Simplicity (Arnheim).md
+- `0.8485` wiki/concepts/Algorithmic Composition.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8484` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Light Vocabulary.md
+- `0.8482` wiki/concepts/Figure and Ground.md -- wiki/concepts/Pyramidal Space.md
+- `0.8478` wiki/concepts/Computational Aesthetics.md -- wiki/concepts/Empirical Aesthetics.md
+- `0.8478` wiki/tools/PCG Toolkit.md -- wiki/tools/Postdigital Tools.md
+- `0.8477` wiki/concepts/Empirical Aesthetics.md -- wiki/concepts/Materials and Texture.md
+- `0.8476` wiki/concepts/Arnheim's Color Syntax.md -- wiki/techniques/OKLCH Pair-Relation Classifier.md
+- `0.8474` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Time-based Composition.md
+- `0.8473` wiki/concepts/Constructed Emotion Theory.md -- wiki/concepts/Emotion Psychology.md
+- `0.8472` wiki/concepts/Hue Brightness Saturation.md -- wiki/concepts/OKLCH.md
+- `0.8471` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Time-based Composition.md
+- `0.8465` wiki/concepts/Artificial Life Art.md -- wiki/concepts/Long-form On-Chain Generative Art.md
+- `0.8463` wiki/concepts/Negative Space Techniques.md -- wiki/concepts/Negative Space.md
+- `0.8463` wiki/concepts/Computational Aesthetics.md -- wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md
+- `0.8462` wiki/tools/Live Coding Tools Survey.md -- wiki/tools/Tone.js.md
+- `0.8461` wiki/questions/Research - Arnheim Sweep 1.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8456` wiki/concepts/Simplicity (Arnheim).md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8446` wiki/sources/DailyArt - Tenebrism 101.md -- wiki/sources/The Art Story - Chiaroscuro Tenebrism Sfumato.md
+- `0.8440` wiki/concepts/Constructed Emotion Theory.md -- wiki/concepts/Expression as Configuration of Forces.md
+- `0.8432` wiki/concepts/Perceptual Constants.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8432` wiki/concepts/Dynamic Symmetry.md -- wiki/sources/Public Seminar - Dynamic Symmetry.md
+- `0.8430` wiki/concepts/Phenomenal Causality.md -- wiki/concepts/Stroboscopic Motion.md
+- `0.8422` wiki/tools/Hydra.md -- wiki/tools/Live Coding Tools Survey.md
+- `0.8420` wiki/concepts/Figure and Ground.md -- wiki/concepts/Illumination as a Perceptual Layer.md
+- `0.8419` wiki/tools/Live Coding Tools Survey.md -- wiki/tools/PCG Toolkit.md
+- `0.8409` wiki/concepts/Eisenstein's Montage Theory.md -- wiki/concepts/Murch's Six Editing Rules.md
+- `0.8402` wiki/concepts/Dynamic Symmetry.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8400` wiki/concepts/Movement Rhythm and Repetition.md -- wiki/concepts/Negative Space.md
+- `0.8396` wiki/concepts/Materials and Texture.md -- wiki/concepts/Time-based Composition.md
+- `0.8394` wiki/concepts/WCAG Contrast Ratios.md -- wiki/techniques/Contrast Checking Pipeline.md
+- `0.8392` wiki/concepts/Arnheim's Color Syntax.md -- wiki/concepts/Color Harmony.md
+- `0.8389` wiki/concepts/Procedural Content Generation.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8386` wiki/concepts/Color Psychology.md -- wiki/concepts/Materials and Texture.md
+- `0.8386` wiki/concepts/Sfumato.md -- wiki/sources/ESRF - New light on Leonardo's faces.md
+- `0.8376` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Perceptual Constants.md
+- `0.8375` wiki/concepts/Emotion Psychology.md -- wiki/concepts/PAD Emotion Model.md
+- `0.8368` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8365` wiki/concepts/Algorithmic Composition.md -- wiki/sources/Galanter - What is Generative Art.md
+- `0.8364` wiki/concepts/Dynamic Symmetry.md -- wiki/concepts/Golden Spiral.md
+- `0.8360` wiki/concepts/Long-form On-Chain Generative Art.md -- wiki/concepts/Procedural Content Generation.md
+- `0.8359` wiki/concepts/Frame of Reference for Motion.md -- wiki/concepts/Stroboscopic Motion.md
+- `0.8359` wiki/concepts/Multimodal Evaluation Loops.md -- wiki/sources/Visual Prompting Iterative Refinement.md
+- `0.8353` wiki/concepts/Light Vocabulary.md -- wiki/concepts/Movement Rhythm and Repetition.md
+- `0.8347` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Movement Rhythm and Repetition.md
+- `0.8346` wiki/concepts/Hue Brightness Saturation.md -- wiki/sources/Wikipedia - Munsell color system.md
+- `0.8339` wiki/concepts/Face Perception.md -- wiki/concepts/Materials and Texture.md
+- `0.8336` wiki/tools/Cloud Inference APIs.md -- wiki/tools/Transformers.js.md
+- `0.8333` wiki/concepts/Materials and Texture.md -- wiki/concepts/Movement Rhythm and Repetition.md
+- `0.8328` wiki/concepts/Pyramidal Space.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8326` wiki/concepts/Vectorizing Aesthetic Concepts.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8323` wiki/concepts/Perceptual Concepts.md -- wiki/concepts/Perceptual Forces.md
+- `0.8321` wiki/concepts/Directed Tension.md -- wiki/concepts/Perceptual Forces.md
+- `0.8320` wiki/tools/Cloud Inference APIs.md -- wiki/tools/TensorFlow.js.md
+- `0.8318` wiki/concepts/Figure and Ground.md -- wiki/concepts/Perceptual Constants.md
+- `0.8316` wiki/concepts/Directed Tension.md -- wiki/concepts/Frame of Reference for Motion.md
+- `0.8316` wiki/concepts/Eisenstein's Montage Theory.md -- wiki/concepts/Time-based Composition.md
+- `0.8315` wiki/concepts/Movement Rhythm and Repetition.md -- wiki/concepts/Symmetry Groups and Tessellation.md
+- `0.8315` wiki/concepts/CIEDE2000.md -- wiki/concepts/WCAG Contrast Ratios.md
+- `0.8314` wiki/concepts/Sfumato.md -- wiki/sources/The Art Story - Chiaroscuro Tenebrism Sfumato.md
+- `0.8313` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8313` wiki/techniques/Contrast Checking Pipeline.md -- wiki/techniques/OKLCH Pair-Relation Classifier.md
+- `0.8309` wiki/tools/Meyda.md -- wiki/tools/Tone.js.md
+- `0.8306` wiki/concepts/Figure and Ground.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8304` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8303` wiki/concepts/CIEDE2000.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8303` wiki/concepts/The Gestalt Principles of Visual Perception.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8298` wiki/concepts/Figure and Ground.md -- wiki/concepts/The Gestalt Principles of Visual Perception.md
+- `0.8294` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Computational Aesthetics.md
+- `0.8292` wiki/concepts/The Munsell and CIELAB Color Systems.md -- wiki/sources/Bottosson - Oklab Color Space.md
+- `0.8285` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Perceptual Constants.md
+- `0.8281` wiki/tools/TensorFlow.js.md -- wiki/tools/ml5.js.md
+- `0.8280` wiki/concepts/Compositional Grids.md -- wiki/concepts/Rule of Thirds.md
+- `0.8276` wiki/tools/ml5.js.md -- wiki/tools/p5.js.md
+- `0.8271` wiki/concepts/Procedural Content Generation.md -- wiki/sources/Galanter - What is Generative Art.md
+- `0.8270` wiki/concepts/Color Harmony.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8266` wiki/concepts/Emotion Psychology.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8263` wiki/concepts/Type as Voice.md -- wiki/concepts/Typographic Principles.md
+- `0.8262` wiki/concepts/Photo Aesthetic Features.md -- wiki/sources/NIMA - Neural Image Assessment.md
+- `0.8262` wiki/concepts/Emotion Psychology.md -- wiki/concepts/Perceptual Constants.md
+- `0.8258` wiki/concepts/Figure and Ground.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8258` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/Transformers.js.md
+- `0.8258` wiki/concepts/Figure and Ground.md -- wiki/concepts/Rule of Thirds.md
+- `0.8251` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Perceptual Concepts.md
+- `0.8250` wiki/concepts/Directed Tension.md -- wiki/concepts/Stroboscopic Motion.md
+- `0.8248` wiki/concepts/Live Coding and Algorave.md -- wiki/tools/Hydra.md
+- `0.8248` wiki/concepts/Complementary Colors.md -- wiki/techniques/OKLCH Pair-Relation Classifier.md
+- `0.8245` wiki/concepts/Face Perception.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8242` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Symbolic Pattern in Composition.md
+- `0.8239` wiki/concepts/Physiognomic Perception.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8238` wiki/tools/PCG Toolkit.md -- wiki/tools/Strudel.md
+- `0.8236` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/concepts/Perceptual Constants.md
+- `0.8235` wiki/tools/Live Coding Tools Survey.md -- wiki/tools/WGSL Tooling.md
+- `0.8234` wiki/concepts/Constructed Emotion Theory.md -- wiki/concepts/Plutchik's Wheel of Emotions.md
+- `0.8234` wiki/tools/Strudel.md -- wiki/tools/WGSL Tooling.md
+- `0.8234` wiki/concepts/Figure and Ground.md -- wiki/concepts/Simplicity (Arnheim).md
+- `0.8227` wiki/concepts/Complementary Colors.md -- wiki/concepts/Hue Brightness Saturation.md
+- `0.8226` wiki/concepts/Central Perspective.md -- wiki/concepts/Pyramidal Space.md
+- `0.8225` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Perceptual Forces.md
+- `0.8224` wiki/tools/Postdigital Tools.md -- wiki/tools/WGSL Tooling.md
+- `0.8223` wiki/concepts/PAD Emotion Model.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8222` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Emotion Psychology.md
+- `0.8221` wiki/concepts/Directed Tension.md -- wiki/concepts/Physiognomic Perception.md
+- `0.8220` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Perceptual Constants.md
+- `0.8216` wiki/concepts/Color Harmony.md -- wiki/techniques/OKLCH Pair-Relation Classifier.md
+- `0.8215` wiki/questions/Research - Composition Foundations.md -- wiki/tools/Postdigital Tools.md
+- `0.8215` wiki/concepts/Frame of Reference for Motion.md -- wiki/concepts/Organic vs Mechanical Motion.md
+- `0.8211` wiki/concepts/Physiognomic Perception.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8206` wiki/concepts/Algorithmic Composition.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8205` wiki/concepts/OKLCH.md -- wiki/techniques/Contrast Checking Pipeline.md
+- `0.8202` wiki/concepts/Organic vs Mechanical Motion.md -- wiki/concepts/Stroboscopic Motion.md
+- `0.8201` wiki/concepts/Expression as Configuration of Forces.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8199` wiki/concepts/Figure and Ground.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8198` wiki/concepts/Face Perception.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8197` wiki/concepts/Perceptual Gradients.md -- wiki/concepts/Shading and Volume.md
+- `0.8195` wiki/concepts/Color Harmony.md -- wiki/concepts/Hue Brightness Saturation.md
+- `0.8194` wiki/concepts/Emotion Psychology.md -- wiki/concepts/Plutchik's Wheel of Emotions.md
+- `0.8193` wiki/concepts/Color Psychology.md -- wiki/concepts/Light Vocabulary.md
+- `0.8190` wiki/concepts/Directed Tension.md -- wiki/concepts/Dynamics of Obliqueness.md
+- `0.8189` wiki/concepts/Kinetic and Generative Typography.md -- wiki/concepts/Typographic Principles.md
+- `0.8183` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Face Perception.md
+- `0.8179` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/PCG Toolkit.md
+- `0.8173` wiki/concepts/Rule of Thirds.md -- wiki/concepts/The Gestalt Principles of Visual Perception.md
+- `0.8172` wiki/concepts/PAD Emotion Model.md -- wiki/concepts/Plutchik's Wheel of Emotions.md
+- `0.8172` wiki/concepts/Artificial Life Art.md -- wiki/concepts/Live Coding and Algorave.md
+- `0.8171` wiki/concepts/Compositional Grids.md -- wiki/concepts/Swiss Grid System.md
+- `0.8170` wiki/concepts/Empirical Aesthetics.md -- wiki/concepts/Light Vocabulary.md
+- `0.8170` wiki/questions/Research - Composition Foundations.md -- wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md
+- `0.8167` wiki/concepts/Figure and Ground.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8161` wiki/concepts/Body Language and Pose Semantics.md -- wiki/concepts/Empirical Aesthetics.md
+- `0.8160` wiki/concepts/Perceptual Forces.md -- wiki/concepts/Physiognomic Perception.md
+- `0.8159` wiki/concepts/Algorithmic Composition.md -- wiki/tools/PCG Toolkit.md
+- `0.8158` wiki/concepts/Empirical Aesthetics.md -- wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md
+- `0.8158` wiki/concepts/Color Psychology.md -- wiki/sources/Wikipedia - Munsell color system.md
+- `0.8158` wiki/concepts/Directed Tension.md -- wiki/concepts/Simplicity (Arnheim).md
+- `0.8156` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/Postdigital Tools.md
+- `0.8153` wiki/sources/Bottosson - Oklab Color Space.md -- wiki/techniques/Contrast Checking Pipeline.md
+- `0.8151` wiki/concepts/Ecological Valence Theory.md -- wiki/concepts/Warm and Cool Colors.md
+- `0.8151` wiki/concepts/Simplicity (Arnheim).md -- wiki/questions/Research - Composition Foundations.md
+- `0.8150` wiki/concepts/Frame of Reference for Motion.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8150` wiki/questions/Research - Tonal Foundations in Classical Painting.md -- wiki/sources/ESRF - New light on Leonardo's faces.md
+- `0.8148` wiki/tools/A-Frame.md -- wiki/tools/Tone.js.md
+- `0.8148` wiki/concepts/Three-Point Lighting and Key-Fill Ratio.md -- wiki/questions/Research - Tonal Foundations in Classical Painting.md
+- `0.8148` wiki/concepts/Directed Tension.md -- wiki/concepts/Symbolic Pattern in Composition.md
+- `0.8147` wiki/concepts/Depth by Overlapping.md -- wiki/concepts/Rule of Thirds.md
+- `0.8146` wiki/concepts/Perceptual Concepts.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8145` wiki/concepts/Arnheim's Color Syntax.md -- wiki/concepts/Complementary Colors.md
+- `0.8145` wiki/concepts/Perceptual Concepts.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8143` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/Live Coding Tools Survey.md
+- `0.8141` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Movement Rhythm and Repetition.md
+- `0.8141` wiki/questions/Research - Composition Foundations.md -- wiki/questions/Research - Tonal Foundations in Classical Painting.md
+- `0.8137` wiki/questions/Research - Composition Foundations.md -- wiki/sources/Galanter - What is Generative Art.md
+- `0.8135` wiki/concepts/Pyramidal Space.md -- wiki/concepts/Shading and Volume.md
+- `0.8134` wiki/sources/Wikipedia - Rule of Thirds.md -- wiki/sources/Wikipedia - The Calling of Saint Matthew.md
+- `0.8134` wiki/concepts/Birkhoff's Aesthetic Measure.md -- wiki/sources/Rigau Feixas Sbert - Birkhoff Shannon Kolmogorov.md
+- `0.8134` wiki/concepts/CIEDE2000.md -- wiki/concepts/OKLCH.md
+- `0.8132` wiki/tools/PCG Toolkit.md -- wiki/tools/WGSL Tooling.md
+- `0.8132` wiki/concepts/McCloud's Panel Transitions and the Infinite Canvas.md -- wiki/concepts/Time-based Composition.md
+- `0.8132` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8131` wiki/concepts/The Five Visual Constancies.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8130` wiki/concepts/Multimodal Evaluation Loops.md -- wiki/concepts/Vectorizing Aesthetic Concepts.md
+- `0.8130` wiki/concepts/Computational Aesthetics.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8129` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Plutchik's Wheel of Emotions.md
+- `0.8122` wiki/concepts/Simplicity (Arnheim).md -- wiki/concepts/The Gestalt Principles of Visual Perception.md
+- `0.8117` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Light Vocabulary.md
+- `0.8116` wiki/concepts/Algorithmic Composition.md -- wiki/tools/Postdigital Tools.md
+- `0.8116` wiki/tools/PCG Toolkit.md -- wiki/tools/Transformers.js.md
+- `0.8113` wiki/concepts/Stroboscopic Motion.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8112` wiki/concepts/Face Perception.md -- wiki/concepts/Light Vocabulary.md
+- `0.8111` wiki/concepts/Perceptual Concepts.md -- wiki/concepts/Stroboscopic Motion.md
+- `0.8110` wiki/tools/Meyda.md -- wiki/tools/Strudel.md
+- `0.8109` wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md -- wiki/sources/NIMA - Neural Image Assessment.md
+- `0.8107` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8107` wiki/concepts/Color Harmony.md -- wiki/concepts/OKLCH.md
+- `0.8103` wiki/concepts/Physiognomic Perception.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8101` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Materials and Texture.md
+- `0.8101` wiki/concepts/Face Perception.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8099` wiki/concepts/Empirical Aesthetics.md -- wiki/concepts/Visual Hierarchy and Typography.md
+- `0.8098` wiki/questions/Research - Composition Foundations.md -- wiki/sources/Spehar Taylor - Universal Aesthetic of Fractals.md
+- `0.8097` wiki/concepts/WCAG Contrast Ratios.md -- wiki/sources/Techkon - CIE Delta E 2000 Formula.md
+- `0.8095` wiki/concepts/Birkhoff's Aesthetic Measure.md -- wiki/concepts/Empirical Aesthetics.md
+- `0.8095` wiki/concepts/Computational Aesthetics.md -- wiki/sources/Spehar Taylor - Universal Aesthetic of Fractals.md
+- `0.8090` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/TensorFlow.js.md
+- `0.8090` wiki/concepts/Artificial Life Art.md -- wiki/sources/Galanter - What is Generative Art.md
+- `0.8085` wiki/concepts/Emotion Psychology.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8085` wiki/concepts/The Munsell and CIELAB Color Systems.md -- wiki/sources/Techkon - CIE Delta E 2000 Formula.md
+- `0.8081` wiki/concepts/The Five Visual Constancies.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8080` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/Simplicity (Arnheim).md
+- `0.8080` wiki/sources/Techkon - CIE Delta E 2000 Formula.md -- wiki/sources/Wikipedia - Munsell color system.md
+- `0.8078` wiki/concepts/Phenomenal Causality.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8076` wiki/concepts/Empirical Aesthetics.md -- wiki/sources/NIMA - Neural Image Assessment.md
+- `0.8076` wiki/concepts/The Gestalt Principles of Visual Perception.md -- wiki/sources/Wikipedia - Rule of Thirds.md
+- `0.8076` wiki/concepts/Directed Tension.md -- wiki/concepts/Organic vs Mechanical Motion.md
+- `0.8073` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/concepts/Light Quality Direction and Motivation.md
+- `0.8071` wiki/concepts/The Munsell and CIELAB Color Systems.md -- wiki/concepts/WCAG Contrast Ratios.md
+- `0.8071` wiki/concepts/Expression as Configuration of Forces.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8066` wiki/concepts/Live Coding and Algorave.md -- wiki/concepts/Long-form On-Chain Generative Art.md
+- `0.8065` wiki/concepts/Depth by Overlapping.md -- wiki/concepts/Shading and Volume.md
+- `0.8064` wiki/tools/Hydra.md -- wiki/tools/Strudel.md
+- `0.8062` wiki/tools/TensorFlow.js.md -- wiki/tools/Tone.js.md
+- `0.8062` wiki/concepts/The Five Visual Constancies.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8060` wiki/concepts/Physiognomic Perception.md -- wiki/concepts/Simplicity (Arnheim).md
+- `0.8059` wiki/concepts/Empirical Aesthetics.md -- wiki/concepts/Time-based Composition.md
+- `0.8057` wiki/concepts/Depth by Overlapping.md -- wiki/concepts/Illumination as a Perceptual Layer.md
+- `0.8057` wiki/concepts/Live Coding and Algorave.md -- wiki/tools/Live Coding Tools Survey.md
+- `0.8055` wiki/concepts/Color Psychology.md -- wiki/concepts/Hue Brightness Saturation.md
+- `0.8051` wiki/concepts/Hue Brightness Saturation.md -- wiki/concepts/Illumination as a Perceptual Layer.md
+- `0.8049` wiki/concepts/Birdwhistell's Kinesics.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8049` wiki/concepts/Color Psychology.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8049` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/concepts/Stroboscopic Motion.md
+- `0.8049` wiki/concepts/Illumination as a Perceptual Layer.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8048` wiki/concepts/Perceptual Constants.md -- wiki/concepts/Time-based Composition.md
+- `0.8046` wiki/concepts/Computational Aesthetics.md -- wiki/concepts/Vectorizing Aesthetic Concepts.md
+- `0.8045` wiki/concepts/Organic vs Mechanical Motion.md -- wiki/concepts/Simplicity (Arnheim).md
+- `0.8041` wiki/concepts/Perceptual Concepts.md -- wiki/concepts/Perceptual Constants.md
+- `0.8040` wiki/tools/Strudel.md -- wiki/tools/Transformers.js.md
+- `0.8040` wiki/concepts/Computational Aesthetics.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8038` wiki/concepts/Perceptual Forces.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8036` wiki/concepts/Birkhoff's Aesthetic Measure.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8034` wiki/concepts/Directed Tension.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8033` wiki/concepts/WCAG Contrast Ratios.md -- wiki/sources/Bottosson - Oklab Color Space.md
+- `0.8033` wiki/sources/Bottosson - Oklab Color Space.md -- wiki/sources/Wikipedia - Munsell color system.md
+- `0.8033` wiki/concepts/Constructed Emotion Theory.md -- wiki/concepts/Universal Body Language Dimensions.md
+- `0.8030` wiki/concepts/Figure and Ground.md -- wiki/concepts/Perceptual Forces.md
+- `0.8028` wiki/concepts/The Gestalt Principles of Visual Perception.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8028` wiki/concepts/Constructed Emotion Theory.md -- wiki/concepts/PAD Emotion Model.md
+- `0.8024` wiki/concepts/Visual Weight.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8023` wiki/concepts/OKLCH.md -- wiki/concepts/WCAG Contrast Ratios.md
+- `0.8022` wiki/concepts/Complementary Colors.md -- wiki/concepts/The Munsell and CIELAB Color Systems.md
+- `0.8022` wiki/tools/Postdigital Tools.md -- wiki/tools/Transformers.js.md
+- `0.8021` wiki/concepts/Simplicity (Arnheim).md -- wiki/concepts/Symbolic Pattern in Composition.md
+- `0.8019` wiki/concepts/Figure and Ground.md -- wiki/concepts/Frame of Reference for Motion.md
+- `0.8017` wiki/concepts/OKLCH.md -- wiki/sources/Wikipedia - Munsell color system.md
+- `0.8015` wiki/concepts/Algorithmic Composition.md -- wiki/concepts/Long-form On-Chain Generative Art.md
+- `0.8014` wiki/concepts/Birdwhistell's Kinesics.md -- wiki/concepts/Body Language and Pose Semantics.md
+- `0.8013` wiki/concepts/Directed Tension.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8012` wiki/concepts/Empirical Aesthetics.md -- wiki/questions/Research - Composition Foundations.md
+- `0.8010` wiki/questions/Research - Composition Foundations.md -- wiki/sources/Rigau Feixas Sbert - Birkhoff Shannon Kolmogorov.md
+- `0.8010` wiki/concepts/Figure and Ground.md -- wiki/concepts/Perceptual Concepts.md
+- `0.8009` wiki/sources/Datta - Studying Aesthetics in Photographic Images.md -- wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md
+- `0.8006` wiki/concepts/Complementary Colors.md -- wiki/concepts/Illumination as a Perceptual Layer.md
+- `0.8006` wiki/concepts/Expression as Configuration of Forces.md -- wiki/concepts/PAD Emotion Model.md
+- `0.8006` wiki/concepts/Organic vs Mechanical Motion.md -- wiki/concepts/The Five Visual Constancies.md
+- `0.8005` wiki/concepts/Constructed Emotion Theory.md -- wiki/concepts/Face Perception.md
+- `0.8005` wiki/sources/Self-Refine - Iterative Refinement.md -- wiki/sources/Visual Prompting Iterative Refinement.md
+- `0.8005` wiki/questions/Research - Composition Foundations.md -- wiki/sources/Wikipedia - Rule of Thirds.md
+- `0.8004` wiki/tools/AI Art Toolkit Map.md -- wiki/tools/WGSL Tooling.md
+- `0.8003` wiki/concepts/Materials and Texture.md -- wiki/questions/Research - Arnheim Sweep 1.md
+- `0.8003` wiki/concepts/Empirical Aesthetics.md -- wiki/sources/Datta - Studying Aesthetics in Photographic Images.md
+- `0.8002` wiki/concepts/Computational Aesthetics.md -- wiki/concepts/LLM-as-Judge for Visual Quality.md
+- `0.8001` wiki/concepts/Computational Aesthetics.md -- wiki/concepts/Fractal Dimension.md
+- `0.8000` wiki/sources/Douchová - Birkhoff's Aesthetic Measure.md -- wiki/sources/Rigau Feixas Sbert - Birkhoff Shannon Kolmogorov.md
+- `0.8000` wiki/concepts/Perceptual Forces.md -- wiki/concepts/Simplicity (Arnheim).md

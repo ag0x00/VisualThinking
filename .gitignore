@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Obsidian local UI state (per CLAUDE.md: "do not edit by hand")
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# Local-only Claude Code settings
+.claude/settings.local.json
+
+# DragonScale runtime — caches and locks (regeneratable, machine-specific)
+.vault-meta/tiling-cache.json
+.vault-meta/.address.lock
+.vault-meta/.tiling.lock
+.vault-meta/.tiling.lock.*
+/tmp/
+
+# Generated lint/tiling artifacts under wiki/meta — keep the dated reports,
+# but ignore any future ad-hoc scratch files that land there.
+# (Currently empty by design; reports are tracked.)
+
+# Inbox is a drop zone — only commit the README documenting its purpose,
+# ignore any files staged for ingest.
+inbox/*
+!inbox/README.md
+!inbox/.gitkeep
+
+# Common defensive ignores
+node_modules/
+.env
+.env.*
+*.log
+*.swp
+*.swo
+
+# Python (in case scripts/ generates anything)
+__pycache__/
+*.pyc
+.venv/
+venv/
