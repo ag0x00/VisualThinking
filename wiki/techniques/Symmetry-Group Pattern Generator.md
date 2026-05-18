@@ -297,9 +297,30 @@ The 17-group framework is **mathematically universal**; the *motif choice + grou
 - **Hat tessellation in branding**: novel aperiodic patterns as a 2026+ design vocabulary; not yet widely-used commercially as of writing
 - **Cross-group blending**: smoothly morphing one group's pattern into another's (animation/transition); mathematically interesting
 
+## Build vs borrow (added 2026-05-18)
+
+Per [[Research - IGP Library Landscape 2026-05-18]]. For each capability this technique needs:
+
+| Capability | Best source | Verdict |
+|---|---|---|
+| 17 wallpaper-group affine transforms | [[wallpaper-groups]] (npm, MIT, 15 of 17) OR port from [[tactile-js]] | borrow (npm) or port (paper) |
+| Isohedral tiling enumeration + edge-shape parameterization | [[tactile-js]] (BSD-3) | **port** — canonical academic |
+| Hankin polygon-in-contact (Bonner core) | [[Alzulejo]] `polygon.svelte.ts` (MIT, ~64 LOC) | **port** — cleanest impl |
+| Planar-graph underlay → line-network transform | [[Alzulejo]] `rosette.svelte.ts` (MIT, ~384 LOC) | **port** — Bonner's "discard underlay" step |
+| Lee 1995 rosette construction (8-fold / 12-fold local) | [[Alhambra]] `rosette.h` algorithm (Bridges 2000 paper, legally clean) | **port** from paper |
+| Lu-Steinhardt subdivision / inflation (quasi-crystalline) | [[Alhambra]] `inflation_tiling.h` (Bridges 2000 paper) | **port** from paper |
+| Hat / Spectre monotile patches | [[hatviz]] (BSD-3, p5.js) | **port** from sketch |
+| 5 girih tiles as first-class primitives | None (gap) | **build** |
+| Cuerda-seca outline rendering | None (gap) | **build** |
+| Glaze imperfections (procedural) | None (gap) | **build** |
+| OKLCH palette layer | [[culori]] (npm, MIT) + [[OKLCH Pair-Relation Classifier]] | **borrow + extend** |
+| Animation on symmetry-group orbits | None (gap) | **build** |
+
+**Recommendation**: port the math, depend on nothing for the geometry core. The toolkit's original contributions are aesthetic — cuerda-seca, glaze, OKLCH chord tuning, animation orbits. See [[Research - IGP Library Landscape 2026-05-18]] for full rationale and the workflow lessons surfaced by this audit.
+
 ## Related pages
 
-[[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Islamic Geometric Patterns and the Polygonal Technique]] · [[Op-Art and Cross-Modal Rhythm]] · [[Movement Rhythm and Repetition]] · [[Procedural Paradigms]] · [[L-Systems and Grammars]] · [[Brand Style Guides as Rule-Systems]]
+[[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Islamic Geometric Patterns and the Polygonal Technique]] · [[Op-Art and Cross-Modal Rhythm]] · [[Movement Rhythm and Repetition]] · [[Procedural Paradigms]] · [[L-Systems and Grammars]] · [[Brand Style Guides as Rule-Systems]] · [[tactile-js]] · [[wallpaper-groups]] · [[PlotBoilerplate]] · [[Research - IGP Library Landscape 2026-05-18]]
 
 ## Sources
 
