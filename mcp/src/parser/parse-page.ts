@@ -21,6 +21,13 @@ import type {
 } from "../types/internal.js";
 import type { Language, PageType } from "../types/shared.js";
 
+// Types that exist in the wiki but are internal-only and not exposed via the public MCP API.
+// Per the design spec: ResearchSweep, FieldStub, Meta are internal model objects, not public API types.
+const INTERNAL_ONLY_TYPES = new Set([
+  "synthesis", "research-synthesis", "field-overview", "tool-overview",
+  "meta", "research", "field-stub", "fold",
+]);
+
 const KNOWN_FRONTMATTER_FIELDS = new Set([
   "title", "type", "status", "tags", "address", "created", "updated",
   "aliases", "sweep", "priority_rank", "depth_dive_complete",
@@ -74,8 +81,15 @@ export function parsePage(raw: RawPage): ParseResult {
   const fm = raw.frontmatter;
 
   if (!fm.type) {
-    diagnostics.push({ level: "error", path: raw.relPath, message: "Missing required 'type' field" });
-    return { page: null, diagnostics };
+    // Pages without a type are internal (e.g., auto-generated reports).
+    // Silently exclude from the public API.
+    return { page: null, diagnostics: [] };
+  }
+
+  // Internal-only types are silently excluded from the public Page set.
+  // They exist in the wiki but are not part of the MCP public API.
+  if (INTERNAL_ONLY_TYPES.has(fm.type as string)) {
+    return { page: null, diagnostics: [] };
   }
 
   checkUnknownFields(fm, raw.relPath, diagnostics);

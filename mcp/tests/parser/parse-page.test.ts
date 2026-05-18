@@ -54,7 +54,7 @@ describe("parsePage", () => {
     expect(page.authors).toEqual(["Aaron Hertzmann"]);
   });
 
-  it("returns an error diagnostic when type field is missing", () => {
+  it("silently excludes pages with missing type field (internal/auto-generated files)", () => {
     const raw = {
       sourcePath: "/fake/path.md",
       relPath: "wiki/concepts/Untyped.md",
@@ -64,7 +64,8 @@ describe("parsePage", () => {
     };
     const result = parsePage(raw);
     expect(result.page).toBeNull();
-    expect(result.diagnostics.some((d) => d.level === "error" && /type/i.test(d.message))).toBe(true);
+    // No error diagnostic — missing type is treated as an internal/auto-generated file, not a bug.
+    expect(result.diagnostics).toEqual([]);
   });
 
   it("returns a warning (not error) for unknown frontmatter fields", async () => {

@@ -80,7 +80,9 @@ const ToolCategorySchema = z.enum([
   "color", "render", "audio", "ml", "geometry",
   "live-coding", "framework", "cloud-api",
 ]);
-const ToolVerdictSchema = z.enum(["first-class", "second-class", "deprecated", "experimental"]);
+// Verdict is a free-form string in the real wiki (e.g., "first-class-pedagogical-second-class-production").
+// We keep it as z.string() rather than a strict enum to preserve the rich nuance from sweep authors.
+const ToolVerdictSchema = z.string();
 
 export const ToolSchema = z.object({
   id: z.string(),
