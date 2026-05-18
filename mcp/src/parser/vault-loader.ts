@@ -35,7 +35,7 @@ async function walkMarkdownFiles(dir: string): Promise<string[]> {
     const full = path.join(dir, e.name);
     if (e.isDirectory()) {
       out.push(...(await walkMarkdownFiles(full)));
-    } else if (e.isFile() && e.name.endsWith(".md") && !EXCLUDED_FILENAMES.has(e.name)) {
+    } else if ((e.isFile() || e.isSymbolicLink()) && e.name.endsWith(".md") && !EXCLUDED_FILENAMES.has(e.name)) {
       out.push(full);
     }
   }
@@ -75,7 +75,7 @@ function buildBacklinks(pages: Page[]): Map<string, PageRef[]> {
       src.type === "concept"
         ? src.relatedConcepts
         : src.type === "technique"
-          ? src.implementsConcepts
+          ? [...src.implementsConcepts, ...src.dependencies.libraries]
           : [];
     for (const ref of outgoing) {
       if (!back.has(ref.id)) back.set(ref.id, []);
@@ -183,11 +183,52 @@ export async function loadVault(vaultRoot: string): Promise<VaultIndex> {
     byTitle.set(p.title.toLowerCase(), p);
   }
 
-  // Compute backlinks from resolved outgoing references.
-  const backlinks = buildBacklinks(resolvedPages);
+  // Populate cross-refs that require the vault index:
+  //   - Technique.dependencies.libraries: body wikilinks that resolve to Tool pages
+  //   - Tool.alternatives: body wikilinks that resolve to other Tool pages
+  const crossRefPages: Page[] = resolvedPages.map((p) => {
+    if (p.type === "technique") {
+      const links = extractWikilinks(p.body.markdown);
+      const seen = new Set<string>();
+      const libs: PageRef[] = [];
+      for (const link of links) {
+        const target =
+          byTitle.get(link.target.toLowerCase()) ??
+          bySlug.get(link.target.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+        if (target && target.type === "tool" && !seen.has(target.id)) {
+          seen.add(target.id);
+          libs.push(toPageRef(target));
+          if (libs.length >= 10) break;
+        }
+      }
+      const merged: Technique = { ...p, dependencies: { libraries: libs } };
+      return merged;
+    }
+    if (p.type === "tool") {
+      const links = extractWikilinks(p.body.markdown);
+      const seen = new Set<string>();
+      const alts: PageRef[] = [];
+      for (const link of links) {
+        const target =
+          byTitle.get(link.target.toLowerCase()) ??
+          bySlug.get(link.target.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+        if (target && target.type === "tool" && target.id !== p.id && !seen.has(target.id)) {
+          seen.add(target.id);
+          alts.push(toPageRef(target));
+          if (alts.length >= 10) break;
+        }
+      }
+      const merged: Tool = { ...p, alternatives: alts };
+      return merged;
+    }
+    return p;
+  });
+
+  // Compute backlinks from resolved outgoing references (including dependencies.libraries).
+  const backlinks = buildBacklinks(crossRefPages);
 
   // Apply backlinks, citedBy, and merge primarySources.
-  const finalPages: Page[] = resolvedPages.map((p) => {
+  const finalPages: Page[] = crossRefPages.map((p) => {
     if (p.type === "concept") {
       const implementedBy = (backlinks.get(p.id) ?? []).filter((r) => r.type === "technique");
       const citedBy = collectCitedBy(p, byTitle);
@@ -216,15 +257,28 @@ export async function loadVault(vaultRoot: string): Promise<VaultIndex> {
     return p;
   });
 
-  // Final indices.
+  // Final indices — first-wins on address/slug/title collisions; emit a warning on duplicates.
   const finalByAddress = new Map<string, Page>();
   const finalBySlug = new Map<string, Page>();
   const finalByTitle = new Map<string, Page>();
   const byDomain = new Map<Domain, Page[]>();
   for (const p of finalPages) {
-    finalByAddress.set(p.id, p);
-    if (p.slug) finalBySlug.set(p.slug, p);
-    finalByTitle.set(p.title.toLowerCase(), p);
+    if (finalByAddress.has(p.id)) {
+      const first = finalByAddress.get(p.id)!;
+      diagnostics.push({
+        level: "warn",
+        path: p.slug ?? p.id,
+        message: `Address collision on ${p.id}: first-wins (keeping "${first.title}"), skipping "${p.title}"`,
+      });
+    } else {
+      finalByAddress.set(p.id, p);
+    }
+    if (p.slug) {
+      if (!finalBySlug.has(p.slug)) finalBySlug.set(p.slug, p);
+    }
+    if (!finalByTitle.has(p.title.toLowerCase())) {
+      finalByTitle.set(p.title.toLowerCase(), p);
+    }
     if (p.type === "concept") {
       for (const d of p.domains) {
         if (!byDomain.has(d)) byDomain.set(d, []);

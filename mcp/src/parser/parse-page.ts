@@ -161,6 +161,54 @@ function buildConcept(
   return { page: parsed.data, diagnostics };
 }
 
+const NPM_INSTALL_RE = /npm\s+(?:install|i)\s+((?:@[\w-]+\/[\w-]+|[\w-]+))/g;
+const BACKTICK_PKG_RE = /`(@[\w-]+\/[\w-]+|[\w][\w-]*\/[\w-]+|[\w][\w.-]*)(?:@[\d^~*][\w.-]*)?\`/g;
+
+function deriveCategory(tags: unknown): Tool["category"] {
+  const tagList = Array.isArray(tags) ? (tags as string[]).map((t) => String(t).toLowerCase()) : [];
+  if (tagList.some((t) => t === "color")) return "color";
+  if (tagList.some((t) => ["render", "3d", "webgpu", "webgl"].includes(t))) return "render";
+  if (tagList.some((t) => ["audio", "sound", "music"].includes(t))) return "audio";
+  if (tagList.some((t) => ["ml", "tensorflow", "transformers", "mediapipe"].includes(t))) return "ml";
+  if (tagList.some((t) => ["geometry", "tessellation", "symmetry", "paper"].includes(t))) return "geometry";
+  if (tagList.some((t) => ["live-coding", "strudel", "hydra", "tidal"].includes(t))) return "live-coding";
+  if (tagList.some((t) => ["cloud", "api", "anthropic", "replicate"].includes(t))) return "cloud-api";
+  return "framework";
+}
+
+function extractPackageRefs(body: string): Tool["packageRefs"] {
+  const seen = new Set<string>();
+  const refs: Tool["packageRefs"] = [];
+
+  // npm install <pkg> pattern
+  let m: RegExpExecArray | null;
+  const installRe = new RegExp(NPM_INSTALL_RE.source, "g");
+  while ((m = installRe.exec(body)) !== null && refs.length < 5) {
+    const name = m[1].trim();
+    if (!seen.has(name)) {
+      seen.add(name);
+      refs.push({ ecosystem: "npm", name });
+    }
+  }
+
+  if (refs.length >= 5) return refs;
+
+  // Backtick package refs — only scoped (@scope/pkg) or slash-form (pkg/sub)
+  // to avoid capturing prose words. Single-word bare package names are skipped
+  // here to reduce false positives (they're covered by npm install).
+  const btRe = new RegExp(BACKTICK_PKG_RE.source, "g");
+  while ((m = btRe.exec(body)) !== null && refs.length < 5) {
+    const name = m[1].trim();
+    // Only take scoped packages (@...) or slash-form to reduce false positives
+    if ((name.startsWith("@") || name.includes("/")) && !seen.has(name)) {
+      seen.add(name);
+      refs.push({ ecosystem: "npm", name });
+    }
+  }
+
+  return refs;
+}
+
 function buildTool(
   raw: RawPage,
   id: string,
@@ -187,9 +235,9 @@ function buildTool(
     title,
     type: "tool",
     summary: firstParagraph(raw.body),
-    category: "framework",
+    category: deriveCategory(raw.frontmatter.tags),
     language,
-    packageRefs: [],
+    packageRefs: extractPackageRefs(raw.body),
     verdict,
     applications,
     alternatives: [],

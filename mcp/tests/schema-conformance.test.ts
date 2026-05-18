@@ -37,4 +37,38 @@ describe("schema-conformance against real vault", () => {
     }
     expect(warnings.length).toBeGreaterThanOrEqual(0);
   }, 30_000);
+
+  it("at least some Tools have non-default category (not all 'framework')", async () => {
+    const vault = await loadVault(REAL_VAULT);
+    const tools = vault.pages.filter((p) => p.type === "tool");
+    const nonDefaultCategory = tools.filter((t) => t.type === "tool" && t.category !== "framework");
+    expect(nonDefaultCategory.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it("at least some Tools have populated packageRefs", async () => {
+    const vault = await loadVault(REAL_VAULT);
+    const tools = vault.pages.filter((p) => p.type === "tool");
+    const withPkgs = tools.filter((t) => t.type === "tool" && t.packageRefs.length > 0);
+    expect(withPkgs.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it("at least some Techniques have populated dependencies.libraries", async () => {
+    const vault = await loadVault(REAL_VAULT);
+    const techs = vault.pages.filter((p) => p.type === "technique");
+    const withDeps = techs.filter((t) => t.type === "technique" && t.dependencies.libraries.length > 0);
+    expect(withDeps.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it("at least some Tools have populated usedBy backlinks", async () => {
+    const vault = await loadVault(REAL_VAULT);
+    const tools = vault.pages.filter((p) => p.type === "tool");
+    const withUsedBy = tools.filter((t) => t.type === "tool" && t.usedBy.length > 0);
+    expect(withUsedBy.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it("emits warning diagnostics on address collisions (e.g., c-000001 in real vault)", async () => {
+    const vault = await loadVault(REAL_VAULT);
+    const warnings = vault.diagnostics.filter((d) => d.level === "warn" && /collision/i.test(d.message));
+    expect(warnings.length).toBeGreaterThan(0);
+  }, 30_000);
 });
