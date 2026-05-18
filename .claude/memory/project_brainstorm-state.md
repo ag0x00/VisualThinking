@@ -59,3 +59,56 @@ Currently on task #3 (Ask clarifying questions, in_progress). Tasks #1, #2 compl
 5. Continue brainstorming-skill flow
 
 How to apply: read this file at session start; the brainstorm state is in this file plus the persisted HTML screens. Do not re-ask questions whose answers are listed above as "locked."
+
+## Post-relaunch findings (2026-05-18, after IGP library landscape audit)
+
+The brainstorm resumed after MCP relaunch and then detoured into a 4-parallel-subagent IGP library audit triggered by the user's reframing: **"the goal of this exercise is NOT to build a screensaver, actually. it's to figure out what works and what doesn't in our wiki+mcp+toolkit approach."** See `feedback_test-artifact-vs-workflow.md` and `feedback_npm-audit-before-design.md`.
+
+### Locked design decisions (continued from above)
+
+Earlier "locked" decisions about the mathematical engine still hold qualitatively, but the framing is sharpened by Lu-Steinhardt 2007:
+
+- **Lines are the visible art; tiles (or girih tiles, or Bonner polygons) are scaffolding.** The construction is *lines first, tiles emergent as enclosed regions of the line network*. Multiple complex patterns share the same scaffold but differ in which lines are drawn.
+- **Vocabulary** for MVP-1: NOT just rhombs + hexagons. Use Bonner's polygonal underlay + per-polygon line rule (or, equivalently, Lu-Steinhardt's 5 girih tiles with edge-line decorations). The atomic move is "place a decorated polygon"; the visible output is the line network across decorated polygon boundaries.
+- **6-fold scaffold is the starting point** (p6 or p6m). "8-point" and "12-point" patterns are *local* rotational motifs on p4m / p6m, not independent global grids — per the crystallographic restriction theorem.
+
+### Library landscape (results of 4-subagent audit)
+
+Full synthesis: [[Research - IGP Library Landscape 2026-05-18]] (c-000226).
+
+**Top candidates** for the toolkit's geometry core:
+- **[[tactile-js]]** (BSD-3, Kaplan) — port the isohedral classification + edge-shape parameterization
+- **[[wallpaper-groups]]** (npm, MIT) — 15-of-17 transform tables; pragmatic foundation
+- **[[Alhambra]]** algorithms via Kaplan Bridges 2000 paper — `infer.h`, `rosette.h`, `inflation_tiling.h` (port from paper, not GPL code)
+- **[[Alzulejo]]** (MIT, npm) — lift 2 algorithms (Hankin contact-angle + PlanarGraph)
+- **[[PlotBoilerplate]]** (IkarosKappler, MIT, TS, npm) — modern geometry substrate; pending follow-up evaluation
+
+**Significant gaps** no library covers (toolkit-original work regardless):
+- Cuerda-seca rendering, glaze imperfections, OKLCH-tuned Samarkand palette, animation on symmetry orbits, Bonner's 5 girih tiles with semantic decoration overlays, Lu-Steinhardt subdivision.
+
+**Recommendation locked**: **port the math, depend on nothing** for the geometry core. Use Alhambra `.tiling` files as visual-regression test oracle.
+
+### Workflow lessons surfaced
+
+1. `wiki_orient` under-surfaces named-tradition terms — logged to `mcp/tasks/lessons.md`
+2. The wiki's IGP page was research-depth not implementation-depth — augmented with Implementation Landscape section (post-detour)
+3. The wiki had zero IGP tool pages — 3 created this session
+4. **npm-search audit must run before designing** — `feedback_npm-audit-before-design.md`
+5. **Test artifact ≠ goal** — `feedback_test-artifact-vs-workflow.md`
+
+### Next action (post-detour)
+
+We are now in a position to actually start toolkit API design. The remaining open clarifying questions from above are mostly resolved or deprioritized:
+
+- ~~Interplay mechanism~~ — defer until static MVP-1 ships
+- ~~Spatial driver~~ — defer
+- **Default symmetry group**: start with p6 (6-fold), per user's stated priority "6 point grid first, then 8, then 12"
+- **Screensaver host**: WebView `.saver` still preferred (no contradiction surfaced)
+- **Repo structure**: toolkit/ + screensaver/ as siblings to mcp/ in this repo
+
+**Next clarifying questions** (or design questions, since we may have enough to proceed):
+1. Toolkit module structure: `wallpaper/`, `polygon/`, `palette/`, `imperfections/`, `animation/` — proposal in design doc
+2. Rendering backend for MVP-1: SVG (simplest, future-WebGPU upgrade path via renderer-agnostic toolkit) vs Canvas vs WebGPU from day one
+3. PlotBoilerplate follow-up evaluation: yes/no — could substitute for manual port of geometry primitives
+
+After these, transition to brainstorming-skill task #4 (Propose architecture approaches) and #5 (Present design sections).
