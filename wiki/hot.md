@@ -2,10 +2,22 @@
 title: Hot Cache
 tags: [meta, hot]
 status: living
-updated: 2026-05-17
+updated: 2026-05-18
 ---
 
-> **Status: 🏁 LOCKED SWEEP SEQUENCE COMPLETE 2026-05-17.** Sweep 7 (Implementation-notes pass, final) ✅ done. 12 technique pages + 1 synthesis ([[Research - Implementation-notes Pass]]) translate the reading layer into operational recipes: [[OKLCH Pair-Relation Classifier]] · [[Contrast Checking Pipeline]] · [[Directed Tension Score]] · [[Visual Hierarchy and Negative Space Scoring]] · [[Aesthetic Measure Stack]] · [[Pose-Emotion Dimension Scorer]] · [[Contrapposto Scorer]] · [[Cultural Emblem Detector]] · [[Audio-to-Visual Cross-Modal Mapping]] · [[Realtime Pose-to-Visualizer Loop]] · [[Symmetry-Group Pattern Generator]] · [[Style Transfer Pipeline]]. **The 15-gap queue is now covered at both reading AND technique layers.** Default stack consolidated: **culori + MediaPipe Tasks + TFJS WebGPU + three.js + meyda + AudioWorklet + Anthropic SDK**. **Wiki transitions from "knowledge base" to "operational reference."** Next phase: **build** — one of the four priority projects (generative art system / brand tooling / graphic-design tools / music-reactive visualizer).
+> **Status: 🛠️ BUILD PHASE ACTIVE 2026-05-18.** Wiki layer LOCKED (sweep sequence complete 2026-05-17 — see Build state below for current activity). Sweep 7 (Implementation-notes pass, final) ✅ done. 12 technique pages + 1 synthesis ([[Research - Implementation-notes Pass]]) translate the reading layer into operational recipes: [[OKLCH Pair-Relation Classifier]] · [[Contrast Checking Pipeline]] · [[Directed Tension Score]] · [[Visual Hierarchy and Negative Space Scoring]] · [[Aesthetic Measure Stack]] · [[Pose-Emotion Dimension Scorer]] · [[Contrapposto Scorer]] · [[Cultural Emblem Detector]] · [[Audio-to-Visual Cross-Modal Mapping]] · [[Realtime Pose-to-Visualizer Loop]] · [[Symmetry-Group Pattern Generator]] · [[Style Transfer Pipeline]]. **The 15-gap queue is now covered at both reading AND technique layers.** Default stack consolidated: **culori + MediaPipe Tasks + TFJS WebGPU + three.js + meyda + AudioWorklet + Anthropic SDK**.
+
+## Build state (2026-05-18, active)
+
+- **Subsystem A — Wiki MCP (`mcp/`)** ✅ shipped. PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` for project-local consumption. Known gap (logged to `mcp/tasks/lessons.md`): `orient` under-surfaces tradition-specific terms like "Bonner / Islamic geometric"; pair with `search` keyword as workaround.
+- **Subsystem B-via-C — Toolkit + Samarkand screensaver (`toolkit/` + `screensaver/`, planned)** 🛠️ brainstorm in progress on branch `toolkit-screensaver`. Visual genre: Samarkand IGPs. Mathematical framework: lines as visible art, tiles as scaffolding, per [[Islamic Geometric Patterns and the Polygonal Technique]] (Bonner) + Lu-Steinhardt 2007 girih-tile tessellation analysis. **Detour to library landscape research** (4 parallel subagents) before committing to toolkit API — borrow-vs-build-vs-port decision pending.
+- **Auto-memory** ✅ relocated into `.claude/memory/` (committed; symlinked from `~/.claude/projects/-Users-ag-Lab-VisualThinking/memory/` for harness compatibility). Future sessions see project state inline.
+
+Lessons emerging from the toolkit-screensaver brainstorm:
+1. **Test artifact ≠ goal.** The screensaver is a test case for the wiki+MCP+toolkit workflow; the workflow is the product.
+2. **Run npm-search audit before designing**, not just before cataloging. Failure to do this caused three wrong mental models before the user corrected the framing.
+3. **The wiki's IGP page (c-000191) is research-synthesis depth, not implementation-depth.** A toolkit author needs concrete algorithms and library recommendations; the wiki currently has theory and rubric. Library research will augment.
+4. **Visual companion is load-bearing for design brainstorms.** Without inline visual feedback, wrong models survive much longer.
 
 # Hot Cache
 
