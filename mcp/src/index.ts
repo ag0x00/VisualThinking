@@ -1,5 +1,39 @@
 #!/usr/bin/env node
-// Stub entrypoint — replaced in Phase 14 with the full MCP server.
-// Exists now so package.json's "bin" target resolves and tsc has something to compile.
-console.error("wiki-mcp: not yet implemented");
-process.exit(1);
+import { parseCliArgs, resolveVaultPath } from "./config.js";
+import { loadVault } from "./parser/vault-loader.js";
+import { startServer } from "./server.js";
+
+async function main(): Promise<void> {
+  const { cliArg } = parseCliArgs(process.argv.slice(2));
+  const vaultRoot = await resolveVaultPath({
+    cliArg,
+    env: process.env,
+    cwd: process.cwd(),
+  });
+  process.stderr.write(`wiki-mcp: loading vault from ${vaultRoot}\n`);
+
+  const vault = await loadVault(vaultRoot);
+  const errors = vault.diagnostics.filter((d) => d.level === "error");
+  const warnings = vault.diagnostics.filter((d) => d.level === "warn");
+  process.stderr.write(
+    `wiki-mcp: parsed ${vault.pages.length} pages, ${errors.length} errors, ${warnings.length} warnings\n`,
+  );
+  for (const e of errors) {
+    process.stderr.write(`  error ${e.path}: ${e.message}\n`);
+  }
+  if (errors.length > 0) {
+    process.stderr.write(
+      `wiki-mcp: hard parse errors in vault; server may serve incomplete data\n`,
+    );
+  }
+
+  await startServer(vault);
+  process.stderr.write(`wiki-mcp: ready on stdio\n`);
+}
+
+main().catch((err) => {
+  process.stderr.write(
+    `wiki-mcp: fatal: ${err instanceof Error ? err.message : String(err)}\n`,
+  );
+  process.exit(1);
+});
