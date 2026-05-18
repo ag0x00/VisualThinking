@@ -177,7 +177,7 @@ function generateSamarkandFrame(seed: number, bounds: { w: number; h: number }):
 
 ## Screensaver integration
 
-`screensaver/` is a macOS WKWebView-based `.saver` bundle (per `subsystem-trajectory.md` recommendation, WKWebViewScreenSaver-style prior art).
+`screensaver/` is a macOS WKWebView-based `.saver` bundle (per `subsystem-trajectory.md` recommendation, WebViewScreenSaver-style prior art).
 
 ```
 screensaver/
@@ -247,7 +247,7 @@ All errors are logged to `~/Library/Logs/VisualThinking-Screensaver.log` for deb
 | Math port from papers takes longer than estimated | Time-box per algorithm; if Lee 1995 rosette takes > 8 hours, fall back to depending on tactile-js directly (BSD-3, vendor the relevant files) |
 | WKWebView SVG performance at 5K+ resolution | Profile early; switch to Canvas at MVP-3 if SVG is the bottleneck |
 | Visual quality of procedural glaze imperfections | Iterate against the user's reference images; if procedural can't match, accept the cleaner "modernist" rendering instead |
-| `.saver` packaging on macOS Sequoia+ (Sonoma, Sequoia, etc.) | Use prior-art WKWebViewScreenSaver as starting point; verify signing requirements |
+| `.saver` packaging on recent macOS (Sonoma 14 / Sequoia 15 / future) — Apple has tightened code signing | Use prior-art WebViewScreenSaver as starting point; verify signing + entitlements requirements early |
 
 **Open**:
 - PlotBoilerplate follow-up evaluation — yes or no?
