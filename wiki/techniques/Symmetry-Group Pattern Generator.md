@@ -303,8 +303,8 @@ The 17-group framework is **mathematically universal**; the *motif choice + grou
 
 ## Sources
 
-- Schattschneider, D. (1978). The plane symmetry groups: Their recognition and notation. *American Mathematical Monthly* 85(6), 439–450.
-- Conway, J. H., Burgiel, H., & Goodman-Strauss, C. (2008). *The Symmetries of Things*. A K Peters.
-- Smith, D., Myers, J. S., Kaplan, C. S., & Goodman-Strauss, C. (2023). An aperiodic monotile. arXiv:2303.10798.
-- Bonner, J. (2017). *Islamic Geometric Patterns*. Springer.
-- Hat tiling reference: cs.uwaterloo.ca/~csk/hat/
+- Schattschneider, D. (1978). The plane symmetry groups: Their recognition and notation. *American Mathematical Monthly* 85(6), 439–450. https://www.jstor.org/stable/2320158
+- Conway, J. H., Burgiel, H., & Goodman-Strauss, C. (2008). *The Symmetries of Things*. A K Peters. https://doi.org/10.1201/b10564
+- Smith, D., Myers, J. S., Kaplan, C. S., & Goodman-Strauss, C. (2023). An aperiodic monotile. arXiv:2303.10798. https://arxiv.org/abs/2303.10798
+- Bonner, J. (2017). *Islamic Geometric Patterns*. Springer. https://doi.org/10.1007/978-1-4419-0217-7
+- Hat tiling reference implementation. https://cs.uwaterloo.ca/~csk/hat/
