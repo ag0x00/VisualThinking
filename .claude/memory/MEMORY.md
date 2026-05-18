@@ -1,0 +1,17 @@
+# Memory index for VisualThinking
+
+- [Programmability principle for wiki pages](feedback_programmability-principle.md) — only create pages for content that translates to a rule/metric/constraint; people don't get pages
+- [Language preference: JS/TS first](feedback_language-preference.md) — prefer JS/TS for building visuals; Python only when JS equivalent is weak; Rust/Go only with a specific 2026 reason
+- [Strategic catalog → prioritized depth](feedback_depth-first-wiki.md) — sweep strategy: catalog the territory first, deep-dive by user-set application priority; pure "depth-first" was wrong
+- [Application priorities + 15-gap depth-dive queue](project_application-priorities.md) — user's 4 projects (generative art, branding, graphic design, real-time visualizers) and the ordered 15-field priority list anchoring future sweeps
+- [Clustered depth-dive sweeps](feedback_clustered-sweeps.md) — prefer multi-item clustered sweeps over single-field; uses Field Map's 6-cluster proposal
+- [No implementation code on concept pages](feedback_implementation-in-sweeps.md) — depth-dive sweeps stay reading-only; defer JS/TS implementation until after Algorithmic Composition + tools sweep (avoids locking in choices before tools are evaluated)
+- [Algorithmic Composition before tools sweep](feedback_algo-comp-before-tools.md) — framework first, then library evaluation; tools sweep needs the criteria the algo-comp depth-dive produces
+- [Catalog-stub cross-check](feedback_catalog-stub-cross-check.md) — depth-dive synthesis pages must explicitly account for every scope item in the catalog stubs they cover; user audit caught missed p5.js plugins, q5.js, r3f in the original Tools sweep; npm-search audit rule added
+- [Framing canonicity](feedback_framing-canonicity.md) — survey alternative theoretical framings before anchoring; don't claim canonicity for the first one recalled; flagged after Galanter-overclaim in the Algorithmic Composition sweep
+- [Source-fetch fallback ladder](feedback_source-fetch-fallback.md) — when WebFetch fails on a primary source, try Firecrawl → Playwright → log URL with a gap callout for user to fetch manually; don't silently substitute secondary summaries
+- [Cross-cultural validity flag](feedback_cross-cultural-validity.md) — psychology / perception / aesthetics claims must state cultural-validity scope; WEIRD-only validation is a default flag; "universal substrate + cultural overlay" is the recurring pattern
+- [Successor-theory tracking](feedback_successor-theory-tracking.md) — for each historical framework cited (especially pre-2010), search for named successor theory; distinguish "useful historical anchor" from "live contemporary framework"
+- [Design for the consumer, not the schema](feedback_design-for-consumer.md) — walk through the consumer's turn-by-turn workflow concretely; don't reflect producer-side data structure into the API
+- [One-click-away primary sources](feedback_one-click-primary-sources.md) — surface external primary-source URLs directly in concept/technique/tool responses, not behind a graph-traversal step
+- [Subsystem trajectory: A shipped, B/C next](project_subsystem-trajectory.md) — MCP server done (PR #1); next decision is toolkit + screensaver vs. another concrete project; scope toolkit minimal-viable around one test artifact
