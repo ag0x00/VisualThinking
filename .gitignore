@@ -9,6 +9,9 @@
 # Local-only Claude Code settings
 .claude/settings.local.json
 
+# Brainstorming visual companion session state
+.superpowers/
+
 # DragonScale runtime — caches and locks (regeneratable, machine-specific)
 .vault-meta/tiling-cache.json
 .vault-meta/.address.lock

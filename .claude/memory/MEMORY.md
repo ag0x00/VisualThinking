@@ -15,3 +15,4 @@
 - [Design for the consumer, not the schema](feedback_design-for-consumer.md) — walk through the consumer's turn-by-turn workflow concretely; don't reflect producer-side data structure into the API
 - [One-click-away primary sources](feedback_one-click-primary-sources.md) — surface external primary-source URLs directly in concept/technique/tool responses, not behind a graph-traversal step
 - [Subsystem trajectory: A shipped, B/C next](project_subsystem-trajectory.md) — MCP server done (PR #1); next decision is toolkit + screensaver vs. another concrete project; scope toolkit minimal-viable around one test artifact
+- [Brainstorm state: toolkit + Samarkand-tile screensaver](project_brainstorm-state.md) — vision anchor + locked design decisions + open questions; read before resuming the brainstorm post-MCP-reload
