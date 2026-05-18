@@ -92,3 +92,13 @@ This is the wiki MCP server project. See `../docs/superpowers/specs/2026-05-17-w
 - Public API exposes 4 types (Concept | Tool | Technique | Source). ResearchSweep/FieldStub/Meta are internal-only.
 - Identity = page address (`c-NNNNNN`). Filenames never appear in API output.
 - `primarySources` field on Concept/Tool/Technique must surface external URLs directly — "one click away" to the original source.
+
+## Dependency rationale
+
+**Audit date: 2026-05-17.** All dependencies are at their latest major versions:
+- `@modelcontextprotocol/sdk@^1.0.0` — latest stable.
+- `zod@^4.4.3` — upgraded from 3.x (safe; scaffold phase has no schema usage yet; migration path documented if needed).
+- `typescript@^6.0.3` — upgraded from 5.7.2 (no deprecated options like `target=es5` or `moduleResolution=classic` in tsconfig.json; requires `types: ["node"]` in tsconfig).
+- `vitest@^4.1.6` — upgraded from 2.1.8 (latest test framework major).
+- `@types/node@^25.8.0` — upgraded from 22.x (Node.js type definitions).
+- Other deps (gray-matter, mdast-util-from-markdown, remark-parse, unified, unist-util-visit) are at their latest.

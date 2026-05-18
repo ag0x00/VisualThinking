@@ -32,7 +32,7 @@ In priority order: `--vault <path>` CLI flag â†’ `WIKI_MCP_VAULT_PATH` env var â
 
 ## Public operations
 
-See `docs/superpowers/specs/2026-05-17-wiki-mcp-server-design.md` in the parent repo for the full spec.
+See [the design spec](https://github.com/anton-goncharov/VisualThinking/blob/main/docs/superpowers/specs/2026-05-17-wiki-mcp-server-design.md) in the source repo for the full spec.
 
 Core operations: `wiki.orient`, `wiki.listDomains`, `wiki.getDomain`, `wiki.getConcept` / `getTool` / `getTechnique` / `getSource`, `wiki.search`, `wiki.getRelated`, `wiki.getEvaluationGuide`, `wiki.suggestDirections`, `wiki.getCautions`, `wiki.getProvenance`.
 
