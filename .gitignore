@@ -39,3 +39,11 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# mcp/ build artifacts
+mcp/node_modules/
+mcp/dist/
+mcp/package-lock.json
+mcp/*.tsbuildinfo
+mcp/coverage/
+mcp/.vitest-cache/
