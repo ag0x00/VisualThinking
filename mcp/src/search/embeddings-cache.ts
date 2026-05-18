@@ -6,10 +6,23 @@ export interface EmbeddingsCache {
   byPath: Map<string, number[]>;
 }
 
+interface RawCacheEntryV1 {
+  path?: string;
+  vector?: number[];
+}
+
+interface RawCacheEntryV2 {
+  hash?: string;
+  embedding?: number[];
+  computed_at?: string;
+}
+
+type RawCacheEntry = RawCacheEntryV1 | RawCacheEntryV2 | number[];
+
 interface RawCache {
   version?: number;
   model?: string;
-  embeddings?: Record<string, { path?: string; vector?: number[] } | number[]>;
+  embeddings?: Record<string, RawCacheEntry>;
 }
 
 export async function loadEmbeddingsCache(vaultRoot: string): Promise<EmbeddingsCache | null> {
@@ -19,10 +32,16 @@ export async function loadEmbeddingsCache(vaultRoot: string): Promise<Embeddings
     const data = JSON.parse(text) as RawCache;
     const model = data.model ?? "unknown";
     const byPath = new Map<string, number[]>();
-    for (const entry of Object.values(data.embeddings ?? {})) {
+    for (const [key, entry] of Object.entries(data.embeddings ?? {})) {
       if (Array.isArray(entry)) continue;
-      if (entry.path && Array.isArray(entry.vector)) {
+      // V1 format: key is a hash, entry has { path, vector }
+      if ("path" in entry && "vector" in entry && entry.path && Array.isArray(entry.vector)) {
         byPath.set(entry.path, entry.vector);
+        continue;
+      }
+      // V2 format: key is the relative path, entry has { hash, embedding, computed_at }
+      if ("embedding" in entry && Array.isArray(entry.embedding)) {
+        byPath.set(key, entry.embedding);
       }
     }
     return { model, byPath };
