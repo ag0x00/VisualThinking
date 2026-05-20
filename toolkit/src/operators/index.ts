@@ -1,0 +1,10 @@
+import { symmetryOperator } from "./symmetry";
+import { complexityOperator } from "./complexity";
+import { colorChordOperator } from "./color-chord";
+import type { Operator } from "./types";
+
+export const operators: Record<string, Operator<any, any>> = {
+  symmetry: symmetryOperator,
+  complexity: complexityOperator,
+  colorChord: colorChordOperator,
+};
