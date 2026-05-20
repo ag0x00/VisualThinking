@@ -187,4 +187,16 @@ TS-first per `feedback_language-preference.md`. Color via `culori` (OKLCH). No o
 - Operators measure; profiles set targets.
 - Toolkit = operator library (pure functions over the render-plan).
 - 3 operators chosen to span geometric-invariance / statistical-complexity / color-relational and to match the user's stated IGP values.
+
+## Addendum 2026-05-20: tile medium + construction-grammar
+
+Triggered by the user's observation that cuerda-seca (and grammar) presuppose **filled cells**, not lines: "make sure you're rendering tiles not lines." So before cuerda-seca we added a tile medium and the operator that validates it.
+
+- **Tile generator** (`generators/tiling.ts`): concentric 6-fold rings of trapezoidal glaze cells around a central hexagon (31 cells), blue fills + cream channels. A valid tiling by construction; `cellScale` perturbs it (>1 overlap, <1 gaps) for degradation tests. Emits `role:"tile"` polygons + the `region` it is meant to fill.
+- **Render-plan schema** gained `region?: Vec2[]` — the design boundary the cells should cover. Operator-dictated: constructionGrammar needs a *fixed* reference (must not scale with the cells, or gaps/overlaps cancel out). This answers O1: a real operator needed a field the schema lacked.
+- **constructionGrammar operator**: `coverage = Σ cell area ÷ region area`; band ≈1.0. <1 → gaps (increase), >1 → overlap (decrease). Honest proxy — cannot catch an overlap exactly cancelled by a gap elsewhere; exact for uniform cell scaling. Cheap (no polygon clipping).
+- **`timurid-tiling` profile**: symmetry (0.40) + constructionGrammar (0.35) + colorChord (0.25). `complexity` is line-oriented (measures segments) and is intentionally NOT bound — a tile-complexity operator (cell/colour variety) is future work. This is the composition model working: a different medium binds a different operator set.
+- **Gallery** is now grouped (Tilework / Strapwork). Tiling acceptance test (`test/acceptance-tiling.test.ts`) proves good outranks overlapping / gappy / broken-symmetry / wrong-chord, and grammar distinguishes overlap (decrease) from gaps (increase).
+
+**Still next:** cuerda-seca rendering quality (channel consistency between filled cells — now has tiles to evaluate), line-continuity, tile-complexity, and the O4 organized-complexity composite.
 - Render-plan schema derived from operator needs, not designed up front.

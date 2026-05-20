@@ -7,6 +7,11 @@ export interface GalleryEntry {
   result: CompositionResult;
 }
 
+export interface GalleryGroup {
+  title: string;
+  entries: GalleryEntry[];
+}
+
 function pct(x: number): string {
   return `${Math.round(x * 100)}%`;
 }
@@ -73,7 +78,15 @@ const LEGEND = `
     <p class="note">Percentages are comparable only as "closeness to <i>this</i> axis's target", not as like-for-like amounts. The composite is the weighted mean of the per-axis scores.</p>
   </details>`;
 
-export function buildGalleryHtml(entries: GalleryEntry[]): string {
+export function buildGalleryHtml(groups: GalleryGroup[]): string {
+  const body = groups
+    .map(
+      (g) => `<h2 class="group">${g.title}</h2>
+<div class="grid">
+${g.entries.map(card).join("\n")}
+</div>`,
+    )
+    .join("\n");
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -94,7 +107,8 @@ export function buildGalleryHtml(entries: GalleryEntry[]): string {
   .legend th, .legend td { border: 1px solid #243444; padding: 6px 8px; text-align: left; vertical-align: top; }
   .legend th { color: #aab9c9; background: #0f1722; }
   .legend code { background: #0a1320; padding: 1px 4px; border-radius: 4px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; padding: 18px 28px 40px; }
+  .group { margin: 18px 28px 0; font-size: 16px; color: #cfe0f0; border-bottom: 1px solid #1f2c3a; padding-bottom: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; padding: 14px 28px 32px; }
   .card { background: #131b26; border: 1px solid #1f2c3a; border-radius: 12px; padding: 14px; }
   .card h2 { margin: 0 0 2px; font-size: 15px; }
   .desc { margin: 0 0 10px; color: #8aa0b6; font-size: 12px; }
@@ -122,9 +136,7 @@ export function buildGalleryHtml(entries: GalleryEntry[]): string {
   <p>One target pattern + four deliberate failures, each scored by the timurid-igp profile. The fix list is what the composer would tell a generator to change.</p>
 </header>
 ${LEGEND}
-<div class="grid">
-${entries.map(card).join("\n")}
-</div>
+${body}
 </body>
 </html>`;
 }

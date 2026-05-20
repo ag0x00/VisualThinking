@@ -29,6 +29,10 @@ export interface RenderPlan {
   symmetry: Symmetry;
   palette: Oklch[];
   elements: Element[];
+  // For tile-based plans: the boundary polygon the cells are meant to fill.
+  // constructionGrammar measures coverage against this (it must not scale with
+  // the cells, or gap/overlap would be undetectable).
+  region?: Vec2[];
 }
 
 export function validateRenderPlan(plan: RenderPlan): string[] {

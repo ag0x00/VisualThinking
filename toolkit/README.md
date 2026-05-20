@@ -22,6 +22,7 @@ The percentage on each metric is **target-adherence** — *how well the pattern 
 | **symmetry** | floor (`≥0.98`) | `measured ÷ 0.98`, capped at 100% — higher is always better | 1.00 → 100% · 0.49 → 50% · 0.00 → 0% |
 | **complexity** | band (`0.55–0.78`, Goldilocks) | 100% inside the band; outside, drops by `distance ÷ 0.25`. **Too much scores low, just like too little.** | 0.77 → 100% · 0.95 → 32% (overshoot) · 0.31 → ~0% (too sparse) |
 | **colorChord** | blend | `0.6 × (fraction of palette on the hue arc) + 0.4 × (light-to-dark range present)` | 0% on-arc but full lightness spread → 40% |
+| **constructionGrammar** | band (`≈1.0`) | region coverage = `Σ cell area ÷ design-region area`; <1 = gaps, >1 = overlap (tile plans only) | 1.00 → 100% · 1.25 → 0% (overlap) · 0.64 → 0% (gaps) |
 
 Consequences:
 - Percentages are comparable only as *closeness to that axis's own target*, not as like-for-like amounts.
@@ -34,13 +35,14 @@ The `composite` is the weighted mean of the per-axis scores; the `fixes` list ra
 
 ```
 src/
-  render-plan.ts      # the geometric data type all operators consume
-  operators/          # symmetry · complexity · color-chord (measure + scoreAgainst)
+  render-plan.ts      # the geometric data type all operators consume (+ optional region for tilings)
+  geom.ts             # shared polygon helpers (area, centroid, scale)
+  operators/          # symmetry · complexity · color-chord · construction-grammar
   profile.ts          # AestheticProfile type (operator bindings + targets)
-  profiles/           # timurid-igp.ts (medium-specific targets)
+  profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells)
   compose.ts          # runs a profile against a plan → composite + fixes
-  generators/igp.ts   # minimal 6-fold pattern generator → RenderPlan
-  renderers/          # svg.ts (single) · gallery.ts (scorecards)
-  variants.ts         # good + deliberate failures, shared by test + gallery
+  generators/         # igp.ts (line strapwork) · tiling.ts (filled cells)
+  renderers/          # svg.ts (single) · gallery.ts (grouped scorecards)
+  variants.ts         # good + deliberate failures (line + tile), shared by test + gallery
 test/                 # vitest; acceptance.test.ts proves good outranks failures
 ```

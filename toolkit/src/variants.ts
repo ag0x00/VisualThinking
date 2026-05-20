@@ -1,8 +1,13 @@
 import { generateIgp, defaultIgpParams } from "./generators/igp";
+import { generateTiling, defaultTilingParams } from "./generators/tiling";
 import type { Oklch, RenderPlan, Vec2 } from "./render-plan";
 
 export function goodPlan(): RenderPlan {
   return generateIgp(defaultIgpParams());
+}
+
+export function tilingGood(): RenderPlan {
+  return generateTiling(defaultTilingParams());
 }
 
 // Deterministic jitter (no RNG dependency).
@@ -42,6 +47,17 @@ export function degradedVariants(): Variant[] {
     { label: "broken-symmetry", description: "points jittered 8px beyond tolerance", plan: jitter(good, 8) },
     { label: "under-dense", description: "1 ring, no stars", plan: generateIgp({ ...defaultIgpParams(), rings: 1, includeStars: false }) },
     { label: "over-dense", description: "14 rings", plan: generateIgp({ ...defaultIgpParams(), rings: 14 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
+  ];
+}
+
+// Tile-medium deliberate failures (scored by the timurid-tiling profile).
+export function tilingVariants(): Variant[] {
+  const good = tilingGood();
+  return [
+    { label: "broken-symmetry", description: "tile points jittered 8px", plan: jitter(good, 8) },
+    { label: "overlapping cells", description: "cells scaled 1.12× (overlap)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 1.12 }) },
+    { label: "gappy cells", description: "cells scaled 0.8× (gaps)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 0.8 }) },
     { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
   ];
 }
