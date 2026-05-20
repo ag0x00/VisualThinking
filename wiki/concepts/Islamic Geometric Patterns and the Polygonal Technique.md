@@ -141,7 +141,7 @@ Two media, two profiles. **Strapwork** (the lines as visible art) → `toolkit/s
 
 The composer (`toolkit/src/compose.ts`) runs a profile's operators against a render-plan → composite score + ranked fixes (axis + direction + detail). Validated by deterministic acceptance tests: a good pattern outranks **8 deliberate failures** (broken-symmetry, over/under-dense, disconnected lines, wrong-chord; overlapping/gappy cells, uneven channels, monotone), each isolating its axis. The scorecard gallery (`npm run gallery`) renders all of them with scores. Spec: `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`.
 
-**Still open:** Perceive remains thin (the *why* of IGP's appeal — infinite/divine connotation, fine detail reading as organic — is not yet operationalised). And the loop is open-ended: the `fixes` are not yet wired back into the generators (the `improve()` step is the next build — see [[subsystem-trajectory]]).
+**Still open:** Perceive remains thin (the *why* of IGP's appeal — infinite/divine connotation, fine detail reading as organic — is not yet operationalised). And the loop is open-ended: the `fixes` are not yet wired back into the generators (the `improve()` step is the next build).
 
 ## Connection to the wiki's priorities
 
