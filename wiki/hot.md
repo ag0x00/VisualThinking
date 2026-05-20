@@ -7,17 +7,21 @@ updated: 2026-05-20
 
 > **Status: 🛠️ BUILD PHASE ACTIVE 2026-05-18.** Wiki layer LOCKED (sweep sequence complete 2026-05-17 — see Build state below for current activity). Sweep 7 (Implementation-notes pass, final) ✅ done. 12 technique pages + 1 synthesis ([[Research - Implementation-notes Pass]]) translate the reading layer into operational recipes: [[OKLCH Pair-Relation Classifier]] · [[Contrast Checking Pipeline]] · [[Directed Tension Score]] · [[Visual Hierarchy and Negative Space Scoring]] · [[Aesthetic Measure Stack]] · [[Pose-Emotion Dimension Scorer]] · [[Contrapposto Scorer]] · [[Cultural Emblem Detector]] · [[Audio-to-Visual Cross-Modal Mapping]] · [[Realtime Pose-to-Visualizer Loop]] · [[Symmetry-Group Pattern Generator]] · [[Style Transfer Pipeline]]. **The 15-gap queue is now covered at both reading AND technique layers.** Default stack consolidated: **culori + MediaPipe Tasks + TFJS WebGPU + three.js + meyda + AudioWorklet + Anthropic SDK**.
 
-## Build state (2026-05-18, active)
+## Build state (2026-05-20, active)
 
-- **Subsystem A — Wiki MCP (`mcp/`)** ✅ shipped. PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` for project-local consumption. Known gap (logged to `mcp/tasks/lessons.md`): `orient` under-surfaces tradition-specific terms like "Bonner / Islamic geometric"; pair with `search` keyword as workaround.
-- **Subsystem B-via-C — Toolkit + Samarkand screensaver (`toolkit/` + `screensaver/`, planned)** 🛠️ brainstorm in progress on branch `toolkit-screensaver`. Visual genre: Samarkand IGPs. Mathematical framework: lines as visible art, tiles as scaffolding, per [[Islamic Geometric Patterns and the Polygonal Technique]] (Bonner) + Lu-Steinhardt 2007 girih-tile tessellation analysis. **Detour to library landscape research** (4 parallel subagents) before committing to toolkit API — borrow-vs-build-vs-port decision pending.
-- **Auto-memory** ✅ relocated into `.claude/memory/` (committed; symlinked from `~/.claude/projects/-Users-ag-Lab-VisualThinking/memory/` for harness compatibility). Future sessions see project state inline.
+- **Subsystem A — Wiki MCP (`mcp/`)** ✅ shipped. PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json`. Known gap: `orient` under-surfaces tradition-specific terms; pair with `search` keyword.
+- **Subsystem B — Toolkit (`toolkit/`)** 🛠️ first slice shipped, **PR #2 open** on branch `toolkit-screensaver`. The toolkit IS the operator library: pure functions over a `RenderPlan`, **operators measure / profiles set targets**, a composer returns composite + ranked fixes. Key reframe: **evaluate self-generated render-plans, not bitmaps** (removes CV risk; deterministic generate→score loop). **7 operators**: symmetry · complexity · colorChord · constructionGrammar · lineContinuity · cuerdaSeca · tileComplexity. **2 generators** (igp lines, tiling cells) + **2 profiles** (timurid-igp strapwork, timurid-tiling cells). Scorecard gallery (`npm run gallery`) shows good vs 8 deliberate failures, each isolating its axis. 53 tests pass. See `toolkit/README.md` + `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`.
+- **Operational readiness** — every concept page must equip Perceive/Build/Evaluate OR compose Evaluate from general operators (cross-domain composition). Triage registry at [[Operational Readiness Registry]] (141 pages scored; Evaluate is the systemic gap). IGP (c-000191) re-scored 3→4 (Evaluate now composes from toolkit operators).
+- **Auto-memory** ✅ in `.claude/memory/` (committed; symlinked for harness). Future sessions see project state inline.
 
-Lessons emerging from the toolkit-screensaver brainstorm:
-1. **Test artifact ≠ goal.** The screensaver is a test case for the wiki+MCP+toolkit workflow; the workflow is the product.
-2. **Run npm-search audit before designing**, not just before cataloging. Failure to do this caused three wrong mental models before the user corrected the framing.
-3. **The wiki's IGP page (c-000191) is research-synthesis depth, not implementation-depth.** A toolkit author needs concrete algorithms and library recommendations; the wiki currently has theory and rubric. Library research will augment.
-4. **Visual companion is load-bearing for design brainstorms.** Without inline visual feedback, wrong models survive much longer.
+**Next session (2026-05-21): close the loop.** Wire the composer's `fixes` back into the generators — an `improve(plan, profile)` step that nudges params toward targets, turning evaluation into generate→score→**fix→regenerate**. This is the "optimize" capability the architecture was built for. (Deferred: external-image CV/VLM front-end; the O4 organized-complexity composite — not triggered, weighted sum hasn't mis-ranked; full wiki write-back binding all 7 operators to their concept pages.)
+
+Lessons (toolkit build):
+1. **Test artifact ≠ goal** — the screensaver/IGP is a test case for the wiki+MCP+toolkit *workflow*; the workflow is the product.
+2. **npm-search audit before designing**, not just cataloging.
+3. **Cross-domain composition over per-page completeness** — medium pages bind to general operators with weights+targets; don't duplicate machinery per medium.
+4. **Aesthetic target is OPEN** — user likes the geometric direction but it may not be IGP; the operators/composer are medium-agnostic, so retargeting = swap generator + profile only.
+5. **Visual companion / scorecard gallery is load-bearing** — seeing scored failures surfaced a real legibility bug (score vs measured).
 
 # Hot Cache
 
