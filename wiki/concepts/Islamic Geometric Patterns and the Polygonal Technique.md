@@ -5,7 +5,7 @@ type: concept
 status: developing
 tags: [concepts, islamic-geometry, girih, pattern, bonner, polygonal-technique]
 created: 2026-05-17
-updated: 2026-05-17
+updated: 2026-05-20
 ---
 
 # Islamic Geometric Patterns and the Polygonal Technique
