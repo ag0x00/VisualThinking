@@ -2,6 +2,7 @@
 
 - [Programmability principle for wiki pages](feedback_programmability-principle.md) — only create pages for content that translates to a rule/metric/constraint; people don't get pages
 - [Operational readiness standard (Perceive/Build/Evaluate)](feedback_operational-page-standard.md) — **strengthens the programmability principle**: every concept page must equip Perceive + Build + Evaluate (incl. critiquing external images with code/prompt fixes), or declare the gap and queue targeted autoresearch. Breadth-coverage produced superficial pages; the new bar is operational depth-for-use
+- [Operational-readiness rollout: Option C](project_operational-readiness-rollout.md) — decision 2026-05-19: triage-map concept pages on P/B/E → ranked gap registry → build-and-fill; registry seeds a future wiki_assessReadiness MCP tool; execute next session
 - [Language preference: JS/TS first](feedback_language-preference.md) — prefer JS/TS for building visuals; Python only when JS equivalent is weak; Rust/Go only with a specific 2026 reason
 - [Strategic catalog → prioritized depth](feedback_depth-first-wiki.md) — sweep strategy: catalog the territory first, deep-dive by user-set application priority; pure "depth-first" was wrong
 - [Application priorities + 15-gap depth-dive queue](project_application-priorities.md) — user's 4 projects (generative art, branding, graphic design, real-time visualizers) and the ordered 15-field priority list anchoring future sweeps
