@@ -14,14 +14,15 @@ export interface IgpParams {
   ringSpacing: number;
   includeStars: boolean;
   palette: Oklch[];
+  segmentScale: number; // 1 = segments meet at junctions; <1 retracts each toward its midpoint, breaking continuity
 }
 
 export function defaultIgpParams(): IgpParams {
-  return { bounds: { width: 800, height: 800 }, rings: 6, ringSpacing: 55, includeStars: true, palette: SAMARKAND_PALETTE };
+  return { bounds: { width: 800, height: 800 }, rings: 6, ringSpacing: 55, includeStars: true, palette: SAMARKAND_PALETTE, segmentScale: 1 };
 }
 
 export function generateIgp(params: IgpParams = defaultIgpParams()): RenderPlan {
-  const { bounds, rings, ringSpacing, includeStars, palette } = params;
+  const { bounds, rings, ringSpacing, includeStars, palette, segmentScale } = params;
   const center: Vec2 = [bounds.width / 2, bounds.height / 2];
   const order = 6;
   const lineColors = Math.max(1, palette.length - 1); // reserve last index for background
@@ -39,25 +40,31 @@ export function generateIgp(params: IgpParams = defaultIgpParams()): RenderPlan 
     const a = (2 * Math.PI * k) / order;
     return [center[0] + r * Math.cos(a), center[1] + r * Math.sin(a)];
   };
+  // optionally retract a segment's endpoints toward its midpoint (breaks junctions)
+  const seg = (a: Vec2, b: Vec2): [Vec2, Vec2] => {
+    if (segmentScale === 1) return [a, b];
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, f = segmentScale;
+    return [[mx + (a[0] - mx) * f, my + (a[1] - my) * f], [mx + (b[0] - mx) * f, my + (b[1] - my) * f]];
+  };
 
   for (let ring = 1; ring <= rings; ring++) {
     const r = ring * ringSpacing;
     const strokeRef = (ring - 1) % lineColors;
     // hexagon edges
     for (let k = 0; k < order; k++) {
-      elements.push({ kind: "segment", role: "line", points: [vertex(r, k), vertex(r, (k + 1) % order)], strokeRef, motifId: `ring-${ring}` });
+      elements.push({ kind: "segment", role: "line", points: seg(vertex(r, k), vertex(r, (k + 1) % order)), strokeRef, motifId: `ring-${ring}` });
     }
     // star crossings (connect k to k+2)
     if (includeStars) {
       for (let k = 0; k < order; k++) {
-        elements.push({ kind: "segment", role: "line", points: [vertex(r, k), vertex(r, (k + 2) % order)], strokeRef: (strokeRef + 1) % lineColors, motifId: `star-${ring}` });
+        elements.push({ kind: "segment", role: "line", points: seg(vertex(r, k), vertex(r, (k + 2) % order)), strokeRef: (strokeRef + 1) % lineColors, motifId: `star-${ring}` });
       }
     }
   }
 
   // spokes from centre to outer ring
   for (let k = 0; k < order; k++) {
-    elements.push({ kind: "segment", role: "line", points: [center, vertex(rings * ringSpacing, k)], strokeRef: 1 % lineColors, motifId: "spokes" });
+    elements.push({ kind: "segment", role: "line", points: seg(center, vertex(rings * ringSpacing, k)), strokeRef: 1 % lineColors, motifId: "spokes" });
   }
 
   return { bounds, symmetry: { group: "p6m", center, order }, palette, elements };

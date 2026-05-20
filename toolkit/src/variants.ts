@@ -47,6 +47,7 @@ export function degradedVariants(): Variant[] {
     { label: "broken-symmetry", description: "points jittered 8px beyond tolerance", plan: jitter(good, 8) },
     { label: "under-dense", description: "1 ring, no stars", plan: generateIgp({ ...defaultIgpParams(), rings: 1, includeStars: false }) },
     { label: "over-dense", description: "14 rings", plan: generateIgp({ ...defaultIgpParams(), rings: 14 }) },
+    { label: "disconnected lines", description: "segments retracted to 0.7 (gaps at junctions)", plan: generateIgp({ ...defaultIgpParams(), segmentScale: 0.7 }) },
     { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
   ];
 }

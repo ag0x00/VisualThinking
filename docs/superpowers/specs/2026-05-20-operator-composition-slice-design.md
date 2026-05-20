@@ -198,5 +198,17 @@ Triggered by the user's observation that cuerda-seca (and grammar) presuppose **
 - **`timurid-tiling` profile**: symmetry (0.40) + constructionGrammar (0.35) + colorChord (0.25). `complexity` is line-oriented (measures segments) and is intentionally NOT bound — a tile-complexity operator (cell/colour variety) is future work. This is the composition model working: a different medium binds a different operator set.
 - **Gallery** is now grouped (Tilework / Strapwork). Tiling acceptance test (`test/acceptance-tiling.test.ts`) proves good outranks overlapping / gappy / broken-symmetry / wrong-chord, and grammar distinguishes overlap (decrease) from gaps (increase).
 
-**Still next:** cuerda-seca rendering quality (channel consistency between filled cells — now has tiles to evaluate), line-continuity, tile-complexity, and the O4 organized-complexity composite.
+**Still next:** cuerda-seca rendering quality (channel consistency between filled cells — now has tiles to evaluate), tile-complexity, and the O4 organized-complexity composite.
+
+## Addendum 2026-05-20b: line-continuity operator
+
+Strapwork's defining property: the eye follows a line *through* crossings (Gestalt good-continuation). Operator over `role:"line"` segments:
+- Snap segment endpoints to a 1px grid → nodes with incident unit directions.
+- **connectedness** = `1 − danglingEnds / totalEnds` (a dangling end = a degree-1 node: a segment that stops in space).
+- **continuation** = at degree-≥2 nodes, for each incident edge the best `−dot` with another incident edge (1 = straight through); averaged.
+- `value = 0.5·connectedness + 0.5·continuation`. Floor target `≥0.6` (higher is better).
+- Added to `timurid-igp` (weights rebalanced to symmetry 0.30 / complexity 0.25 / lineContinuity 0.25 / colorChord 0.20 — symmetry kept highest so broken-symmetry stays the top fix).
+- New generator knob `segmentScale` (<1 retracts each segment toward its midpoint, opening junction gaps) drives a "disconnected lines" degraded variant. Measured: good 0.635 (connected, moderate through-going) → 100%; disconnected 0.0 → 0%; jitter 0.007. Acceptance: good outranks disconnected and the top fix is lineContinuity→increase.
+
+**Still next:** cuerda-seca rendering quality, tile-complexity, the O4 organized-complexity composite.
 - Render-plan schema derived from operator needs, not designed up front.

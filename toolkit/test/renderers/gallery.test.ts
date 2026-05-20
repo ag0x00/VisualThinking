@@ -23,13 +23,14 @@ function group(): GalleryGroup {
 
 describe("buildGalleryHtml", () => {
   it("emits one card per entry with composite scores and embedded svg", () => {
-    const html = buildGalleryHtml([group()]);
+    const g = group();
+    const html = buildGalleryHtml([g]);
     expect(html.startsWith("<!doctype html>")).toBe(true);
-    expect((html.match(/<section class="card">/g) ?? []).length).toBe(5);
-    expect((html.match(/<svg /g) ?? []).length).toBe(5);
+    expect((html.match(/<section class="card">/g) ?? []).length).toBe(g.entries.length);
+    expect((html.match(/<svg /g) ?? []).length).toBe(g.entries.length);
     expect(html.includes("composite")).toBe(true);
     expect(html.includes('class="group">Strapwork')).toBe(true);
-    for (const label of ["GOOD", "broken-symmetry", "under-dense", "over-dense", "wrong-chord"]) {
+    for (const label of ["GOOD", "broken-symmetry", "under-dense", "over-dense", "disconnected lines", "wrong-chord"]) {
       expect(html.includes(label)).toBe(true);
     }
   });

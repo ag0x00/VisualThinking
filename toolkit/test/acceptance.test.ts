@@ -40,4 +40,11 @@ describe("operator-composition spine (acceptance)", () => {
     expect(goodResult.composite).toBeGreaterThan(r.composite);
     expect(r.fixes.some((f) => f.axis === "colorChord")).toBe(true);
   });
+
+  it("ranks good above disconnected lines and the top fix is lineContinuity", () => {
+    const r = variant["disconnected lines"];
+    expect(goodResult.composite).toBeGreaterThan(r.composite);
+    expect(r.fixes[0].axis).toBe("lineContinuity");
+    expect(r.fixes[0].direction).toBe("increase");
+  });
 });
