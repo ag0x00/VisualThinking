@@ -51,7 +51,7 @@ Sorted by (priority-app asc, total asc): high-priority + low-readiness floats to
 
 **Tier 1 — Gen-art, Critical (total ≤ 2):** the 11 lowest-readiness pages on the top-priority application. Most are field-overviews that should either become operational or be explicitly demoted to router pages with operational children.
 
-**Tier 2 — Gen-art, Weak (total 3):** 20 pages. Includes the build-relevant [[Islamic Geometric Patterns and the Polygonal Technique]] (needs Perceive + Evaluate), [[Aperiodic Tiling and the Hat Monotile]], the lighting-recipe pages (Cinematic Lighting, Three-Point Lighting, PBR Lighting — all missing an Evaluate metric), and the procedural-theory pages (Algorithmic Composition, Procedural Content Generation, Procedural Paradigms).
+**Tier 2 — Gen-art, Weak (total 3):** 20 pages (at the 2026-05-19 snapshot). [[Islamic Geometric Patterns and the Polygonal Technique]] has since moved to total 4 — Evaluate bound via the toolkit composer; Perceive still needed. Remaining Weak: [[Aperiodic Tiling and the Hat Monotile]], the lighting-recipe pages (Cinematic Lighting, Three-Point Lighting, PBR Lighting — all missing an Evaluate metric), and the procedural-theory pages (Algorithmic Composition, Procedural Content Generation, Procedural Paradigms).
 
 **Tier 3 — Branding, all Critical/Weak (total ≤ 3):** 9 pages. The most under-served *application*. Branding-specific eval metrics (brand-mark consistency scoring, archetype-fit, cultural-color risk) are absent across the board.
 
