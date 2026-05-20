@@ -60,6 +60,7 @@ export function tilingVariants(): Variant[] {
     { label: "overlapping cells", description: "cells scaled 1.12× (overlap)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 1.12 }) },
     { label: "gappy cells", description: "cells scaled 0.8× (gaps)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 0.8 }) },
     { label: "uneven channels", description: "cuerda-seca jittered (uneven/missing cream lines)", plan: generateTiling({ ...defaultTilingParams(), channelJitter: 1.0 }) },
+    { label: "monotone", description: "single glaze colour (no variety)", plan: generateTiling({ ...defaultTilingParams(), colorCount: 1 }) },
     { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
   ];
 }

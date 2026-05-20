@@ -10,21 +10,23 @@ export interface TilingParams {
   cellScale: number; // 1 = perfect tiling; >1 overlaps neighbours; <1 leaves gaps
   channelWidth: number; // cuerda-seca channel (cream line) width in px
   channelJitter: number; // 0 = uniform channels; >0 randomises per-cell (breaks cuerda-seca quality)
+  colorCount: number; // distinct glaze colours to cycle (1 = monotone); capped at available fills
 }
 
 export function defaultTilingParams(): TilingParams {
-  return { bounds: { width: 800, height: 800 }, rings: 6, ringSpacing: 60, palette: SAMARKAND_PALETTE, cellScale: 1, channelWidth: 5, channelJitter: 0 };
+  return { bounds: { width: 800, height: 800 }, rings: 6, ringSpacing: 60, palette: SAMARKAND_PALETTE, cellScale: 1, channelWidth: 5, channelJitter: 0, colorCount: 3 };
 }
 
 // Concentric 6-fold rings of trapezoidal glaze cells around a central hexagon.
 // A valid tiling by construction; `cellScale` perturbs it for degradation tests.
 export function generateTiling(params: TilingParams = defaultTilingParams()): RenderPlan {
-  const { bounds, rings, ringSpacing, palette, cellScale, channelWidth, channelJitter } = params;
+  const { bounds, rings, ringSpacing, palette, cellScale, channelWidth, channelJitter, colorCount } = params;
   const center: Vec2 = [bounds.width / 2, bounds.height / 2];
   const order = 6;
   const bgIdx = palette.length - 1;
   const creamIdx = Math.max(0, palette.length - 2);
   const fillCount = Math.max(1, palette.length - 2); // palette indices 0..length-3 are fills
+  const colors = Math.max(1, Math.min(colorCount, fillCount)); // distinct glaze colours actually used
   const elements: Element[] = [];
 
   // per-cell channel width: uniform when channelJitter is 0, else deterministically
@@ -62,7 +64,7 @@ export function generateTiling(params: TilingParams = defaultTilingParams()): Re
     const rOut = (ring + 1) * ringSpacing;
     for (let k = 0; k < order; k++) {
       const pts: Vec2[] = [vertex(rIn, k), vertex(rIn, (k + 1) % order), vertex(rOut, (k + 1) % order), vertex(rOut, k)];
-      cell(pts, (ring + k) % fillCount, `band-${ring}`);
+      cell(pts, (ring + k) % colors, `band-${ring}`);
     }
   }
 

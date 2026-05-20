@@ -210,7 +210,7 @@ Strapwork's defining property: the eye follows a line *through* crossings (Gesta
 - Added to `timurid-igp` (weights rebalanced to symmetry 0.30 / complexity 0.25 / lineContinuity 0.25 / colorChord 0.20 — symmetry kept highest so broken-symmetry stays the top fix).
 - New generator knob `segmentScale` (<1 retracts each segment toward its midpoint, opening junction gaps) drives a "disconnected lines" degraded variant. Measured: good 0.635 (connected, moderate through-going) → 100%; disconnected 0.0 → 0%; jitter 0.007. Acceptance: good outranks disconnected and the top fix is lineContinuity→increase.
 
-**Still next:** tile-complexity, the O4 organized-complexity composite.
+**Still next:** the O4 organized-complexity composite.
 
 ## Addendum 2026-05-20c: cuerda-seca rendering quality
 
@@ -220,5 +220,15 @@ Cuerda seca = the matte "dry cord" line keeping adjacent glazes apart. Quality =
 - **cuerdaSeca operator:** `value = 0.5·completeness (channel ≥ 2px) + 0.5·uniformity (1 − coefficient-of-variation)`; floor target `≥0.85`.
 - **Profile:** added to `timurid-tiling` (symmetry 0.35 / constructionGrammar 0.25 / cuerdaSeca 0.20 / colorChord 0.20). Variant "uneven channels" (jitter 1.0): cuerdaSeca 0.65 → 76%, top fix cuerdaSeca→increase; good = 100%.
 
-**Still next:** tile-complexity, the O4 organized-complexity composite.
+**Still next:** the O4 organized-complexity composite.
+
+## Addendum 2026-05-20d: tile-complexity operator
+
+The Berlyne band operator for the tile medium (the line `complexity` operator measures segments, so tiles had no richness score). `value = 0.5·cell-density + 0.5·colour-variety` (normalized entropy of glaze-colour usage); band `[0.5, 0.85]`.
+- Distinct from `colorChord`: colorChord scores whether the *palette* is the right chord; tileComplexity scores whether colours are actually *used* with variety. A monotone tiling has a perfect palette (colorChord 100%) but no variety (tileComplexity 55%).
+- Generator gains `colorCount` (distinct glaze colours to cycle; 1 = monotone). New variant "monotone" (colorCount 1): tileComplexity 0.39 → 55%, top fix tileComplexity→increase.
+- `timurid-tiling` rebalanced: symmetry 0.30 / constructionGrammar 0.25 / tileComplexity 0.15 / cuerdaSeca 0.15 / colorChord 0.15.
+- Note: the upper (too-busy) end of the band is hard to reach with a 3-colour palette (colour-variety caps ~0.68), so only the too-plain end is demonstrated. The band still encodes the inverted-U.
+
+**Still next:** the O4 organized-complexity composite (only if the weighted sum is shown to mis-rank).
 - Render-plan schema derived from operator needs, not designed up front.

@@ -50,4 +50,11 @@ describe("tiling spine (acceptance)", () => {
     expect(r.fixes[0].axis).toBe("cuerdaSeca");
     expect(r.fixes[0].direction).toBe("increase");
   });
+
+  it("ranks good above a monotone tiling and the top fix is tileComplexity", () => {
+    const r = variant["monotone"];
+    expect(goodResult.composite).toBeGreaterThan(r.composite);
+    expect(r.fixes[0].axis).toBe("tileComplexity");
+    expect(r.fixes[0].direction).toBe("increase");
+  });
 });
