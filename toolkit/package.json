@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "render": "tsx src/scripts/render-sample.ts"
+    "render": "tsx src/scripts/render-sample.ts",
+    "gallery": "tsx src/scripts/render-gallery.ts"
   },
   "dependencies": {
     "culori": "^4.0.1"
