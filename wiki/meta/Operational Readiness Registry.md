@@ -43,6 +43,8 @@ Scored 2026-05-19 via 7 parallel triage subagents on one shared rubric (fast-sco
 
 Gen-art (priority 1) holds both the most pages and the most strong pages — expected, since the May sweeps targeted it. Branding (priority 2) is the weakest cohort proportionally: 9 of 14 pages are Critical/Weak, and only 1 is Strong. **Branding is the most under-operationalized priority application.**
 
+> This table is the **2026-05-19 triage snapshot**. Individual rows are re-scored in place as pages are deepened (the table totals are not continuously recomputed). First re-score: IGP 3→4 on 2026-05-20.
+
 ## Priority fill queue
 
 Sorted by (priority-app asc, total asc): high-priority + low-readiness floats to top. Re-deepen these first via targeted autoresearch — each fill must close the *specific* operational gap named, not "learn more about X" (see [[Wiki Methodology]] §Operational readiness, and the `npm-audit-before-design` memory's program-style prompt pattern).
