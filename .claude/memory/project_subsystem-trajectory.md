@@ -15,6 +15,10 @@ First slice shipped on branch `toolkit-screensaver`, **PR #2** (https://github.c
 
 **Next operators/bindings** (named in the IGP page's Aesthetic-profile section): line-continuity, cuerda-seca rendering quality, construction-grammar correctness; plus the "organized-complexity" composite operator if the weighted-sum mis-ranks (open question O4). Screensaver (C) is still the eventual test artifact but is NOT the goal — the wiki+MCP+toolkit workflow is (see [[test-artifact-vs-workflow]]).
 
+**Aesthetic target is OPEN (2026-05-20).** User saw the rendered 6-fold pattern, liked the *geometric-art* direction, but said it "maybe [is] not IGP" — has a reason, deferred explaining since it doesn't block feedback-tuning. Do NOT treat IGP as the locked aesthetic. The architecture makes this cheap: to change the look, swap the **generator** + **profile targets**; the operators + composer (the scoring spine) are medium-agnostic and stay untouched. Ask the user for the intended geometric direction before investing in a production generator (and before adopting the stashed d3 IGP resource in [[Research - IGP Library Landscape 2026-05-18]]).
+
+**Browser scorecard gallery** (`toolkit/src/scripts/render-gallery.ts`, `npm run gallery` → `out/gallery.html`): renders the good pattern + 4 deliberate failures with composite/per-operator scores + ranked fixes; the variants are shared with the acceptance test via `src/variants.ts`. This is the "show the feedback working" surface (replaces the brainstorm visual-companion for this purpose). Confirmed scores: GOOD 100%; broken-symmetry 61% (symmetry 0); under-dense 65% / over-dense 76% (complexity 0/32); wrong-chord 82% (colorChord 40) — each failure isolates its axis.
+
 ---
 
 ## Current state (2026-05-17, end of build session)
