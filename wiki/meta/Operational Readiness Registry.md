@@ -81,7 +81,7 @@ Sorted by (priority-app asc, total asc): high-priority + low-readiness floats to
 | Computational Creativity | 1 | 1 | 1 | 3 | Taxonomy/philosophy; Ritchie criteria not operationalized |
 | Constructed Emotion Theory | 2 | 1 | 0 | 3 | No metric or assessment of an artifact |
 | Helmholtz Gibson and Bayesian Perception | 2 | 1 | 0 | 3 | Theory page; no build params, no artifact metric |
-| Islamic Geometric Patterns and the Polygonal Technique | 1 | 2 | 0 | 3 | Strong build/libs; no aesthetic mechanism or evaluation metric |
+| Islamic Geometric Patterns and the Polygonal Technique | 1 | 2 | 1 | 4 | Re-scored 2026-05-20: Evaluate now composes from toolkit operators (timurid-igp profile); Perceive still thin |
 | Mehrabian's 55-38-7 Misinterpretation | 1 | 1 | 1 | 3 | Myth-correction; pose-caption alignment lever but no metric |
 | Movement Rhythm and Repetition | 1 | 1 | 1 | 3 | Stub; defers concrete levers/metrics to depth-dive |
 | Negative Space | 1 | 1 | 1 | 3 | Stub; metrics named only, no formulas/code/prompts |
