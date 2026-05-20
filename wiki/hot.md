@@ -2,7 +2,7 @@
 title: Hot Cache
 tags: [meta, hot]
 status: living
-updated: 2026-05-18
+updated: 2026-05-20
 ---
 
 > **Status: 🛠️ BUILD PHASE ACTIVE 2026-05-18.** Wiki layer LOCKED (sweep sequence complete 2026-05-17 — see Build state below for current activity). Sweep 7 (Implementation-notes pass, final) ✅ done. 12 technique pages + 1 synthesis ([[Research - Implementation-notes Pass]]) translate the reading layer into operational recipes: [[OKLCH Pair-Relation Classifier]] · [[Contrast Checking Pipeline]] · [[Directed Tension Score]] · [[Visual Hierarchy and Negative Space Scoring]] · [[Aesthetic Measure Stack]] · [[Pose-Emotion Dimension Scorer]] · [[Contrapposto Scorer]] · [[Cultural Emblem Detector]] · [[Audio-to-Visual Cross-Modal Mapping]] · [[Realtime Pose-to-Visualizer Loop]] · [[Symmetry-Group Pattern Generator]] · [[Style Transfer Pipeline]]. **The 15-gap queue is now covered at both reading AND technique layers.** Default stack consolidated: **culori + MediaPipe Tasks + TFJS WebGPU + three.js + meyda + AudioWorklet + Anthropic SDK**.
