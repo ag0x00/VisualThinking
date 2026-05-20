@@ -24,6 +24,7 @@ The percentage on each metric is **target-adherence** — *how well the pattern 
 | **colorChord** | blend | `0.6 × (fraction of palette on the hue arc) + 0.4 × (light-to-dark range present)` | 0% on-arc but full lightness spread → 40% |
 | **constructionGrammar** | band (`≈1.0`) | region coverage = `Σ cell area ÷ design-region area`; <1 = gaps, >1 = overlap (tile plans only) | 1.00 → 100% · 1.25 → 0% (overlap) · 0.64 → 0% (gaps) |
 | **lineContinuity** | floor (`≥0.6`) | `0.5 × connectedness + 0.5 × through-continuation` of line segments — Gestalt good-continuation (line plans only) | 0.64 → 100% (connected) · 0.0 → 0% (segments dangle) |
+| **cuerdaSeca** | floor (`≥0.85`) | `0.5 × completeness + 0.5 × uniformity` of the cream channels between tiles (tile plans only) | 1.0 → 100% (uniform) · 0.65 → 76% (uneven/missing) |
 
 Consequences:
 - Percentages are comparable only as *closeness to that axis's own target*, not as like-for-like amounts.
@@ -38,7 +39,7 @@ The `composite` is the weighted mean of the per-axis scores; the `fixes` list ra
 src/
   render-plan.ts      # the geometric data type all operators consume (+ optional region for tilings)
   geom.ts             # shared polygon helpers (area, centroid, scale)
-  operators/          # symmetry · complexity · color-chord · construction-grammar · line-continuity
+  operators/          # symmetry · complexity · color-chord · construction-grammar · line-continuity · cuerda-seca
   profile.ts          # AestheticProfile type (operator bindings + targets)
   profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells)
   compose.ts          # runs a profile against a plan → composite + fixes

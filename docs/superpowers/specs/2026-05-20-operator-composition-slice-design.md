@@ -210,5 +210,15 @@ Strapwork's defining property: the eye follows a line *through* crossings (Gesta
 - Added to `timurid-igp` (weights rebalanced to symmetry 0.30 / complexity 0.25 / lineContinuity 0.25 / colorChord 0.20 — symmetry kept highest so broken-symmetry stays the top fix).
 - New generator knob `segmentScale` (<1 retracts each segment toward its midpoint, opening junction gaps) drives a "disconnected lines" degraded variant. Measured: good 0.635 (connected, moderate through-going) → 100%; disconnected 0.0 → 0%; jitter 0.007. Acceptance: good outranks disconnected and the top fix is lineContinuity→increase.
 
-**Still next:** cuerda-seca rendering quality, tile-complexity, the O4 organized-complexity composite.
+**Still next:** tile-complexity, the O4 organized-complexity composite.
+
+## Addendum 2026-05-20c: cuerda-seca rendering quality
+
+Cuerda seca = the matte "dry cord" line keeping adjacent glazes apart. Quality = the channels are **complete** (every cell has one) and **uniform** (equal width).
+- **Schema:** `Element.channel?: number` — the cream channel width per tile. Rendered as the cream stroke (renderer stroke-width = `channel ?? 1.5`); construction-grammar is unaffected (it reads full-cell `points`, not the stroke).
+- **Generator:** `channelWidth` (default 5) + `channelJitter` (default 0). Jitter deterministically perturbs per-cell channel — some widen, some shrink toward 0 (glazes touch).
+- **cuerdaSeca operator:** `value = 0.5·completeness (channel ≥ 2px) + 0.5·uniformity (1 − coefficient-of-variation)`; floor target `≥0.85`.
+- **Profile:** added to `timurid-tiling` (symmetry 0.35 / constructionGrammar 0.25 / cuerdaSeca 0.20 / colorChord 0.20). Variant "uneven channels" (jitter 1.0): cuerdaSeca 0.65 → 76%, top fix cuerdaSeca→increase; good = 100%.
+
+**Still next:** tile-complexity, the O4 organized-complexity composite.
 - Render-plan schema derived from operator needs, not designed up front.

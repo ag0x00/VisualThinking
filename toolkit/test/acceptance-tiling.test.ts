@@ -43,4 +43,11 @@ describe("tiling spine (acceptance)", () => {
     expect(goodResult.composite).toBeGreaterThan(r.composite);
     expect(r.fixes.some((f) => f.axis === "colorChord")).toBe(true);
   });
+
+  it("ranks good above uneven channels and the top fix is cuerdaSeca", () => {
+    const r = variant["uneven channels"];
+    expect(goodResult.composite).toBeGreaterThan(r.composite);
+    expect(r.fixes[0].axis).toBe("cuerdaSeca");
+    expect(r.fixes[0].direction).toBe("increase");
+  });
 });

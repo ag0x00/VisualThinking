@@ -59,6 +59,7 @@ export function tilingVariants(): Variant[] {
     { label: "broken-symmetry", description: "tile points jittered 8px", plan: jitter(good, 8) },
     { label: "overlapping cells", description: "cells scaled 1.12× (overlap)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 1.12 }) },
     { label: "gappy cells", description: "cells scaled 0.8× (gaps)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 0.8 }) },
+    { label: "uneven channels", description: "cuerda-seca jittered (uneven/missing cream lines)", plan: generateTiling({ ...defaultTilingParams(), channelJitter: 1.0 }) },
     { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
   ];
 }

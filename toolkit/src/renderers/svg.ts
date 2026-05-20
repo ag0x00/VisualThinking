@@ -18,7 +18,8 @@ export function renderSvg(plan: RenderPlan): string {
       parts.push(`<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${hex(e.strokeRef, "#ffffff")}" stroke-width="1.5"/>`);
     } else {
       const pts = e.points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
-      parts.push(`<polygon points="${pts}" fill="${hex(e.colorRef, "none")}" stroke="${hex(e.strokeRef, "#ffffff")}" stroke-width="1.5"/>`);
+      const sw = e.channel ?? 1.5; // cuerda-seca channel rendered as the cream stroke
+      parts.push(`<polygon points="${pts}" fill="${hex(e.colorRef, "none")}" stroke="${hex(e.strokeRef, "#ffffff")}" stroke-width="${sw.toFixed(2)}"/>`);
     }
   }
   parts.push(`</svg>`);

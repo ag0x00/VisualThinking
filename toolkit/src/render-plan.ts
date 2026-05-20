@@ -22,6 +22,9 @@ export interface Element {
   colorRef?: number;
   strokeRef?: number;
   motifId?: string;
+  // For tiles: the cuerda-seca channel (cream separating line) width, in px.
+  // Rendered as the cream stroke; cuerdaSeca scores its completeness + uniformity.
+  channel?: number;
 }
 
 export interface RenderPlan {
