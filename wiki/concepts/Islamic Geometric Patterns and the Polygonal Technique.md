@@ -123,6 +123,22 @@ Per [[Research - IGP Library Landscape 2026-05-18]] — a 4-parallel-subagent bu
 
 **Workflow lessons surfaced by this audit** (see [[Research - IGP Library Landscape 2026-05-18]] for the full retrospective): `wiki_orient` under-surfaces named-tradition terms (workaround: pair with `wiki_search` keyword); the IGP page was research-depth not implementation-depth (this section addresses that); npm-search audit must run before designing, not just before cataloging.
 
+## Aesthetic profile (operator binding)
+
+Added 2026-05-20. This page does **not** carry a bespoke "is this pattern good?" metric. Per the [[Wiki Methodology]] operational-readiness standard (cross-domain composition), its **Evaluate** capability is *composed* from general operators in `toolkit/`, parameterised for this medium by a profile. Operators measure (target-free); the profile sets the targets.
+
+`toolkit/src/profiles/timurid-igp.ts`:
+
+| Operator | toolkit module | weight | target | what it captures here |
+|---|---|---|---|---|
+| `symmetry` | `src/operators/symmetry.ts` | 0.35 | `minFidelity: 0.98` | near-exact group fidelity (continuous, so intentional imperfection later scores as a tradeoff) — [[Symmetry Groups and Tessellation]] |
+| `complexity` | `src/operators/complexity.ts` | 0.35 | `band: [0.55, 0.78]` | organized richness (Berlyne inverted-U): high but not chaotic detail density / motif variety / angle entropy — [[Visual Entropy]], [[Fractal Dimension]], [[Berlyne's Arousal-Potential Theory]] |
+| `colorChord` | `src/operators/color-chord.ts` | 0.30 | turquoise→cobalt hue arc + lightness spread | the Samarkand blue chord — [[OKLCH]], [[Arnheim's Color Syntax]] |
+
+The composer (`toolkit/src/compose.ts`) runs these against a render-plan and returns a composite score + ranked fixes (axis + direction + detail). Validated by a deterministic acceptance test (`toolkit/test/acceptance.test.ts`): a good generated pattern outranks deliberately broken-symmetry / over- and under-dense / wrong-chord variants, and the top fix names the broken axis. Spec: `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`.
+
+**Still open (the binding is partial):** Perceive remains thin (the *why* of IGP's appeal — infinite/divine connotation, fine detail reading as organic — is not yet operationalised), and the profile covers only 3 aesthetic dimensions. Not yet bound: line-continuity, cuerda-seca rendering quality, construction-grammar correctness. These are the next operators/bindings.
+
 ## Connection to the wiki's priorities
 
 | Priority | Application |
