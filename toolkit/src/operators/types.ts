@@ -14,7 +14,9 @@ export interface Fix {
 }
 
 export interface OperatorScore {
-  score: number; // 0..1
+  score: number; // 0..1 target-adherence (how well the measured value meets the target)
+  measured: number; // raw measured value (operator-specific scale, typically 0..1)
+  target: string; // human-readable target, e.g. "≥0.98" or "0.55–0.78"
   fix: Fix;
 }
 

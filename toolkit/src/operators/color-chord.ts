@@ -27,8 +27,9 @@ export const colorChordOperator: Operator<ChordTarget, ChordMeasurement> = {
   },
   scoreAgainst(m, t): OperatorScore {
     const pal = m.palette;
+    const targetLabel = `hue ${t.hueArc.lo}–${t.hueArc.hi}°`;
     if (pal.length === 0) {
-      return { score: 0, fix: { axis: "colorChord", direction: "increase", detail: "empty palette" } };
+      return { score: 0, measured: 0, target: targetLabel, fix: { axis: "colorChord", direction: "increase", detail: "empty palette" } };
     }
     const inArc = pal.filter((c) => c.c < CHROMA_NEUTRAL || hueInArc(c.h, t.hueArc.lo, t.hueArc.hi));
     const hueInRange = inArc.length / pal.length;
@@ -37,6 +38,8 @@ export const colorChordOperator: Operator<ChordTarget, ChordMeasurement> = {
     const ok = value > 0.85;
     return {
       score: value,
+      measured: hueInRange, // fraction of palette on-arc (neutrals exempt)
+      target: targetLabel,
       fix: {
         axis: "colorChord",
         direction: ok ? "ok" : "increase",

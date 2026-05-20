@@ -50,6 +50,8 @@ export const symmetryOperator: Operator<{ minFidelity: number }> = {
     const direction = m.value < min ? "increase" : "ok";
     return {
       score,
+      measured: m.value,
+      target: `≥${min}`,
       fix: {
         axis: "symmetry",
         direction,

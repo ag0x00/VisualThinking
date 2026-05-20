@@ -62,6 +62,8 @@ export const complexityOperator: Operator<{ band: [number, number]; falloff?: nu
     }
     return {
       score,
+      measured: v,
+      target: `${lo}–${hi}`,
       fix: {
         axis: "complexity",
         direction,

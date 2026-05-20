@@ -22,8 +22,9 @@ function card(e: GalleryEntry): string {
     .map(
       (p) => `
         <div class="op">
-          <div class="op-head"><span>${p.name}</span><span>${pct(p.score)} · w${p.weight}</span></div>
+          <div class="op-head"><span>${p.name}</span><span>score ${pct(p.score)} · w${p.weight}</span></div>
           <div class="track"><div class="fill" style="width:${pct(p.score)};background:${barColor(p.score)}"></div></div>
+          <div class="op-sub">measured ${p.measured.toFixed(2)} · target ${p.target}</div>
         </div>`,
     )
     .join("");
@@ -68,6 +69,7 @@ export function buildGalleryHtml(entries: GalleryEntry[]): string {
   .op-head { display: flex; justify-content: space-between; font-size: 12px; color: #aab9c9; }
   .track { height: 6px; background: #20303f; border-radius: 4px; overflow: hidden; margin-top: 2px; }
   .fill { height: 100%; }
+  .op-sub { font-size: 11px; color: #6f8298; margin-top: 3px; }
   .fixes { margin: 10px 0 0; padding-left: 16px; font-size: 12px; color: #cdd9e6; }
   .fixes .ok { color: #5fbf7f; list-style: none; margin-left: -16px; }
 </style>
