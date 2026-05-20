@@ -127,17 +127,21 @@ Per [[Research - IGP Library Landscape 2026-05-18]] — a 4-parallel-subagent bu
 
 Added 2026-05-20. This page does **not** carry a bespoke "is this pattern good?" metric. Per the [[Wiki Methodology]] operational-readiness standard (cross-domain composition), its **Evaluate** capability is *composed* from general operators in `toolkit/`, parameterised for this medium by a profile. Operators measure (target-free); the profile sets the targets.
 
-`toolkit/src/profiles/timurid-igp.ts`:
+Two media, two profiles. **Strapwork** (the lines as visible art) → `toolkit/src/profiles/timurid-igp.ts`; **Tilework** (the filled glaze cells) → `toolkit/src/profiles/timurid-tiling.ts`. 7 operators total; each binds to the general wiki concept it operationalises:
 
-| Operator | toolkit module | weight | target | what it captures here |
-|---|---|---|---|---|
-| `symmetry` | `src/operators/symmetry.ts` | 0.35 | `minFidelity: 0.98` | near-exact group fidelity (continuous, so intentional imperfection later scores as a tradeoff) — [[Symmetry Groups and Tessellation]] |
-| `complexity` | `src/operators/complexity.ts` | 0.35 | `band: [0.55, 0.78]` | organized richness (Berlyne inverted-U): high but not chaotic detail density / motif variety / angle entropy — [[Visual Entropy]], [[Fractal Dimension]], [[Berlyne's Arousal-Potential Theory]] |
-| `colorChord` | `src/operators/color-chord.ts` | 0.30 | turquoise→cobalt hue arc + lightness spread | the Samarkand blue chord — [[OKLCH]], [[Arnheim's Color Syntax]] |
+| Operator | binds concept | medium | what it captures |
+|---|---|---|---|
+| `symmetry` | [[Symmetry Groups and Tessellation]] | both | continuous group fidelity (imperfection scores as a tradeoff) |
+| `complexity` | [[Visual Entropy]] · [[Fractal Dimension]] · [[Berlyne's Arousal-Potential Theory]] | strapwork | organized richness of the line network (inverted-U band) |
+| `lineContinuity` | [[The Gestalt Principles of Visual Perception]] (good continuation) | strapwork | lines connect end-to-end + pass through junctions |
+| `constructionGrammar` | [[Aperiodic Tiling and the Hat Monotile]] · [[Symmetry Groups and Tessellation]] | tilework | cells partition the region (no gaps/overlap) |
+| `tileComplexity` | [[Berlyne's Arousal-Potential Theory]] | tilework | cell density × glaze-colour-usage variety |
+| `cuerdaSeca` | [[Material Perception]] · [[Materiality in Graphic Design]] | tilework | the cream channels are complete + uniform width |
+| `colorChord` | [[OKLCH]] · [[Arnheim's Color Syntax]] | both | the Samarkand turquoise→cobalt blue chord |
 
-The composer (`toolkit/src/compose.ts`) runs these against a render-plan and returns a composite score + ranked fixes (axis + direction + detail). Validated by a deterministic acceptance test (`toolkit/test/acceptance.test.ts`): a good generated pattern outranks deliberately broken-symmetry / over- and under-dense / wrong-chord variants, and the top fix names the broken axis. Spec: `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`.
+The composer (`toolkit/src/compose.ts`) runs a profile's operators against a render-plan → composite score + ranked fixes (axis + direction + detail). Validated by deterministic acceptance tests: a good pattern outranks **8 deliberate failures** (broken-symmetry, over/under-dense, disconnected lines, wrong-chord; overlapping/gappy cells, uneven channels, monotone), each isolating its axis. The scorecard gallery (`npm run gallery`) renders all of them with scores. Spec: `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`.
 
-**Still open (the binding is partial):** Perceive remains thin (the *why* of IGP's appeal — infinite/divine connotation, fine detail reading as organic — is not yet operationalised), and the profile covers only 3 aesthetic dimensions. Not yet bound: line-continuity, cuerda-seca rendering quality, construction-grammar correctness. These are the next operators/bindings.
+**Still open:** Perceive remains thin (the *why* of IGP's appeal — infinite/divine connotation, fine detail reading as organic — is not yet operationalised). And the loop is open-ended: the `fixes` are not yet wired back into the generators (the `improve()` step is the next build — see [[subsystem-trajectory]]).
 
 ## Connection to the wiki's priorities
 
