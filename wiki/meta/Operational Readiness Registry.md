@@ -231,4 +231,19 @@ Sorted by (priority-app asc, total asc): high-priority + low-readiness floats to
 2. **Re-score in place** after a page is deepened (edit its row; bump `updated`).
 3. **Seed `wiki_assessReadiness`**: this table is the training/eval set for a future MCP tool that scores any concept on P/B/E and emits the autoresearch program to close the gap. Connects the standalone eval pages — [[Multimodal Evaluation Loops]], [[LLM-as-Judge for Visual Quality]], [[Photo Aesthetic Features]] — into per-concept evaluation hooks.
 
+## Toolkit operator-implementation layer (2026-05-20)
+
+The `toolkit/` (PR #2) now provides **7 working operators** that implement the Build+Evaluate side of several concept pages as pure functions over a render-plan (composed per-medium via profiles — see [[Islamic Geometric Patterns and the Polygonal Technique]]):
+
+| toolkit operator | implements concept(s) |
+|---|---|
+| `symmetry` | [[Symmetry Groups and Tessellation]] |
+| `complexity` / `tileComplexity` | [[Visual Entropy]] · [[Berlyne's Arousal-Potential Theory]] |
+| `lineContinuity` | [[The Gestalt Principles of Visual Perception]] (good continuation) |
+| `constructionGrammar` | [[Aperiodic Tiling and the Hat Monotile]] (tiling validity) |
+| `cuerdaSeca` | [[Material Perception]] (glaze-channel finish) |
+| `colorChord` | [[OKLCH]] · [[Arnheim's Color Syntax]] |
+
+**Pending (tomorrow's wiki write-back):** re-score these concept pages' Build/Evaluate now that working code exists, and add an "implemented in toolkit" pointer to each — the same treatment IGP got. Not yet done to avoid hasty re-scoring; do it as a focused pass.
+
 Related: [[Wiki Methodology]] · [[Field Map - Visual Thinking Knowledge Domains]]
