@@ -185,6 +185,10 @@ Defer [[PlotBoilerplate]] evaluation as the next library question — IkarosKapp
 5. Generative Escher Meshes (SIGGRAPH 2024). https://arxiv.org/abs/2309.14564
 6. Bridges 2025: Variable-Based Generation of Girih Patterns. http://www.archive.bridgesmathart.org/2025/bridges2025-255.pdf
 
+## Later additions (stashed, unvetted — for the real-generator phase)
+
+- **Michael Fares — "How I made an SVG Islamic Tessellation Coloring App with d3.js and React"** (user-surfaced 2026-05-20). Step-by-step how-to with code for SVG tessellation *generation mechanics* (not aesthetics). Post: https://michael-fares.medium.com/how-i-made-an-svg-islamic-tessellation-coloring-app-with-d3-js-and-react-d0cd2155d3ab · code: https://github.com/Michael-Fares/tiles . **Why stashed:** the current toolkit generator is a deliberately minimal 6-fold vehicle for tuning the *evaluation* feedback loop; richer generation is deferred. Evaluate this (license, d3-dependency fit vs the "depend on nothing" recommendation, polygonal-technique fidelity) when building the production generator. Note: the user signalled the eventual aesthetic target may not be IGP specifically — confirm medium before investing here.
+
 ## Related
 
 - [[Islamic Geometric Patterns and the Polygonal Technique]] (c-000191) — augmented with Implementation Landscape section
