@@ -1,11 +1,20 @@
 import { operators } from "./operators/index";
-import type { Fix } from "./operators/types";
+import type { Fix, ScoreComponent } from "./operators/types";
 import type { AestheticProfile } from "./profile";
 import type { RenderPlan } from "./render-plan";
 
 export interface CompositionResult {
   composite: number;
-  perOperator: { name: string; score: number; measured: number; target: string; weight: number; fix: Fix }[];
+  perOperator: {
+    name: string;
+    score: number;
+    measured: number;
+    target: string;
+    rule: string;
+    components?: ScoreComponent[];
+    weight: number;
+    fix: Fix;
+  }[];
   fixes: Fix[];
 }
 
@@ -15,7 +24,7 @@ export function compose(plan: RenderPlan, profile: AestheticProfile): Compositio
     if (!op) throw new Error(`Unknown operator: ${b.operator}`);
     const m = op.measure(plan);
     const s = op.scoreAgainst(m, b.target);
-    return { name: b.operator, score: s.score, measured: s.measured, target: s.target, weight: b.weight, fix: s.fix };
+    return { name: b.operator, score: s.score, measured: s.measured, target: s.target, rule: s.rule, components: s.components, weight: b.weight, fix: s.fix };
   });
   const wsum = perOperator.reduce((s, p) => s + p.weight, 0);
   const composite = wsum === 0 ? 0 : perOperator.reduce((s, p) => s + p.score * p.weight, 0) / wsum;

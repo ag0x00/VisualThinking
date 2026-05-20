@@ -64,6 +64,7 @@ export const complexityOperator: Operator<{ band: [number, number]; falloff?: nu
       score,
       measured: v,
       target: `${lo}–${hi}`,
+      rule: "band — too little or too much both score low",
       fix: {
         axis: "complexity",
         direction,

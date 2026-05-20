@@ -30,4 +30,18 @@ describe("buildGalleryHtml", () => {
       expect(html.includes(label)).toBe(true);
     }
   });
+
+  it("includes the scoring legend and per-metric rules", () => {
+    const html = buildGalleryHtml(entries());
+    expect(html.includes("What does the percentage mean?")).toBe(true);
+    expect(html.includes("target-adherence")).toBe(true);
+    expect(html.includes("floor — higher is better")).toBe(true);
+    expect(html.includes("band — too little or too much both score low")).toBe(true);
+  });
+
+  it("splits colorChord into hue and lightness sub-bars", () => {
+    const html = buildGalleryHtml(entries());
+    expect(html.includes("hue on-arc")).toBe(true);
+    expect(html.includes("lightness spread")).toBe(true);
+  });
 });

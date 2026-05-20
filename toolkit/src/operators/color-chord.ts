@@ -28,8 +28,9 @@ export const colorChordOperator: Operator<ChordTarget, ChordMeasurement> = {
   scoreAgainst(m, t): OperatorScore {
     const pal = m.palette;
     const targetLabel = `hue ${t.hueArc.lo}–${t.hueArc.hi}°`;
+    const rule = "blend — 60% hue + 40% lightness";
     if (pal.length === 0) {
-      return { score: 0, measured: 0, target: targetLabel, fix: { axis: "colorChord", direction: "increase", detail: "empty palette" } };
+      return { score: 0, measured: 0, target: targetLabel, rule, fix: { axis: "colorChord", direction: "increase", detail: "empty palette" } };
     }
     const inArc = pal.filter((c) => c.c < CHROMA_NEUTRAL || hueInArc(c.h, t.hueArc.lo, t.hueArc.hi));
     const hueInRange = inArc.length / pal.length;
@@ -40,6 +41,11 @@ export const colorChordOperator: Operator<ChordTarget, ChordMeasurement> = {
       score: value,
       measured: hueInRange, // fraction of palette on-arc (neutrals exempt)
       target: targetLabel,
+      rule,
+      components: [
+        { label: "hue on-arc", score: hueInRange, weight: 0.6 },
+        { label: "lightness spread", score: spreadScore, weight: 0.4 },
+      ],
       fix: {
         axis: "colorChord",
         direction: ok ? "ok" : "increase",

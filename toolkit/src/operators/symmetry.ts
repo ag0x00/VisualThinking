@@ -52,6 +52,7 @@ export const symmetryOperator: Operator<{ minFidelity: number }> = {
       score,
       measured: m.value,
       target: `≥${min}`,
+      rule: "floor — higher is better",
       fix: {
         axis: "symmetry",
         direction,
