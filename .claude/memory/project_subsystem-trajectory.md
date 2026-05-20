@@ -1,10 +1,20 @@
 ---
 name: subsystem-trajectory
-description: "Current state of the multi-subsystem build trajectory (MCP done, toolkit + concrete project decision pending)"
+description: "Current state of the multi-subsystem build trajectory. A (MCP) shipped; B (toolkit) underway — first operator-composition slice shipped 2026-05-20 (PR #2)."
 metadata: 
   node_type: memory
   type: project
   originSessionId: 8bd3cfd4-5d18-4817-9003-0b7d5db2d68c
+---
+
+## Update (2026-05-20): Subsystem B underway — operator-composition slice shipped
+
+B-via-C resolved into a sharper shape than the 2026-05-17 plan below. **The toolkit IS the operator library**: pure functions over a `RenderPlan` type, half generators (Build), half scorers (Evaluate), sharing one geometric representation. Key reframe (see [[cross-domain-composition]]): **evaluate self-generated render-plans, not bitmaps** — removes the CV/extraction risk, gives higher-information input, enables a deterministic generate→score→optimize loop. Operators measure; profiles set targets.
+
+First slice shipped on branch `toolkit-screensaver`, **PR #2** (https://github.com/ag0x00/VisualThinking/pull/2): `toolkit/` with 3 operators (symmetry/complexity/colorChord), the `timurid-igp` profile, a composer, a minimal 6-fold IGP generator, an SVG renderer, and a deterministic acceptance test (good pattern outranks degraded variants; top fix names the broken axis). 23 tests pass, tsc clean. Spec `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`; plan `docs/superpowers/plans/2026-05-20-operator-composition-slice.md`.
+
+**Next operators/bindings** (named in the IGP page's Aesthetic-profile section): line-continuity, cuerda-seca rendering quality, construction-grammar correctness; plus the "organized-complexity" composite operator if the weighted-sum mis-ranks (open question O4). Screensaver (C) is still the eventual test artifact but is NOT the goal — the wiki+MCP+toolkit workflow is (see [[test-artifact-vs-workflow]]).
+
 ---
 
 ## Current state (2026-05-17, end of build session)
