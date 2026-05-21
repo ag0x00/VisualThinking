@@ -16,6 +16,9 @@ export function renderSvg(plan: RenderPlan): string {
     } else if (e.kind === "segment") {
       const [[x0, y0], [x1, y1]] = e.points;
       parts.push(`<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${hex(e.strokeRef, "#ffffff")}" stroke-width="1.5"/>`);
+    } else if (e.kind === "path") {
+      const pts = e.points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+      parts.push(`<polyline points="${pts}" fill="none" stroke="${hex(e.strokeRef, "#ffffff")}" stroke-width="1.5"/>`);
     } else {
       const pts = e.points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
       const sw = e.channel ?? 1.5; // cuerda-seca channel rendered as the cream stroke
