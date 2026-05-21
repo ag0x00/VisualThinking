@@ -1,5 +1,6 @@
 import { generateIgp, defaultIgpParams } from "./generators/igp";
 import { generateTiling, defaultTilingParams } from "./generators/tiling";
+import { generateTruchet, defaultTruchetParams } from "./generators/truchet";
 import type { Oklch, RenderPlan, Vec2 } from "./render-plan";
 
 export function goodPlan(): RenderPlan {
@@ -62,5 +63,23 @@ export function tilingVariants(): Variant[] {
     { label: "uneven channels", description: "cuerda-seca jittered (uneven/missing cream lines)", plan: generateTiling({ ...defaultTilingParams(), channelJitter: 1.0 }) },
     { label: "monotone", description: "single glaze colour (no variety)", plan: generateTiling({ ...defaultTilingParams(), colorCount: 1 }) },
     { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
+  ];
+}
+
+export function truchetGood(): RenderPlan {
+  return generateTruchet(defaultTruchetParams());
+}
+
+// Truchet (wall-to-wall) deliberate failures, one per profile axis. Note
+// broken-lattice degrades BOTH periodicity and lineContinuity (moving cells
+// pulls their arcs off neighbours) — periodicity has the higher weight so it
+// stays the top fix; the coupling is benign (one knob heals both).
+export function truchetVariants(): Variant[] {
+  const d = defaultTruchetParams();
+  return [
+    { label: "broken-lattice", description: "cells jittered off the grid (latticeJitter 0.25)", plan: generateTruchet({ ...d, latticeJitter: 0.25 }) },
+    { label: "gappy-grid", description: "cells scaled 0.8 (gaps)", plan: generateTruchet({ ...d, cellScale: 0.8 }) },
+    { label: "disconnected-arcs", description: "arcs retracted from edges (arcGap 0.4)", plan: generateTruchet({ ...d, arcGap: 0.4 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...truchetGood(), palette: OFF_ARC } },
   ];
 }
