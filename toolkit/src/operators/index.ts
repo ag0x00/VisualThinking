@@ -5,6 +5,7 @@ import { constructionGrammarOperator } from "./construction-grammar";
 import { lineContinuityOperator } from "./line-continuity";
 import { cuerdaSecaOperator } from "./cuerda-seca";
 import { tileComplexityOperator } from "./tile-complexity";
+import { periodicityOperator } from "./periodicity";
 import type { Operator } from "./types";
 
 export const operators: Record<string, Operator<any, any>> = {
@@ -15,4 +16,5 @@ export const operators: Record<string, Operator<any, any>> = {
   lineContinuity: lineContinuityOperator,
   cuerdaSeca: cuerdaSecaOperator,
   tileComplexity: tileComplexityOperator,
+  periodicity: periodicityOperator,
 };
