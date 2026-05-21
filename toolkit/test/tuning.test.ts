@@ -46,3 +46,33 @@ describe("applyNudge", () => {
     expect(input.rings).toBe(6);
   });
 });
+
+import { igpTuning } from "../src/tuning/igp";
+import { tilingTuning } from "../src/tuning/tiling";
+import { defaultIgpParams } from "../src/generators/igp";
+import { defaultTilingParams } from "../src/generators/tiling";
+
+describe("tuning maps", () => {
+  it("igp binds complexity→rings and lineContinuity→segmentScale (cliff step)", () => {
+    expect(igpTuning.complexity.param).toBe("rings");
+    expect(igpTuning.lineContinuity.param).toBe("segmentScale");
+    expect(igpTuning.lineContinuity.step).toBe(0.6); // coarse: crosses the continuity cliff
+    expect(igpTuning.symmetry).toBeUndefined();
+    expect(igpTuning.colorChord).toBeUndefined();
+  });
+
+  it("tiling binds three axes; cuerdaSeca is inverted; colorCount capped at fillCount", () => {
+    expect(tilingTuning.constructionGrammar.param).toBe("cellScale");
+    expect(tilingTuning.tileComplexity.param).toBe("colorCount");
+    expect(tilingTuning.tileComplexity.max).toBe(3);
+    expect(tilingTuning.cuerdaSeca.param).toBe("channelJitter");
+    expect(tilingTuning.cuerdaSeca.invert).toBe(true);
+  });
+
+  it("every bound param is a real key on the generator's default params", () => {
+    const ip = defaultIgpParams() as Record<string, unknown>;
+    for (const b of Object.values(igpTuning)) expect(b.param in ip).toBe(true);
+    const tp = defaultTilingParams() as Record<string, unknown>;
+    for (const b of Object.values(tilingTuning)) expect(b.param in tp).toBe(true);
+  });
+});
