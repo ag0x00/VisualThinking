@@ -70,9 +70,9 @@ describe("tuning maps", () => {
   });
 
   it("every bound param is a real key on the generator's default params", () => {
-    const ip = defaultIgpParams() as Record<string, unknown>;
+    const ip = defaultIgpParams() as unknown as Record<string, unknown>;
     for (const b of Object.values(igpTuning)) expect(b.param in ip).toBe(true);
-    const tp = defaultTilingParams() as Record<string, unknown>;
+    const tp = defaultTilingParams() as unknown as Record<string, unknown>;
     for (const b of Object.values(tilingTuning)) expect(b.param in tp).toBe(true);
   });
 });
