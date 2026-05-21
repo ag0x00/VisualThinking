@@ -95,7 +95,7 @@ adds it, rounds when `kind === "int"`, clamps to `[min, max]`, and returns a **n
 | fix axis | param | kind | step | range | note |
 |---|---|---|---|---|---|
 | `complexity` | `rings` | int | 1 | 3–9 | band; direction comes from the fix |
-| `lineContinuity` | `segmentScale` | num | 0.1 | 0.4–1.0 | floor |
+| `lineContinuity` | `segmentScale` | num | 0.6 | 0.4–1.0 | floor; **cliff knob** — segments only connect (continuity jumps 0→1) at scale 1.0, so composite is flat across 0.5→0.9. A coarse step (0.6) crosses the discontinuity in one move (any start in range → 1.0); a fine step would yield zero gain and trip the revert-and-stop guard prematurely. Verified by probe 2026-05-20. |
 
 ### tiling — `src/tuning/tiling.ts`
 
@@ -158,8 +158,7 @@ This is the "show the loop working" surface — the composite visibly climbs kno
 - `src/improve.test.ts` — acceptance + unit tests.
 
 **Modified:**
-- `src/renderers/gallery.ts` — render an improvement trajectory group.
-- `src/scripts/render-gallery.ts` — build the Improvement group for both media.
+- `src/scripts/render-gallery.ts` — build the Improvement group for both media. A trajectory step maps directly onto the existing `GalleryEntry` (plan → svg + composite), so **`gallery.ts` is reused unchanged** — no edit to the tested HTML renderer.
 - `README.md` — document `improve` + tuning maps.
 
 ## Testing
