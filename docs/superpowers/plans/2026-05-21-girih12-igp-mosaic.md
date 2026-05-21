@@ -153,10 +153,14 @@ export function generateGirih12(params: Girih12Params = defaultGirih12Params()):
   const u1: Vec2 = [D, 0];
   const u2: Vec2 = [D * Math.cos(Math.PI / 3), D * Math.sin(Math.PI / 3)];
   let accentArea = 0;
-  let dodecaCount = 0;
 
-  for (let j = -1; j < Math.ceil(H / u2[1]) + 2; j++) {
-    for (let i = -1; i < Math.ceil(W / D) + 2; i++) {
+  // Shear-aware lattice range: rows shift right by j·D/2 as j grows, so i must
+  // start increasingly negative to keep the lower-left filled (off-canvas
+  // dodecagons are culled by the bounds check below).
+  const rows = Math.ceil(H / u2[1]) + 2;
+  const cols = Math.ceil(W / D) + 2;
+  for (let j = -1; j <= rows; j++) {
+    for (let i = -Math.ceil(rows / 2) - 1; i <= cols; i++) {
       let cx = i * u1[0] + j * u2[0];
       let cy = i * u1[1] + j * u2[1];
       if (cx < -R || cx > W + R || cy < -R || cy > H + R) continue;
@@ -171,11 +175,12 @@ export function generateGirih12(params: Girih12Params = defaultGirih12Params()):
       // 12-point star (alternate edge-mid outer + inner)
       const star: Vec2[] = [];
       for (let k = 0; k < 12; k++) { star.push(Mk(k)); star.push(Ik(k)); }
-      // accent budget: every 4th dodecagon's star core gets a warm accent
+      // accent budget: ~7% of dodecagons (hash-scattered across the whole field,
+      // not front-loaded) get a warm accent star core, capped at accentBudget area
       let starColor = STAR;
       const aStar = polyAreaLocal(star);
-      if (dodecaCount % 4 === 0 && accentArea + aStar < accentBudget * totalArea) {
-        starColor = 5 + (dodecaCount % 3);
+      if (hash(i, j, rngSeed + 5) < 0.07 && accentArea + aStar < accentBudget * totalArea) {
+        starColor = 5 + Math.floor(hash(i, j, rngSeed + 11) * 3);
         accentArea += aStar;
       }
       elements.push({ kind: "polygon", role: "tile", points: inset(star), colorRef: starColor, strokeRef: CREAM, channel: channelOf(), motifId: "star" });
@@ -185,7 +190,6 @@ export function generateGirih12(params: Girih12Params = defaultGirih12Params()):
         const petal: Vec2[] = [Mk(k), Vk(k), Mk((k + 1) % 12), Ik(k)];
         elements.push({ kind: "polygon", role: "tile", points: inset(petal), colorRef: PETAL, strokeRef: CREAM, channel: channelOf(), motifId: "petal" });
       }
-      dodecaCount++;
     }
   }
 
