@@ -6,10 +6,41 @@ import type { AestheticProfile } from "../profile";
 import { timuridIgpProfile } from "../profiles/timurid-igp";
 import { timuridTilingProfile } from "../profiles/timurid-tiling";
 import { goodPlan, degradedVariants, tilingGood, tilingVariants } from "../variants";
+import { improve } from "../improve";
+import type { TuningMap } from "../tuning";
+import { igpTuning } from "../tuning/igp";
+import { tilingTuning } from "../tuning/tiling";
+import { generateIgp, defaultIgpParams } from "../generators/igp";
+import { generateTiling, defaultTilingParams } from "../generators/tiling";
 import type { RenderPlan } from "../render-plan";
 
 function entry(label: string, description: string, plan: RenderPlan, profile: AestheticProfile): GalleryEntry {
   return { label, description, svg: renderSvg(plan), result: compose(plan, profile) };
+}
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+
+// Build an "Improvement" group: start state + one card per accepted improve() step.
+function improvementGroup<P>(
+  title: string,
+  generate: (p: P) => RenderPlan,
+  start: P,
+  profile: AestheticProfile,
+  tuning: TuningMap,
+): GalleryGroup {
+  const r = improve(generate, start, profile, tuning, { targetComposite: 0.99 });
+  const entries: GalleryEntry[] = [entry("start", "degraded params, below target", generate(start), profile)];
+  for (const s of r.trajectory) {
+    entries.push(
+      entry(
+        `step ${s.iter}: ${s.fix}`,
+        `${s.param} ${s.from}→${s.to} · ${pct(s.compositeBefore)}→${pct(s.compositeAfter)}`,
+        generate(s.params),
+        profile,
+      ),
+    );
+  }
+  return { title, entries };
 }
 
 const strapwork: GalleryGroup = {
@@ -28,6 +59,22 @@ const tilework: GalleryGroup = {
   ],
 };
 
+const improveIgp = improvementGroup(
+  "Improvement — strapwork (improve() closing the loop)",
+  generateIgp,
+  { ...defaultIgpParams(), rings: 3, segmentScale: 0.5 },
+  timuridIgpProfile,
+  igpTuning,
+);
+
+const improveTiling = improvementGroup(
+  "Improvement — tilework (improve() closing the loop)",
+  generateTiling,
+  { ...defaultTilingParams(), cellScale: 0.9, channelJitter: 1.0 },
+  timuridTilingProfile,
+  tilingTuning,
+);
+
 mkdirSync("out", { recursive: true });
-writeFileSync("out/gallery.html", buildGalleryHtml([tilework, strapwork]));
+writeFileSync("out/gallery.html", buildGalleryHtml([improveIgp, improveTiling, tilework, strapwork]));
 console.log("wrote out/gallery.html");
