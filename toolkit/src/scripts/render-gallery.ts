@@ -12,6 +12,10 @@ import { igpTuning } from "../tuning/igp";
 import { tilingTuning } from "../tuning/tiling";
 import { generateIgp, defaultIgpParams } from "../generators/igp";
 import { generateTiling, defaultTilingParams } from "../generators/tiling";
+import { truchetProfile } from "../profiles/truchet";
+import { truchetTuning } from "../tuning/truchet";
+import { generateTruchet, defaultTruchetParams } from "../generators/truchet";
+import { truchetGood, truchetVariants } from "../variants";
 import type { RenderPlan } from "../render-plan";
 
 function entry(label: string, description: string, plan: RenderPlan, profile: AestheticProfile): GalleryEntry {
@@ -75,6 +79,22 @@ const improveTiling = improvementGroup(
   tilingTuning,
 );
 
+const truchet: GalleryGroup = {
+  title: "Truchet (wall-to-wall)",
+  entries: [
+    entry("GOOD (target)", "default 8×8 periodic grid", truchetGood(), truchetProfile),
+    ...truchetVariants().map((x) => entry(x.label, x.description, x.plan, truchetProfile)),
+  ],
+};
+
+const improveTruchet = improvementGroup(
+  "Improvement — truchet (improve() on a new medium)",
+  generateTruchet,
+  { ...defaultTruchetParams(), latticeJitter: 0.2, cellScale: 0.85 },
+  truchetProfile,
+  truchetTuning,
+);
+
 mkdirSync("out", { recursive: true });
-writeFileSync("out/gallery.html", buildGalleryHtml([improveIgp, improveTiling, tilework, strapwork]));
+writeFileSync("out/gallery.html", buildGalleryHtml([improveTruchet, truchet, improveIgp, improveTiling, tilework, strapwork]));
 console.log("wrote out/gallery.html");
