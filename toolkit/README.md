@@ -26,6 +26,7 @@ The percentage on each metric is **target-adherence** — *how well the pattern 
 | **lineContinuity** | floor (`≥0.6`) | `0.5 × connectedness + 0.5 × through-continuation` of line segments — Gestalt good-continuation (line plans only) | 0.64 → 100% (connected) · 0.0 → 0% (segments dangle) |
 | **cuerdaSeca** | floor (`≥0.85`) | `0.5 × completeness + 0.5 × uniformity` of the cream channels between tiles (tile plans only) | 1.0 → 100% (uniform) · 0.65 → 76% (uneven/missing) |
 | **tileComplexity** | band (`0.5–0.85`) | `0.5 × cell-density + 0.5 × colour-variety` of tiles — Berlyne organized-richness (tile plans only) | 0.73 → 100% · 0.39 → 55% (monotone) |
+| **periodicity** | floor (`≥0.95`) | fraction of cell frames that map onto another frame under lattice translation — measures the *grid*, not the cell contents (rotation-blind), so varied tilings still score high (periodic plans only) | 1.0 → 100% (clean grid) · 0.0 → 0% (cells drift off-lattice) |
 
 Consequences:
 - Percentages are comparable only as *closeness to that axis's own target*, not as like-for-like amounts.
@@ -53,19 +54,23 @@ A **tuning map** binds each `fix.axis` to one generator knob: `{ param, kind, st
 
 `improve()` returns `{ finalParams, finalPlan, finalScore, trajectory }`; each trajectory step carries a full params snapshot, so `npm run gallery` renders the climb as an "Improvement" group (start → each accepted step → final, composite rising knob-by-knob).
 
+## A third medium — Truchet (the medium-agnostic test)
+
+The `truchet` generator + profile fill the canvas with a periodic arc-tile grid — a deliberately different geometry from the centred IGP/tiling generators, used to test that the spine is medium-agnostic. The result: it took **one new operator** (`periodicity`, translational lattice self-match, replacing centre-rotation `symmetry`) and a new generator/profile/tuning map. `constructionGrammar`, `lineContinuity`, `colorChord`, the composer, and `improve()` were **reused unchanged**. The boundary that keeps the toolkit from accreting bias is in `../CLAUDE.md` → Engineering discipline: operators *measure* (taste-free), profiles *set targets* (project-owned taste), and a measurement belongs in core only if its property is transferable across unrelated mediums.
+
 ## Layout
 
 ```
 src/
   render-plan.ts      # the geometric data type all operators consume (+ optional region for tilings)
   geom.ts             # shared polygon helpers (area, centroid, scale)
-  operators/          # symmetry · complexity · color-chord · construction-grammar · line-continuity · cuerda-seca · tile-complexity
+  operators/          # symmetry · complexity · color-chord · construction-grammar · line-continuity · cuerda-seca · tile-complexity · periodicity
   profile.ts          # AestheticProfile type (operator bindings + targets)
-  profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells)
+  profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells) · truchet.ts (periodic)
   compose.ts          # runs a profile against a plan → composite + fixes
-  generators/         # igp.ts (line strapwork) · tiling.ts (filled cells)
+  generators/         # igp.ts (line strapwork) · tiling.ts (filled cells) · truchet.ts (wall-to-wall arcs)
   tuning.ts           # TuningBinding/TuningMap + applyNudge (fix.axis → knob)
-  tuning/             # igp.ts · tiling.ts (per-generator fix→param maps)
+  tuning/             # igp.ts · tiling.ts · truchet.ts (per-generator fix→param maps)
   improve.ts          # greedy generate→score→fix→regenerate loop
   renderers/          # svg.ts (single) · gallery.ts (grouped scorecards)
   variants.ts         # good + deliberate failures (line + tile), shared by test + gallery
