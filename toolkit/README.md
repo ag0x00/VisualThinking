@@ -34,6 +34,25 @@ Consequences:
 
 The `composite` is the weighted mean of the per-axis scores; the `fixes` list ranks the off-target axes and says which direction to move.
 
+## Closing the loop — `improve()`
+
+Evaluation feeds back into generation. `improve(generate, params, profile, tuning)` reads the composer's ranked `fixes` and turns the single worst-weighted *actionable* knob one step, regenerates, and keeps the step only if the composite climbed — stopping on the first non-improvement.
+
+```ts
+import { improve } from "./src/improve";
+import { generateIgp, defaultIgpParams } from "./src/generators/igp";
+import { timuridIgpProfile } from "./src/profiles/timurid-igp";
+import { igpTuning } from "./src/tuning/igp";
+
+const start = { ...defaultIgpParams(), rings: 3, segmentScale: 0.5 }; // composite ≈0.71
+const r = improve(generateIgp, start, timuridIgpProfile, igpTuning);
+// r.finalScore ≈ 0.99 ; r.trajectory lists each accepted knob turn
+```
+
+A **tuning map** binds each `fix.axis` to one generator knob: `{ param, kind, step, min, max, invert? }`. `invert` flips the direction→delta sign for inverse-sense knobs (cuerda-seca quality rises as `channelJitter` falls). Axes with no knob (`symmetry`, which is always `p6m`; `colorChord`, deferred) are absent from the map and skipped by the loop. One subtlety: `segmentScale` is a *cliff knob* — line continuity only resolves at scale 1.0 — so it uses a coarse step that crosses the discontinuity in one move.
+
+`improve()` returns `{ finalParams, finalPlan, finalScore, trajectory }`; each trajectory step carries a full params snapshot, so `npm run gallery` renders the climb as an "Improvement" group (start → each accepted step → final, composite rising knob-by-knob).
+
 ## Layout
 
 ```
@@ -45,7 +64,10 @@ src/
   profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells)
   compose.ts          # runs a profile against a plan → composite + fixes
   generators/         # igp.ts (line strapwork) · tiling.ts (filled cells)
+  tuning.ts           # TuningBinding/TuningMap + applyNudge (fix.axis → knob)
+  tuning/             # igp.ts · tiling.ts (per-generator fix→param maps)
+  improve.ts          # greedy generate→score→fix→regenerate loop
   renderers/          # svg.ts (single) · gallery.ts (grouped scorecards)
   variants.ts         # good + deliberate failures (line + tile), shared by test + gallery
-test/                 # vitest; acceptance.test.ts proves good outranks failures
+test/                 # vitest; acceptance + improve.test.ts prove the spine end-to-end
 ```
