@@ -140,6 +140,7 @@ A third gallery "Improvement" group: start from a jittered, gappy grid (`lattice
 
 ## Out of scope (this slice)
 
+- **Injectable operator registry.** `periodicity` is registered in the existing global `operators/index.ts`. Making `compose` accept a per-project registry is a real future improvement (so projects add bespoke operators without bloating core), but nothing yet consumes the toolkit as an external project — building the seam now would be engineering for a hypothetical. Deferred until a real second consumer needs it. (Boundary principle is recorded in `CLAUDE.md` → Engineering discipline.)
 - Mutating or generalizing the `symmetry` operator (we add `periodicity` instead).
 - Orientation/rotation-variety scoring (a `tileComplexity`-style band on the rotation distribution) — possible later operator; not needed to prove the medium.
 - `colorChord`/palette tuning (still the deferred v1 `improve` gap).

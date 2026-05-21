@@ -11,6 +11,14 @@ An **Obsidian vault** AND a workspace for code subprojects that consume the vaul
 
 The founding document is `wiki/sources/Wiki Seed.md` (a Gemini conversation establishing scope). The 4-branch spine is in `wiki/index.md`. **The authoritative methodology page** is `wiki/meta/Wiki Methodology.md` — read it before planning sweeps. Current build-phase state lives in `.claude/memory/project_subsystem-trajectory.md` and `.claude/memory/project_brainstorm-state.md`.
 
+## Engineering discipline (all subprojects)
+
+- **Do not over-engineer.** Before committing to a plan, ask: *is this the most elegant and minimal way to do this?* Build the mechanism when it is actually load-bearing, not for a hypothetical future consumer. YAGNI is the default.
+- **Toolkit vs. project vs. wiki boundary.** There is an uncountable number of art/design directions; the toolkit must not try to contain all of them or it becomes biased toward whatever directions we happened to build. So:
+  - **Toolkit (`toolkit/`)** = the domain-neutral *spine* (RenderPlan representation, `compose`, `improve`, the operator registry) + a small set of **transferable measurements**. The bias-safe split is already in place: **operators *measure* (taste-free); profiles *set targets/weights* (where taste lives, project-owned).** A measurement earns a place in core if its underlying *property is transferable across unrelated projects* (symmetry, periodicity, complexity, balance, contrast, colour-relations, continuity, coverage — and yes, channel/grout uniformity à la cuerda-seca, which recurs in any handmade-ceramic/mosaic/stained-glass look). The test is transferable-property, **not** single-named-tradition.
+  - **Per-project** = the generator wiring + the profile (taste) + any genuinely bespoke metric only that project needs.
+  - **Generators lean on prior art.** Where a mature library exists (e.g. IGP), reuse it rather than reinventing — reinventing is both wasted effort and a bias magnet. **The wiki is where we point to that prior art** (a concept page like IGP should link the ready-made implementations we found). Build a custom generator only when nothing fits (see `.claude/memory/feedback_npm-audit-before-design.md`).
+
 ## Subsystems (build trajectory)
 
 - **Subsystem A — Wiki MCP server (`mcp/`)** — ✅ shipped. Read-only MCP server exposing the wiki as typed knowledge over stdio. PR #1 merged. Publishable as `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` so any Claude Code session in this directory gets `mcp__visualthinking-wiki__*` tools (`orient`, `search`, `getRelated`, `getConcept`, `getTechnique`, `getTool`, etc.).
