@@ -8,6 +8,13 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-05-23 ingest | Application-Based Principles of IGPs (Azari et al. 2023)
+- Source: `~/Downloads/s40494-022-00852-w.pdf` — *Heritage Science* 11:22 (2023), open access CC-BY.
+- Summary: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]] (c-000231)
+- Pages created: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]], [[The Variation Principle in Islamic Geometric Patterns]] (c-000232)
+- Pages updated: [[Islamic Geometric Patterns and the Polygonal Technique]] (added the radial/polygon-in-contact/symmetry-group generation trichotomy + a variation cross-ref; removed a verbatim-duplicated Implementation-landscape section), `wiki/index.md`
+- Key insight: one IGP transforms into another by sweeping the **contact angle** (acute/median/obtuse; *Tond/Shol/Tond-o-Shol*); varied continuously — spatially or over time — patterns **flow into each other**. Maps directly onto the toolkit's strapwork θ knob (temporal morph + spatial gradient + per-cell re-decoration animation models).
+
 ## 2026-05-18 — Build phase begins; toolkit-screensaver brainstorm + IGP library audit
 
 - **Subsystem A (MCP) shipped**: PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` for project-local consumption. Known gap (logged to `mcp/tasks/lessons.md`): `wiki_orient` under-surfaces named-tradition terms.
