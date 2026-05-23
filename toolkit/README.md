@@ -66,7 +66,11 @@ It is also the first generator built to the wiki's **ceramic craft invariants** 
 - **No empty gaps.** Interstitial triangles are *glazed tiles*, not background. Tagging them `background` would have left illogical holes *and* silently defeated `constructionGrammar`'s coverage check (background is excluded from coverage) — so the rule is now enforced by a measurement the generator can't dodge.
 - **Colour bound to shape, varied only symmetrically.** Petals carry a symmetric 2-colour alternation; the warm accent recolours whole star cores on a translationally-symmetric sub-lattice (`accentStride`), never scattered singletons. Proportion (≲5%) is taste → profile; symmetric placement is law → (todo: a `colorSymmetry` operator to enforce it automatically).
 
-Two honest caveats: the default `groutGap` (0.15) lands the wall-to-wall coverage proxy at ~1.0 (it would otherwise read high from off-canvas tile overhang); and `colorChord`'s single-hue-arc model **under-scores the warm accent** (off-arc) — accepted for v1, and `improve()` can't strip the accent because the palette isn't a tuning knob. The proportion-aware chord is on the todo.
+**Render-faithful metrics (2026-05-23).** The area operators measure what the renderer *draws*, not declared intent (after a `groutGap=0.15` render exposed three plan↔pixel-gap bugs at once):
+- `constructionGrammar` clips tile area to the frame (`effectiveArea` via the shared `clipToConvexRegion` resolver), so off-canvas overhang no longer inflates coverage — `groutGap` is the visually-correct ~0.05 with the standard band.
+- `colorChord` is **area-weighted** with a neutral-dominance balance term: a tiny off-arc accent barely dents it (the saffron accent no longer under-scores), while a cream-dominant field is penalised. Region-less line plans keep the old membership formula.
+- The grout is **cream by construction** (cream ground), so dark "bowtie" bleed cannot form — `cuerdaSeca` keeps its channel-uniformity job and the failure mode is gone structurally.
+- A dev-only `@resvg/resvg-js` **raster oracle** (`test/util/raster-oracle.ts`) gives pixel ground-truth: per-medium raster-agreement cross-checks + an **adversarial test class** (`test/adversarial.test.ts`) that asserts the old `groutGap=0.15` defect now scores low. Principle: `feedback_measure-rendered-reality-not-intent`. (`colorSymmetry`, to auto-enforce symmetric colour placement, remains a todo.)
 
 ## Layout
 
