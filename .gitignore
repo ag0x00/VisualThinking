@@ -50,3 +50,8 @@ mcp/package-lock.json
 mcp/*.tsbuildinfo
 mcp/coverage/
 mcp/.vitest-cache/
+
+# screensaver/ build artifacts + generated previews
+screensaver/web/dist/
+screensaver/package-lock.json
+screensaver/preview/
