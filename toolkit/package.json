@@ -10,7 +10,8 @@
     "gallery": "tsx src/scripts/render-gallery.ts"
   },
   "dependencies": {
-    "culori": "^4.0.1"
+    "culori": "^4.0.1",
+    "tactile-js": "^1.0.0"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
