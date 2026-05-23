@@ -1,6 +1,6 @@
 import type { RenderPlan } from "../render-plan";
 import type { FixDirection, Measurement, Operator } from "./types";
-import { polyArea } from "../geom";
+import { polyArea, effectiveArea } from "../geom";
 
 // Validates a tiling by coverage: sum of cell areas ÷ the design region area.
 // ≈1 = cells partition the region; <1 = gaps; >1 = overlap. This is a proxy —
@@ -14,7 +14,7 @@ export const constructionGrammarOperator: Operator<{ band: [number, number]; fal
     if (tiles.length === 0 || regionArea === 0) {
       return { value: 0, components: { tiles: tiles.length, coverage: 0 } };
     }
-    const sumCell = tiles.reduce((s, t) => s + polyArea(t.points), 0);
+    const sumCell = tiles.reduce((s, t) => s + effectiveArea(t.points, plan.region!), 0);
     const coverage = sumCell / regionArea;
     return { value: coverage, components: { coverage, tiles: tiles.length } };
   },

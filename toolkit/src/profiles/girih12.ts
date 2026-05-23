@@ -2,12 +2,12 @@ import type { AestheticProfile } from "../profile";
 
 // 12-fold girih glazed mosaic. periodicity (translational lattice) replaces the
 // centre-rotation `symmetry` operator, exactly as for truchet. constructionGrammar
-// now sees FULL coverage because the interstitial triangles are glazed tiles (not
-// background) — a region tagged `background` would silently dodge this check.
-// colorChord under-scores the warm accent (saffron is off the cool arc) — accepted
-// for v1; the fix (proportion/area-aware chord) is on the todo in
-// project_subsystem-trajectory.md. The palette is not a tuning knob, so improve()
-// cannot "fix" the chord by stripping the (intentional, symmetric) accent.
+// clips tile area to the frame (render-faithful), so the wall-to-wall overhang no
+// longer inflates coverage — default groutGap 0.05 lands ~0.90, standard band.
+// colorChord is area-weighted with a neutralCap balance term: the small symmetric
+// saffron accent barely dents the score, while a cream-dominant field (thick grout)
+// is penalised. The palette is not a tuning knob, so improve() cannot "fix" the
+// chord by stripping the (intentional, symmetric) accent.
 export const girih12Profile: AestheticProfile = {
   medium: "girih12",
   operators: [

@@ -14,7 +14,11 @@ export const SAMARKAND_7: Oklch[] = [
   { l: 0.50, c: 0.10, h: 50 },  // 6 sienna — (reserved for future symmetric role)
   { l: 0.62, c: 0.05, h: 135 }, // 7 sage — (reserved)
 ];
+// BG (deep-blue, idx 3) is currently unused: the background is the CREAM ground so
+// any inter-tile gap reads as cream channel — dark "bowtie" bleed is impossible at
+// any grout width. Deep-blue stays in SAMARKAND_7 for later use.
 const BG = 3, CREAM = 4, STAR = 0, PETAL_A = 1, PETAL_B = 2, TRI = 2, ACCENT = 5;
+void BG;
 
 export interface Girih12Params {
   bounds: { width: number; height: number };
@@ -32,7 +36,7 @@ export interface Girih12Params {
 export function defaultGirih12Params(): Girih12Params {
   return {
     bounds: { width: 800, height: 800 }, dodecaRadius: 70, contactAngle: 65,
-    groutGap: 0.15, channelWidth: 4, channelJitter: 0, latticeJitter: 0,
+    groutGap: 0.05, channelWidth: 4, channelJitter: 0, latticeJitter: 0,
     accentStride: 4, palette: SAMARKAND_7, rngSeed: 1,
   };
 }
@@ -54,7 +58,7 @@ export function generateGirih12(params: Girih12Params = defaultGirih12Params()):
   const inset = (pts: Vec2[]) => (groutGap > 0 ? scaleAbout(pts, centroid(pts), 1 - groutGap) : pts);
 
   const elements: Element[] = [
-    { kind: "polygon", role: "background", points: [[0, 0], [W, 0], [W, H], [0, H]], colorRef: BG },
+    { kind: "polygon", role: "background", points: [[0, 0], [W, 0], [W, H], [0, H]], colorRef: CREAM },
   ];
 
   // deterministic per-region channel width (uniform unless channelJitter > 0)
