@@ -35,6 +35,21 @@ export const OFF_ARC: Oklch[] = [
   { l: 0.30, c: 0.10, h: 120 },
 ];
 
+// 8-entry off-arc palette for the girih12 wrong-chord variant (SAMARKAND_7 is
+// 8 colours incl. an accent at index 5, so the 5-entry OFF_ARC would leave that
+// colorRef undefined). All hues off the cool 180–265 arc; the cream slot is made
+// chromatic so it is NOT hue-exempt.
+export const OFF_ARC_8: Oklch[] = [
+  { l: 0.45, c: 0.15, h: 30 },
+  { l: 0.62, c: 0.14, h: 110 },
+  { l: 0.72, c: 0.12, h: 330 },
+  { l: 0.30, c: 0.10, h: 120 },
+  { l: 0.95, c: 0.12, h: 30 }, // chromatic "cream" → NOT hue-exempt
+  { l: 0.78, c: 0.13, h: 60 },
+  { l: 0.50, c: 0.11, h: 350 },
+  { l: 0.62, c: 0.10, h: 100 },
+];
+
 export interface Variant {
   label: string;
   description: string;
@@ -98,6 +113,6 @@ export function girih12Variants(): Variant[] {
     { label: "broken-lattice", description: "dodecagons jittered off the grid (latticeJitter 0.2)", plan: generateGirih12({ ...d, latticeJitter: 0.2 }) },
     { label: "gappy-grout", description: "oversized grout (groutGap 0.25 → gaps)", plan: generateGirih12({ ...d, groutGap: 0.25 }) },
     { label: "uneven-channels", description: "cuerda-seca jittered (channelJitter 1.0)", plan: generateGirih12({ ...d, channelJitter: 1.0 }) },
-    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...girih12Good(), palette: OFF_ARC } },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...girih12Good(), palette: OFF_ARC_8 } },
   ];
 }

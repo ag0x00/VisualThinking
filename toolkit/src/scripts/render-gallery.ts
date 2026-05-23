@@ -16,6 +16,10 @@ import { truchetProfile } from "../profiles/truchet";
 import { truchetTuning } from "../tuning/truchet";
 import { generateTruchet, defaultTruchetParams } from "../generators/truchet";
 import { truchetGood, truchetVariants } from "../variants";
+import { girih12Profile } from "../profiles/girih12";
+import { girih12Tuning } from "../tuning/girih12";
+import { generateGirih12, defaultGirih12Params } from "../generators/girih12";
+import { girih12Good, girih12Variants } from "../variants";
 import type { RenderPlan } from "../render-plan";
 
 function entry(label: string, description: string, plan: RenderPlan, profile: AestheticProfile): GalleryEntry {
@@ -95,6 +99,22 @@ const improveTruchet = improvementGroup(
   truchetTuning,
 );
 
+const girih12: GalleryGroup = {
+  title: "Girih 12-fold (glazed mosaic)",
+  entries: [
+    entry("GOOD (target)", "12-fold star-and-rosette, Samarkand 7-colour, symmetric accents", girih12Good(), girih12Profile),
+    ...girih12Variants().map((x) => entry(x.label, x.description, x.plan, girih12Profile)),
+  ],
+};
+
+const improveGirih12 = improvementGroup(
+  "Improvement — girih12 (improve() on a real art medium)",
+  generateGirih12,
+  { ...defaultGirih12Params(), latticeJitter: 0.15, groutGap: 0.25 },
+  girih12Profile,
+  girih12Tuning,
+);
+
 mkdirSync("out", { recursive: true });
-writeFileSync("out/gallery.html", buildGalleryHtml([improveTruchet, truchet, improveIgp, improveTiling, tilework, strapwork]));
+writeFileSync("out/gallery.html", buildGalleryHtml([improveGirih12, girih12, improveTruchet, truchet, improveIgp, improveTiling, tilework, strapwork]));
 console.log("wrote out/gallery.html");
