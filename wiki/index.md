@@ -207,6 +207,9 @@ Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the compar
 
 ## Sources
 
+### Islamic geometric patterns
+- [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]]
+
 ### Tonal foundations
 - [[The Art Story - Chiaroscuro Tenebrism Sfumato]]
 - [[DailyArt - Tenebrism 101]]
