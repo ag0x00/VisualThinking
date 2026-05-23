@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { colorChordOperator } from "../../src/operators/color-chord";
 import type { RenderPlan, Oklch } from "../../src/render-plan";
+import { generateGirih12, defaultGirih12Params } from "../../src/generators/girih12";
 
 function planWith(palette: Oklch[]): RenderPlan {
   return {
@@ -34,5 +35,35 @@ describe("colorChordOperator", () => {
     const s = colorChordOperator.scoreAgainst(m, target);
     expect(s.score).toBeLessThan(0.6);
     expect(s.fix.axis).toBe("colorChord");
+  });
+});
+
+describe("colorChord is area-weighted on fill media", () => {
+  const areaTarget = { hueArc: { lo: 180, hi: 265 }, minLightnessSpread: 0.45, neutralCap: 0.25 };
+
+  it("a tiny off-arc accent barely dents the score (girih12 good)", () => {
+    const m = colorChordOperator.measure(generateGirih12(defaultGirih12Params()));
+    const s = colorChordOperator.scoreAgainst(m, areaTarget);
+    expect(s.score).toBeGreaterThan(0.85); // 3.75%-area saffron no longer tanks it
+  });
+
+  it("cream dominance (very thick grout → cream is ~half the frame) is penalised", () => {
+    // With the cream ground, thin/moderate grout is fine (no dark bleed); only genuine
+    // cream DOMINANCE is a defect. groutGap 0.30 → ~51% cream → balance term bites.
+    const dominant = colorChordOperator.scoreAgainst(colorChordOperator.measure(generateGirih12({ ...defaultGirih12Params(), groutGap: 0.30 })), areaTarget);
+    const good = colorChordOperator.scoreAgainst(colorChordOperator.measure(generateGirih12(defaultGirih12Params())), areaTarget);
+    expect(dominant.score).toBeLessThan(0.85);
+    expect(dominant.score).toBeLessThan(good.score); // monotone: more cream scores worse
+  });
+
+  it("falls back to membership for region-less line plans (finite, no crash)", () => {
+    const linePlan: RenderPlan = {
+      bounds: { width: 100, height: 100 },
+      symmetry: { group: "p6m", order: 6 },
+      palette: [{ l: 0.5, c: 0.1, h: 200 }],
+      elements: [{ kind: "segment", role: "line", points: [[0, 0], [10, 10]], strokeRef: 0 }],
+    };
+    const s = colorChordOperator.scoreAgainst(colorChordOperator.measure(linePlan), areaTarget);
+    expect(Number.isFinite(s.score)).toBe(true);
   });
 });
