@@ -5,16 +5,17 @@
 //   · directed tension (c-000068): acute angles thrust → the pattern tightens/relaxes
 //   · organic motion (c-000067): never constant-rate; θ is driven by noise-perturbed
 //     oscillation so it never perfectly repeats ("perfect repetition reads as dead").
-import { buildTiling, strapworkPlan, LINE_PALETTE, CLEAN_TYPES, type PolyTiling } from "../../toolkit/src/generators/polygonal";
+import { buildTiling, buildOctagonSquareTiling, strapworkPlan, LINE_PALETTE, CLEAN_TYPES, type PolyTiling } from "../../toolkit/src/generators/polygonal";
 import { renderToCanvas } from "../../toolkit/src/renderers/canvas";
 
 const params = new URLSearchParams(location.search);
-const TYPE = Number(params.get("type") ?? CLEAN_TYPES[1]); // tactile-js tiling index (default IH7)
-const SCALE = Number(params.get("scale") ?? 96);
-const PERIOD = Number(params.get("period") ?? 8); // seconds per breath (short while we tune)
-const CENTER = Number(params.get("center") ?? 40); // θ midpoint (deg)
-const AMP = Number(params.get("amp") ?? 16); // θ swing (deg): median ~56 ↔ acute ~24
-const LEVELS = Number(params.get("levels") ?? 2); // 1 = single-pass; 2+ = multi-level rosette
+const GRID = params.get("grid") ?? "octsq"; // "octsq" = dense 8-star girih; else a tactile-js type
+const TYPE = Number(params.get("type") ?? CLEAN_TYPES[1]); // tactile-js tiling index (when grid≠octsq)
+const SCALE = Number(params.get("scale") ?? 70);
+const PERIOD = Number(params.get("period") ?? 12); // seconds per breath
+const CENTER = Number(params.get("center") ?? 54); // θ midpoint — the 54° girih angle
+const AMP = Number(params.get("amp") ?? 12); // θ swing (deg) around the girih angle
+const LEVELS = Number(params.get("levels") ?? 1); // 1 = single-pass (nesting was the wrong direction; girih-tile intricacy TBD)
 const LINE_W = Number(params.get("line") ?? 1.5);
 const HUD = params.get("hud") !== "0"; // on by default while debugging
 
@@ -51,8 +52,11 @@ function rebuild(): void {
   canvas.style.width = `${cssW}px`;
   canvas.style.height = `${cssH}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
-  grid = buildTiling({ typeIndex: TYPE, bounds: { width: cssW, height: cssH }, scale: SCALE });
-  console.log(`rebuild · ${cssW}×${cssH} · tiling IH-index ${TYPE} · ${grid.polys.length} tiles`);
+  const bounds = { width: cssW, height: cssH };
+  grid = GRID === "octsq"
+    ? buildOctagonSquareTiling({ bounds, scale: SCALE })
+    : buildTiling({ typeIndex: TYPE, bounds, scale: SCALE });
+  console.log(`rebuild · ${cssW}×${cssH} · grid ${GRID} · ${grid.polys.length} tiles`);
 }
 
 const t0 = performance.now();

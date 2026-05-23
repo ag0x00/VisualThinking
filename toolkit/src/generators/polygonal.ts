@@ -95,6 +95,28 @@ export interface DecorateOpts {
   innerAngle?: number;   // contact angle for the inner level(s); defaults to the outer angle
 }
 
+// A periodic girih tiling: regular octagons on a square lattice with squares filling
+// the gaps (the 4.8.8 Archimedean tiling). Decorated at the 54° girih angle it gives
+// the classic dense interlocking 8-star girih. Unlike the decagonal girih (which is
+// inherently quasiperiodic — 10-fold can't tile a lattice), this repeats cleanly.
+export function buildOctagonSquareTiling(opts: { bounds: { width: number; height: number }; scale?: number }): PolyTiling {
+  const s = opts.scale ?? 64;
+  const R = s / (2 * Math.sin(Math.PI / 8)); // octagon circumradius
+  const D = s * (1 + Math.SQRT2);            // octagon centre spacing
+  const { width: W, height: H } = opts.bounds;
+  const polys: Vec2[][] = [];
+  const oct = (cx: number, cy: number): Vec2[] =>
+    Array.from({ length: 8 }, (_, k) => { const a = Math.PI / 8 + (k * Math.PI) / 4; return [cx + R * Math.cos(a), cy + R * Math.sin(a)] as Vec2; });
+  const sq = (cx: number, cy: number): Vec2[] => { const r = s / Math.SQRT2; return [[cx + r, cy], [cx, cy + r], [cx - r, cy], [cx, cy - r]]; };
+  for (let i = -1; i * D < W + D; i++) {
+    for (let j = -1; j * D < H + D; j++) {
+      polys.push(oct(i * D, j * D));
+      polys.push(sq(i * D + D / 2, j * D + D / 2));
+    }
+  }
+  return { polys, bounds: opts.bounds, region: rect(W, H), typeIndex: -1 };
+}
+
 // Decorate a static grid at one contact angle → a line-only RenderPlan.
 export function strapworkPlan(tiling: PolyTiling, contactAngle: number, opts: DecorateOpts = {}): RenderPlan {
   const palette = opts.palette ?? LINE_PALETTE;

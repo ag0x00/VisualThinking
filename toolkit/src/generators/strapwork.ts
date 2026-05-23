@@ -25,7 +25,6 @@ interface Ray {
 
 const sub = (p: Vec2, q: Vec2): Vec2 => [p[0] - q[0], p[1] - q[1]];
 const mid = (p: Vec2, q: Vec2): Vec2 => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-const dot = (p: Vec2, q: Vec2): number => p[0] * q[0] + p[1] * q[1];
 const norm = (p: Vec2): Vec2 => {
   const m = Math.hypot(p[0], p[1]) || 1;
   return [p[0] / m, p[1] / m];
@@ -34,10 +33,14 @@ const rotate = (v: Vec2, phi: number): Vec2 => {
   const c = Math.cos(phi), s = Math.sin(phi);
   return [v[0] * c - v[1] * s, v[0] * s + v[1] * c];
 };
-const centroidOf = (verts: Vec2[]): Vec2 => {
-  let x = 0, y = 0;
-  for (const v of verts) { x += v[0]; y += v[1]; }
-  return [x / verts.length, y / verts.length];
+// signed area > 0 ⇒ CCW winding (interior is to the LEFT of each directed edge)
+const isCCW = (verts: Vec2[]): boolean => {
+  let a = 0;
+  for (let i = 0; i < verts.length; i++) {
+    const [x0, y0] = verts[i], [x1, y1] = verts[(i + 1) % verts.length];
+    a += x0 * y1 - x1 * y0;
+  }
+  return a > 0;
 };
 
 // Forward intersection of two half-lines; null if parallel or behind either origin.
@@ -57,17 +60,18 @@ function rayHit(r1: Ray, r2: Ray): { p: Vec2; t: number; s: number } | null {
 export function inferStrapworkDetailed(verts: Vec2[], contactAngleDeg: number): { segments: Segment[]; crossings: Vec2[] } {
   const n = verts.length;
   if (n < 3) return { segments: [], crossings: [] };
-  const c = centroidOf(verts);
+  const ccw = isCCW(verts);
   const offFromNormal = Math.PI / 2 - (contactAngleDeg * Math.PI) / 180;
 
-  // two rays per edge midpoint, fired into the tile
+  // two rays per edge midpoint, fired into the tile. The interior side is fixed by
+  // winding (left of each directed edge for CCW) — correct even for non-convex tiles
+  // like the bowtie, where a centroid-direction test would fail at reflex corners.
   const rays: Ray[] = [];
   for (let i = 0; i < n; i++) {
     const a = verts[i], b = verts[(i + 1) % n];
     const m = mid(a, b);
     const along = norm(sub(b, a));
-    let inward: Vec2 = [-along[1], along[0]];        // perpendicular
-    if (dot(inward, sub(c, m)) < 0) inward = [-inward[0], -inward[1]]; // ensure it points inward
+    const inward: Vec2 = ccw ? [-along[1], along[0]] : [along[1], -along[0]];
     rays.push({ o: m, d: rotate(inward, offFromNormal) });
     rays.push({ o: m, d: rotate(inward, -offFromNormal) });
   }
