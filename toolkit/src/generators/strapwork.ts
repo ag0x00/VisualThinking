@@ -51,9 +51,12 @@ function rayHit(r1: Ray, r2: Ray): { p: Vec2; t: number; s: number } | null {
   return { p: [r1.o[0] + t * r1.d[0], r1.o[1] + t * r1.d[1]], t, s };
 }
 
-export function inferStrapwork(verts: Vec2[], contactAngleDeg: number): Segment[] {
+// The full inference: the strands PLUS the interior crossing points where paired
+// rays met. The crossings are the seed for a second (inner) level — they form a
+// ring inside the cell that can itself be decorated, giving multi-level depth.
+export function inferStrapworkDetailed(verts: Vec2[], contactAngleDeg: number): { segments: Segment[]; crossings: Vec2[] } {
   const n = verts.length;
-  if (n < 3) return [];
+  if (n < 3) return { segments: [], crossings: [] };
   const c = centroidOf(verts);
   const offFromNormal = Math.PI / 2 - (contactAngleDeg * Math.PI) / 180;
 
@@ -80,11 +83,17 @@ export function inferStrapwork(verts: Vec2[], contactAngleDeg: number): Segment[
   cands.sort((x, y) => x.cost - y.cost);
 
   const used = new Array<boolean>(rays.length).fill(false);
-  const segs: Segment[] = [];
+  const segments: Segment[] = [];
+  const crossings: Vec2[] = [];
   for (const { i, j, p } of cands) {
     if (used[i] || used[j]) continue;
     used[i] = used[j] = true;
-    segs.push({ a: rays[i].o, b: p }, { a: p, b: rays[j].o });
+    segments.push({ a: rays[i].o, b: p }, { a: p, b: rays[j].o });
+    crossings.push(p);
   }
-  return segs;
+  return { segments, crossings };
+}
+
+export function inferStrapwork(verts: Vec2[], contactAngleDeg: number): Segment[] {
+  return inferStrapworkDetailed(verts, contactAngleDeg).segments;
 }

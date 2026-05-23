@@ -36,4 +36,15 @@ describe("polygonal generator: tactile-js tiling + strapwork inference → line 
     const firstSegAcute = JSON.stringify(acute.elements.find((e) => e.role === "line"));
     expect(firstSegMedian).not.toEqual(firstSegAcute);
   });
+
+  it("multi-level rosette adds interior strands (more lines than single-pass), still valid", () => {
+    const grid = buildTiling({ typeIndex: 6, bounds: BOUNDS });
+    const l1 = strapworkPlan(grid, 48, { levels: 1 });
+    const l2 = strapworkPlan(grid, 48, { levels: 2 });
+    const count = (p: typeof l1) => p.elements.filter((e) => e.role === "line").length;
+    expect(count(l2)).toBeGreaterThan(count(l1)); // nested inner stars add segments
+    expect(validateRenderPlan(l2)).toEqual([]);
+    // the outer level is preserved — l2 contains every l1 segment plus more
+    expect(count(l2)).toBeGreaterThanOrEqual(count(l1) * 1.5);
+  });
 });

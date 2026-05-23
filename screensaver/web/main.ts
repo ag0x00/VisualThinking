@@ -11,10 +11,12 @@ import { renderToCanvas } from "../../toolkit/src/renderers/canvas";
 const params = new URLSearchParams(location.search);
 const TYPE = Number(params.get("type") ?? CLEAN_TYPES[1]); // tactile-js tiling index (default IH7)
 const SCALE = Number(params.get("scale") ?? 96);
-const PERIOD = Number(params.get("period") ?? 26); // seconds per breath
-const CENTER = Number(params.get("center") ?? 42); // θ midpoint (deg)
-const AMP = Number(params.get("amp") ?? 12); // θ swing (deg): median ~54 ↔ acute ~30
+const PERIOD = Number(params.get("period") ?? 8); // seconds per breath (short while we tune)
+const CENTER = Number(params.get("center") ?? 40); // θ midpoint (deg)
+const AMP = Number(params.get("amp") ?? 16); // θ swing (deg): median ~56 ↔ acute ~24
+const LEVELS = Number(params.get("levels") ?? 2); // 1 = single-pass; 2+ = multi-level rosette
 const LINE_W = Number(params.get("line") ?? 1.5);
+const HUD = params.get("hud") !== "0"; // on by default while debugging
 
 const canvas = document.getElementById("c") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
@@ -40,26 +42,43 @@ function thetaAt(tSec: number): number {
 }
 
 let grid: PolyTiling;
+let cssW = 0, cssH = 0;
 function rebuild(): void {
   const dpr = window.devicePixelRatio || 1;
-  const w = window.innerWidth, h = window.innerHeight;
-  canvas.width = Math.round(w * dpr);
-  canvas.height = Math.round(h * dpr);
-  canvas.style.width = `${w}px`;
-  canvas.style.height = `${h}px`;
+  cssW = window.innerWidth; cssH = window.innerHeight;
+  canvas.width = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  canvas.style.width = `${cssW}px`;
+  canvas.style.height = `${cssH}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
-  grid = buildTiling({ typeIndex: TYPE, bounds: { width: w, height: h }, scale: SCALE });
+  grid = buildTiling({ typeIndex: TYPE, bounds: { width: cssW, height: cssH }, scale: SCALE });
+  console.log(`rebuild · ${cssW}×${cssH} · tiling IH-index ${TYPE} · ${grid.polys.length} tiles`);
 }
 
 const t0 = performance.now();
+let frames = 0, lastFpsT = t0, fps = 0;
 function frame(): void {
-  const tSec = (performance.now() - t0) / 1000;
-  const plan = strapworkPlan(grid, thetaAt(tSec), LINE_PALETTE);
-  renderToCanvas(plan, ctx, { lineWidth: LINE_W });
-  requestAnimationFrame(frame);
+  try {
+    const now = performance.now();
+    const tSec = (now - t0) / 1000;
+    const theta = thetaAt(tSec);
+    const plan = strapworkPlan(grid, theta, { palette: LINE_PALETTE, levels: LEVELS });
+    renderToCanvas(plan, ctx, { lineWidth: LINE_W });
+
+    frames++;
+    if (now - lastFpsT >= 500) { fps = Math.round((frames * 1000) / (now - lastFpsT)); frames = 0; lastFpsT = now; }
+    if (HUD) {
+      ctx.fillStyle = "#c0392b";
+      ctx.font = "16px ui-monospace, monospace";
+      ctx.fillText(`θ ${theta.toFixed(1)}°   t ${tSec.toFixed(1)}s   ${fps} fps`, 14, 24);
+    }
+  } catch (err) {
+    console.error("frame error:", err);
+  }
+  requestAnimationFrame(frame); // always reschedule, even on error
 }
 
 window.addEventListener("resize", rebuild);
 rebuild();
 requestAnimationFrame(frame);
-console.log(`θ-breath · tiling IH-index ${TYPE} · breath ${CENTER}±${AMP}° over ${PERIOD}s`);
+console.log(`θ-breath start · breath ${CENTER}±${AMP}° over ${PERIOD}s · levels ${LEVELS} · hud=${HUD}`);
