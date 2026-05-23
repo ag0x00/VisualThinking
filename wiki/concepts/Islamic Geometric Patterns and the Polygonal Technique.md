@@ -174,7 +174,7 @@ For wiki users producing IGP-style work:
 
 ## Related
 
-- [[Movement Rhythm and Repetition]] (parent stub) · [[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Op-Art and Cross-Modal Rhythm]] · [[Cultural and Symbolic Iconography]] · [[Non-Western Iconographic Systems]] · [[Multilingual Typography]]
+- [[Movement Rhythm and Repetition]] (parent stub) · [[The Variation Principle in Islamic Geometric Patterns]] · [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]] · [[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Op-Art and Cross-Modal Rhythm]] · [[Cultural and Symbolic Iconography]] · [[Non-Western Iconographic Systems]] · [[Multilingual Typography]]
 
 ## Sources
 
