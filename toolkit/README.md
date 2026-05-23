@@ -58,6 +58,16 @@ A **tuning map** binds each `fix.axis` to one generator knob: `{ param, kind, st
 
 The `truchet` generator + profile fill the canvas with a periodic arc-tile grid — a deliberately different geometry from the centred IGP/tiling generators, used to test that the spine is medium-agnostic. The result: it took **one new operator** (`periodicity`, translational lattice self-match, replacing centre-rotation `symmetry`) and a new generator/profile/tuning map. `constructionGrammar`, `lineContinuity`, `colorChord`, the composer, and `improve()` were **reused unchanged**. The boundary that keeps the toolkit from accreting bias is in `../CLAUDE.md` → Engineering discipline: operators *measure* (taste-free), profiles *set targets* (project-owned taste), and a measurement belongs in core only if its property is transferable across unrelated mediums.
 
+## A fourth medium — Girih 12-fold mosaic (actual IGP art)
+
+`generateGirih12` builds a 12-fold star-and-rosette **glazed mosaic** (the 3.12.12 truncated-hexagonal tiling decorated by the polygonal technique), coloured from a dedicated 7-colour Samarkand chord (`SAMARKAND_7`): cobalt stars, turquoise/light-turquoise petals, glazed triangular interstices, cream cuerda-seca channels, and a **saffron warm accent on a symmetric sub-lattice**. Scored by `periodicity + constructionGrammar + cuerdaSeca + colorChord` — **zero new operators**; the spine is untouched again.
+
+It is also the first generator built to the wiki's **ceramic craft invariants** (`wiki/concepts/Islamic Geometric Patterns and the Polygonal Technique.md` → "Ceramic tilework: hard invariants"), after an earlier prototype violated them:
+- **No empty gaps.** Interstitial triangles are *glazed tiles*, not background. Tagging them `background` would have left illogical holes *and* silently defeated `constructionGrammar`'s coverage check (background is excluded from coverage) — so the rule is now enforced by a measurement the generator can't dodge.
+- **Colour bound to shape, varied only symmetrically.** Petals carry a symmetric 2-colour alternation; the warm accent recolours whole star cores on a translationally-symmetric sub-lattice (`accentStride`), never scattered singletons. Proportion (≲5%) is taste → profile; symmetric placement is law → (todo: a `colorSymmetry` operator to enforce it automatically).
+
+Two honest caveats: the default `groutGap` (0.15) lands the wall-to-wall coverage proxy at ~1.0 (it would otherwise read high from off-canvas tile overhang); and `colorChord`'s single-hue-arc model **under-scores the warm accent** (off-arc) — accepted for v1, and `improve()` can't strip the accent because the palette isn't a tuning knob. The proportion-aware chord is on the todo.
+
 ## Layout
 
 ```
@@ -66,11 +76,11 @@ src/
   geom.ts             # shared polygon helpers (area, centroid, scale)
   operators/          # symmetry · complexity · color-chord · construction-grammar · line-continuity · cuerda-seca · tile-complexity · periodicity
   profile.ts          # AestheticProfile type (operator bindings + targets)
-  profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells) · truchet.ts (periodic)
+  profiles/           # timurid-igp.ts (lines) · timurid-tiling.ts (cells) · truchet.ts (periodic) · girih12.ts (12-fold mosaic)
   compose.ts          # runs a profile against a plan → composite + fixes
-  generators/         # igp.ts (line strapwork) · tiling.ts (filled cells) · truchet.ts (wall-to-wall arcs)
+  generators/         # igp.ts (line strapwork) · tiling.ts (filled cells) · truchet.ts (wall-to-wall arcs) · girih12.ts (12-fold glazed mosaic)
   tuning.ts           # TuningBinding/TuningMap + applyNudge (fix.axis → knob)
-  tuning/             # igp.ts · tiling.ts · truchet.ts (per-generator fix→param maps)
+  tuning/             # igp.ts · tiling.ts · truchet.ts · girih12.ts (per-generator fix→param maps)
   improve.ts          # greedy generate→score→fix→regenerate loop
   renderers/          # svg.ts (single) · gallery.ts (grouped scorecards)
   variants.ts         # good + deliberate failures (line + tile), shared by test + gallery
