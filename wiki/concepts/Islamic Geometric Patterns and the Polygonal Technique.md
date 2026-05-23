@@ -51,6 +51,9 @@ The *same underlay* can produce *very different* patterns depending on the patte
 
 This is **deeply parameterizable**: (underlay tessellation, pattern-line rule) → pattern. For a generative system, both axes are tractable.
 
+> [!note] Computational generation strategies + the variation knob
+> Beyond Bonner's *historical* methods, the review literature ([[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]]) groups IGP *generation* into three strategies: the **radial girih** approach (star-in-circle, rays from the centre), the **polygon-in-contact** (Hankin) method — the natural algorithmic starting point, used by the toolkit's strapwork inference — and **symmetry-group** methods. Crucially, the *pattern-line rule* is mostly one scalar: the **contact angle**. Sweeping it carries a single tiling through a whole family of patterns (acute/median/obtuse) and, varied continuously, makes patterns **flow into each other**. See [[The Variation Principle in Islamic Geometric Patterns]].
+
 ## Famous examples
 
 - **Alhambra (Granada, 14th century)**: extensive tile decoration covering most of the 17 wallpaper groups in addition to IGP-specific designs.
