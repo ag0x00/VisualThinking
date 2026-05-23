@@ -69,15 +69,13 @@ export function measureFromRaster(plan: RenderPlan, px = 256): RasterMeasurement
   return { coverage: total === 0 ? 0 : 1 - bgCount / total, areaShareByHex, bgHex };
 }
 
-// Total pixel share of colours OFF the [lo,hi] hue arc (chroma ≥ 0.03) — visible
-// "wrong"/off-arc area, used to cross-check colorChord against the render.
-export function offArcShare(m: RasterMeasurement, palette: Oklch[], lo: number, hi: number): number {
-  const inArcHexes = palette
-    .filter((c) => c.c < 0.03 || (((c.h % 360) + 360) % 360 >= lo && ((c.h % 360) + 360) % 360 <= hi))
-    .map(hexOf);
-  let off = 0;
-  for (const [hex, share] of Object.entries(m.areaShareByHex)) {
-    if (!inArcHexes.some((h) => nearHex(hex, h, 12))) off += share;
+// Pixel share of a specific palette colour (robust to antialiasing via tol) —
+// used to cross-check a colour's actual rendered area against the budget/intent.
+export function shareOfPaletteColor(m: RasterMeasurement, c: Oklch, tol = 14): number {
+  const want = hexOf(c);
+  let share = 0;
+  for (const [hex, s] of Object.entries(m.areaShareByHex)) {
+    if (nearHex(hex, want, tol)) share += s;
   }
-  return off;
+  return share;
 }
