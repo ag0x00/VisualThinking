@@ -1,6 +1,7 @@
 import { generateIgp, defaultIgpParams } from "./generators/igp";
 import { generateTiling, defaultTilingParams } from "./generators/tiling";
 import { generateTruchet, defaultTruchetParams } from "./generators/truchet";
+import { generateGirih12, defaultGirih12Params } from "./generators/girih12";
 import type { Oklch, RenderPlan, Vec2 } from "./render-plan";
 
 export function goodPlan(): RenderPlan {
@@ -81,5 +82,22 @@ export function truchetVariants(): Variant[] {
     { label: "gappy-grid", description: "cells scaled 0.8 (gaps)", plan: generateTruchet({ ...d, cellScale: 0.8 }) },
     { label: "disconnected-arcs", description: "arcs retracted from edges (arcGap 0.4)", plan: generateTruchet({ ...d, arcGap: 0.4 }) },
     { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...truchetGood(), palette: OFF_ARC } },
+  ];
+}
+
+export function girih12Good(): RenderPlan {
+  return generateGirih12(defaultGirih12Params());
+}
+
+// 12-fold girih deliberate failures, one per profile axis. broken-lattice also
+// breaks triangle dedup (cells drift apart), so coverage rises too — but
+// periodicity has equal weight and collapses harder, so it stays the top fix.
+export function girih12Variants(): Variant[] {
+  const d = defaultGirih12Params();
+  return [
+    { label: "broken-lattice", description: "dodecagons jittered off the grid (latticeJitter 0.2)", plan: generateGirih12({ ...d, latticeJitter: 0.2 }) },
+    { label: "gappy-grout", description: "oversized grout (groutGap 0.25 → gaps)", plan: generateGirih12({ ...d, groutGap: 0.25 }) },
+    { label: "uneven-channels", description: "cuerda-seca jittered (channelJitter 1.0)", plan: generateGirih12({ ...d, channelJitter: 1.0 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...girih12Good(), palette: OFF_ARC } },
   ];
 }
