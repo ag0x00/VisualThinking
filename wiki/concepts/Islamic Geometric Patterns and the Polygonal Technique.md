@@ -152,31 +152,6 @@ The composer (`toolkit/src/compose.ts`) runs a profile's operators against a ren
 
 **Still open:** Perceive remains thin (the *why* of IGP's appeal — infinite/divine connotation, fine detail reading as organic — is not yet operationalised). And the loop is open-ended: the `fixes` are not yet wired back into the generators (the `improve()` step is the next build).
 
-## Implementation landscape (added 2026-05-18)
-
-Per [[Research - IGP Library Landscape 2026-05-18]] — a 4-parallel-subagent build-phase audit triggered when the toolkit-screensaver brainstorm exposed that the wiki had concept-depth but no tool-depth for IGP generation.
-
-**Top candidates for porting / depending**:
-
-- **[[tactile-js]]** (Craig Kaplan, BSD-3, ~240 stars) — canonical academic library. Covers 81 of 93 isohedral tiling types with edge-shape (J/U/S/I) parameterization. Port the math into the toolkit.
-- **[[wallpaper-groups]]** (npm, MIT) — 15 of 17 wallpaper-group affine transform tables. Pragmatic foundation for the repetition layer.
-- **[[Alhambra]]** (pierrebai, C++/Qt, GPL-2.0) — niche for integration (wrong language, viral license), first-class for math borrowing: port `infer.h` (Hankin/Kaplan polygon-in-contact), `rosette.h` (Lee 1995 rosette for 8/12-fold local motifs), `inflation_tiling.h` (Lu-Steinhardt-style substitution) from Kaplan's Bridges 2000 paper (algorithms predate the GPL code; legally clean route).
-- **[[Alzulejo]]** (npm, MIT) — niche; lift two algorithms verbatim: `polygon.svelte.ts` (Hankin contact-angle, ~64 LOC) and `rosette.svelte.ts` (PlanarGraph class for "discard underlay, keep line network", ~384 LOC).
-- **[[PlotBoilerplate]]** (IkarosKappler, npm, MIT, TS, active 2026) — modern geometry substrate; pending follow-up evaluation as a renderer base.
-
-**Significant gaps — no library covers**:
-
-- Cuerda-seca line rendering (cream channel between glaze cells with double-stroke compositing)
-- Procedural glaze imperfections (per-cell noise gradient, edge bleed, micro-rotation jitter, soft Lambertian shading)
-- OKLCH palette tuned to historical chord (e.g., Samarkand cobalt-turquoise-saffron — see [[OKLCH Pair-Relation Classifier]] c-000211)
-- Animation timeline on symmetry-group orbits
-- Bonner's 5 girih tiles as first-class primitives with semantic decoration overlays — no maintained JS implementation exists
-- Quasi-crystalline self-similar inflation (Lu-Steinhardt Fig. 3 D/E)
-
-**Recommendation**: port the math, depend on nothing. Specifically — extract `tactile-js`'s isohedral classification (BSD-3), `wallpaper-groups`'s transform tables (MIT), Alzulejo's polygon-in-contact + planar-graph (MIT), Lee 1995 rosette and Lu-Steinhardt inflation from the Kaplan / Lu-Steinhardt papers. Use Alhambra's `.tiling` data files (reverse-engineered to JSON) as visual-regression test oracle.
-
-**Workflow lessons surfaced by this audit** (see [[Research - IGP Library Landscape 2026-05-18]] for the full retrospective): `wiki_orient` under-surfaces named-tradition terms (workaround: pair with `wiki_search` keyword); the IGP page was research-depth not implementation-depth (this section addresses that); npm-search audit must run before designing, not just before cataloging.
-
 ## Connection to the wiki's priorities
 
 | Priority | Application |
