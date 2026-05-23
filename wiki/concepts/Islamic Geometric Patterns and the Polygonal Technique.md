@@ -81,7 +81,15 @@ What makes Islamic patterns *work* aesthetically (per Bonner and other scholars)
 - **Star patterns**: 6, 8, 10, 12-fold stars are the most-common motifs; their symmetry organizes the pattern
 - **Interlacing strapwork**: lines pass over and under each other, creating woven appearance
 - **Multi-level / self-similar patterns**: smaller pattern-figures fit inside larger ones at the same symmetry; some patterns have multiple recursive levels
-- **Color is secondary** in most classical IGPs — the geometry carries the work; color was added in tile and ceramic but not generally in the underlying pattern-design
+- **Color is secondary** *in line-pattern design* — the geometry carries the work; color was added in tile and ceramic but not generally in the underlying pattern-design. **This does not hold for ceramic tilework** (see invariants below), where color is rigidly governed.
+
+## Ceramic tilework: hard invariants (color + coverage)
+
+These are **laws of the executed ceramic medium**, distinct from the looser conventions of line-pattern design. They are the kind of craft-rule a generator must honour to read as authentic — and the kind that, if absent, makes output look subtly wrong to anyone who knows the tradition. (Added 2026-05-23 after a girih12 generator violated both.)
+
+- **Coverage is total — there are no empty gaps.** Every region of the plane is a glazed tile; the cuerda-seca channel/grout *separates* tiles but never surrounds an *unfilled* hole. "Background showing through" between motifs is illogical in fired tilework. → operationalised by `constructionGrammar` (cells partition the region, no gaps/overlap). A region modelled as `background` rather than as a tile **defeats this check** — model interstitial triangles as tiles, not ground.
+- **Color is bound to shape-class, and any within-class variation is symmetric.** A shape class (star / kite / petal / triangle) is either a single constant color, **or** its tiles are colored by an assignment that *respects the pattern's symmetry group* — e.g. alternating kites around a 12-star (a symmetric 2-coloring), never individually/randomly recolored tiles. Random single-tile recoloring reads as a defect, not as an accent. → the principled enforcement is a **color-symmetry-equivariance** check (colors commute with the symmetry group); this is a transferable property (any rosette/wallpaper pattern), so it is a candidate *core* operator, not IGP-specific. **Currently unbuilt — todo.**
+- **Accents follow the same symmetry law.** A warm-accent tier (proportion is taste — historically ≲5% of frame, see the Samarkand 7-color chord) is still placed *symmetrically* — a coherent symmetric subset of a shape class, never scattered singletons. Proportion = taste (profile); symmetric placement = law (operator).
 
 ## Computable handles
 
