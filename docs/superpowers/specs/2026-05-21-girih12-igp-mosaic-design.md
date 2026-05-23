@@ -25,7 +25,7 @@ Each dodecagon is **decorated** into a 12-pointed star by the polygonal techniqu
 - a central **12-pointed star** region, and
 - **12 petal/kite** regions between the star arms and the dodecagon edges.
 
-The interstitial **triangles** are their own tile regions.
+The interstitial **triangles** are their own **glazed tile regions** — *not* background. (Correction 2026-05-23: leaving them as ground produced illogical empty "holes"; fired tilework never has gaps. Glazing them also restores `constructionGrammar`'s full-coverage check, which a `background` region silently defeats. See the wiki IGP page → "Ceramic tilework: hard invariants" and [[feedback_extract-rules-before-generating]].) Triangle apex is radial: on each odd-`k` dodecagon edge (the triangle-bordering edges at `k·30°`, `k` odd), the equilateral apex sits at radius `a + (s·√3/2)` where `s = 2R·sin(π/12)`; each triangle is shared by 3 dodecagons, deduplicated by rounded centroid.
 
 `latticeJitter > 0` displaces each dodecagon-cluster off its lattice point (degrades periodicity); `groutGap > 0` insets every region toward its centroid (dark channels between glazes — the real-tile look; reduces coverage); `channelJitter > 0` perturbs per-region channel widths (degrades cuerda-seca).
 
@@ -46,7 +46,7 @@ The interstitial **triangles** are their own tile regions.
 | 6 | sienna | l0.50 c0.10 h50 | **accent (<5%)** |
 | 7 | sage | l0.62 c0.05 h135 | **accent (<5%)** |
 
-**Accent placement:** the three accents are applied *only* to the small inner core of each star and a sparse, deterministic subset of triangles, area-budgeted so total accent coverage stays **< 5%**. The generator exposes `accentBudget` (default 0.05) and skips accenting once the budget is hit.
+**Accent placement (corrected 2026-05-23 — symmetric, not scattered):** color is bound to shape-class, and any within-class variation must respect the pattern's symmetry — never random single tiles. So: **petals carry a symmetric 2-colour alternation** by edge-parity (idx 1 / idx 2 — "every other kite"), and **the warm accent recolours whole star cores on a sub-lattice** (`accentStride`, default 4 → dodecagons where `i mod stride == 0 && j mod stride == 0`). That sub-lattice is translationally symmetric, so the accent reads as a deliberate secondary pattern, not chaos. Proportion stays the taste target (≲5% of frame; `stride 4` measures ~3.75% in the 800² prototype). v1 uses one warm accent (saffron); sienna/sage remain in the chord for future symmetric roles. (Earlier `accentBudget`/hash-scatter approach removed — it violated the symmetry law; see [[feedback_extract-rules-before-generating]].)
 
 **Why the accents enrich** (per `Color Harmony` c-000017, `Complementary Colors` c-000061, `Arnheim's Color Syntax` c-000060): unequal proportion (dominant cool field : subordinate cream : tiny warm accent ≈ 60-30-10) reads as *composed* rather than *filled*; the warm accent is near-complementary to the cool ground → maximal chromatic vibrancy at its boundary; and a small high-chroma spot becomes a focal center of visual weight in an otherwise even tessellation. The < 5% budget is what makes it punctuation rather than a competing system.
 
