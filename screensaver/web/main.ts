@@ -11,13 +11,15 @@ import { renderToCanvas } from "../../toolkit/src/renderers/canvas";
 const params = new URLSearchParams(location.search);
 const GRID = params.get("grid") ?? "dod12"; // "dod12" = 12-star girih · "octsq" = 8-star · else a tactile-js type
 const TYPE = Number(params.get("type") ?? CLEAN_TYPES[1]); // tactile-js tiling index (when grid≠octsq)
-const SCALE = Number(params.get("scale") ?? 70);
-const PERIOD = Number(params.get("period") ?? 12); // seconds per breath
-const CENTER = Number(params.get("center") ?? 54); // θ midpoint — the 54° girih angle
-const AMP = Number(params.get("amp") ?? 12); // θ swing (deg) around the girih angle
+const SCALE = Number(params.get("scale") ?? 84);
+const PERIOD = Number(params.get("period") ?? 14); // seconds per breath
+// Breath stays low-to-mid: at high θ the central star balloons into a huge empty motif
+// that dominates the field (boring). [39,55] keeps every motif modest.
+const CENTER = Number(params.get("center") ?? 47); // θ midpoint
+const AMP = Number(params.get("amp") ?? 8); // θ swing → θ ∈ [39, 55]
 const LEVELS = Number(params.get("levels") ?? 1); // 1 = single-pass (nesting was the wrong direction; girih-tile intricacy TBD)
 const LINE_W = Number(params.get("line") ?? 1.5);
-const HUD = params.get("hud") !== "0"; // on by default while debugging
+const HUD = params.get("hud") === "1"; // opt-in (debug)
 
 const canvas = document.getElementById("c") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
