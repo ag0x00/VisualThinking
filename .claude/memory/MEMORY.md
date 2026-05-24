@@ -1,5 +1,7 @@
 # Memory index for VisualThinking
 
+- [Girih line-art screensaver: build state](project_girih-screensaver-state.md) — **READ FIRST for current screensaver work.** Dense interlocking-star girih (8/12-fold), travelling-wave θ field on a fixed grid, per-edge-angle continuity. OPEN: wave reads static (amp too small / morph-vs-discrete-replacement question). Craft rules: intricacy = more tiles not nesting; girih decoration = PIC@54°/edge; decagonal = quasiperiodic
+
 - [Programmability principle for wiki pages](feedback_programmability-principle.md) — only create pages for content that translates to a rule/metric/constraint; people don't get pages
 - [Operational readiness standard (Perceive/Build/Evaluate)](feedback_operational-page-standard.md) — **strengthens the programmability principle**: every concept page must equip Perceive + Build + Evaluate (incl. critiquing external images with code/prompt fixes), or declare the gap and queue targeted autoresearch. Breadth-coverage produced superficial pages; the new bar is operational depth-for-use
 - [Operational-readiness rollout: Option C](project_operational-readiness-rollout.md) — decision 2026-05-19: triage-map concept pages on P/B/E → ranked gap registry → build-and-fill. **Triage DONE 2026-05-19**: registry at `wiki/meta/Operational Readiness Registry.md`; Evaluate is the systemic gap; branding most under-operationalized; build-and-fill is next
