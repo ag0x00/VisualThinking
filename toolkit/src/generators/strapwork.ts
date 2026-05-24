@@ -57,11 +57,15 @@ function rayHit(r1: Ray, r2: Ray): { p: Vec2; t: number; s: number } | null {
 // The full inference: the strands PLUS the interior crossing points where paired
 // rays met. The crossings are the seed for a second (inner) level — they form a
 // ring inside the cell that can itself be decorated, giving multi-level depth.
-export function inferStrapworkDetailed(verts: Vec2[], contactAngleDeg: number): { segments: Segment[]; crossings: Vec2[] } {
+// contactAngle is either one angle for the whole tile, or one angle PER EDGE.
+// Per-edge angles enable a spatially-varying field (a travelling wave, a gradient)
+// while preserving strand continuity: an edge's angle is a function of its midpoint,
+// so the two cells sharing that edge compute the same angle and stay joined.
+export function inferStrapworkDetailed(verts: Vec2[], contactAngle: number | number[]): { segments: Segment[]; crossings: Vec2[] } {
   const n = verts.length;
   if (n < 3) return { segments: [], crossings: [] };
   const ccw = isCCW(verts);
-  const offFromNormal = Math.PI / 2 - (contactAngleDeg * Math.PI) / 180;
+  const angleOf = (i: number): number => (typeof contactAngle === "number" ? contactAngle : contactAngle[i]);
 
   // two rays per edge midpoint, fired into the tile. The interior side is fixed by
   // winding (left of each directed edge for CCW) — correct even for non-convex tiles
@@ -72,8 +76,9 @@ export function inferStrapworkDetailed(verts: Vec2[], contactAngleDeg: number): 
     const m = mid(a, b);
     const along = norm(sub(b, a));
     const inward: Vec2 = ccw ? [-along[1], along[0]] : [along[1], -along[0]];
-    rays.push({ o: m, d: rotate(inward, offFromNormal) });
-    rays.push({ o: m, d: rotate(inward, -offFromNormal) });
+    const off = Math.PI / 2 - (angleOf(i) * Math.PI) / 180;
+    rays.push({ o: m, d: rotate(inward, off) });
+    rays.push({ o: m, d: rotate(inward, -off) });
   }
 
   // candidate pairings by ascending path length (greedy least-length inference)
@@ -98,6 +103,6 @@ export function inferStrapworkDetailed(verts: Vec2[], contactAngleDeg: number): 
   return { segments, crossings };
 }
 
-export function inferStrapwork(verts: Vec2[], contactAngleDeg: number): Segment[] {
-  return inferStrapworkDetailed(verts, contactAngleDeg).segments;
+export function inferStrapwork(verts: Vec2[], contactAngle: number | number[]): Segment[] {
+  return inferStrapworkDetailed(verts, contactAngle).segments;
 }

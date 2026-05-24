@@ -174,6 +174,30 @@ export function strapworkPlan(tiling: PolyTiling, contactAngle: number, opts: De
   };
 }
 
+// Decorate with a SPATIAL contact-angle field: each edge's angle = angleAt(its
+// midpoint). Shared edges have one midpoint → both cells agree → strands stay joined.
+// This is the tile-replacement / travelling-wave path (the angle a function of
+// position + time, evaluated per frame). Single-pass only.
+export function strapworkPlanField(
+  tiling: PolyTiling,
+  angleAt: (midpoint: Vec2) => number,
+  palette: Oklch[] = LINE_PALETTE
+): RenderPlan {
+  const elements: Element[] = [
+    { kind: "polygon", role: "background", points: rect(tiling.bounds.width, tiling.bounds.height), colorRef: 1 },
+  ];
+  for (const poly of tiling.polys) {
+    const angles = poly.map((p, i) => {
+      const q = poly[(i + 1) % poly.length];
+      return angleAt([(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]);
+    });
+    for (const s of inferStrapwork(poly, angles)) {
+      elements.push({ kind: "segment", points: [s.a, s.b], role: "line", strokeRef: 0 });
+    }
+  }
+  return { bounds: tiling.bounds, symmetry: { group: "p6m" }, palette, elements, region: tiling.region };
+}
+
 export function generatePolygonal(opts: {
   typeIndex: number;
   contactAngle: number;

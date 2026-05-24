@@ -5,8 +5,9 @@
 //   · directed tension (c-000068): acute angles thrust → the pattern tightens/relaxes
 //   · organic motion (c-000067): never constant-rate; θ is driven by noise-perturbed
 //     oscillation so it never perfectly repeats ("perfect repetition reads as dead").
-import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlan, LINE_PALETTE, CLEAN_TYPES, type PolyTiling } from "../../toolkit/src/generators/polygonal";
+import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlanField, LINE_PALETTE, CLEAN_TYPES, type PolyTiling } from "../../toolkit/src/generators/polygonal";
 import { renderToCanvas } from "../../toolkit/src/renderers/canvas";
+import type { Vec2 } from "../../toolkit/src/render-plan";
 
 const params = new URLSearchParams(location.search);
 const GRID = params.get("grid") ?? "dod12"; // "dod12" = 12-star girih · "octsq" = 8-star · else a tactile-js type
@@ -17,7 +18,8 @@ const PERIOD = Number(params.get("period") ?? 14); // seconds per breath
 // that dominates the field (boring). [39,55] keeps every motif modest.
 const CENTER = Number(params.get("center") ?? 47); // θ midpoint
 const AMP = Number(params.get("amp") ?? 8); // θ swing → θ ∈ [39, 55]
-const LEVELS = Number(params.get("levels") ?? 1); // 1 = single-pass (nesting was the wrong direction; girih-tile intricacy TBD)
+const WAVELEN = Number(params.get("wave") ?? 540); // spatial wavelength of the travelling wave (px)
+const WAVE_DIR = (Number(params.get("dir") ?? 28) * Math.PI) / 180; // travel direction
 const LINE_W = Number(params.get("line") ?? 1.5);
 const HUD = params.get("hud") === "1"; // opt-in (debug)
 
@@ -32,16 +34,18 @@ function makeNoise(seed: number): (x: number) => number {
     return hash(i) * (1 - u) + hash(i + 1) * u;
   };
 }
-const nFreq = makeNoise(11), nAmp = makeNoise(23), nPhase = makeNoise(37);
+const nAmp = makeNoise(23), nPhase = makeNoise(37);
 
-// θ(t): a slow breath, organically perturbed so it never loops exactly.
-function thetaAt(tSec: number): number {
-  const baseFreq = 1 / PERIOD;
-  const freqJit = 1 + 0.15 * nFreq(tSec * 0.05);
+// θ as a travelling wave over space + time: the breath, but with a spatial phase so
+// it SWEEPS across the grid (propagating tile-replacement) rather than moving in
+// lock-step. θ depends only on the edge midpoint, so two cells sharing an edge agree
+// and strands stay continuous. (Global breath is the WAVELEN→∞ limit of this.)
+const dirX = Math.cos(WAVE_DIR), dirY = Math.sin(WAVE_DIR);
+function angleAt(mid: Vec2, tSec: number): number {
+  const proj = mid[0] * dirX + mid[1] * dirY;
   const ampJit = 1 + 0.10 * nAmp(tSec * 0.07);
-  const phase = 0.4 * nPhase(tSec * 0.03);
-  const osc = Math.sin(2 * Math.PI * baseFreq * tSec * freqJit + phase);
-  return CENTER + AMP * ampJit * osc;
+  const phase = 2 * Math.PI * (proj / WAVELEN) - 2 * Math.PI * (tSec / PERIOD) + 0.3 * nPhase(tSec * 0.03);
+  return CENTER + AMP * ampJit * Math.sin(phase);
 }
 
 let grid: PolyTiling;
@@ -69,8 +73,7 @@ function frame(): void {
   try {
     const now = performance.now();
     const tSec = (now - t0) / 1000;
-    const theta = thetaAt(tSec);
-    const plan = strapworkPlan(grid, theta, { palette: LINE_PALETTE, levels: LEVELS });
+    const plan = strapworkPlanField(grid, (mid) => angleAt(mid, tSec), LINE_PALETTE);
     renderToCanvas(plan, ctx, { lineWidth: LINE_W });
 
     frames++;
@@ -78,7 +81,7 @@ function frame(): void {
     if (HUD) {
       ctx.fillStyle = "#c0392b";
       ctx.font = "16px ui-monospace, monospace";
-      ctx.fillText(`θ ${theta.toFixed(1)}°   t ${tSec.toFixed(1)}s   ${fps} fps`, 14, 24);
+      ctx.fillText(`θ~${angleAt([cssW / 2, cssH / 2], tSec).toFixed(1)}°   t ${tSec.toFixed(1)}s   ${fps} fps`, 14, 24);
     }
   } catch (err) {
     console.error("frame error:", err);
@@ -89,4 +92,4 @@ function frame(): void {
 window.addEventListener("resize", rebuild);
 rebuild();
 requestAnimationFrame(frame);
-console.log(`θ-breath start · breath ${CENTER}±${AMP}° over ${PERIOD}s · levels ${LEVELS} · hud=${HUD}`);
+console.log(`travelling-wave girih · θ ${CENTER}±${AMP}° · wave ${WAVELEN}px @ ${Math.round((WAVE_DIR * 180) / Math.PI)}° over ${PERIOD}s · grid ${GRID}`);

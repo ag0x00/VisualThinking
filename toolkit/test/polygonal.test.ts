@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlan, generatePolygonal, CLEAN_TYPES } from "../src/generators/polygonal";
-import { validateRenderPlan } from "../src/render-plan";
+import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlan, strapworkPlanField, generatePolygonal, CLEAN_TYPES } from "../src/generators/polygonal";
+import { validateRenderPlan, type Vec2 } from "../src/render-plan";
 
 const BOUNDS = { width: 800, height: 800 };
 
@@ -55,6 +55,28 @@ describe("polygonal generator: tactile-js tiling + strapwork inference → line 
     const plan = strapworkPlan(t, 54);
     expect(validateRenderPlan(plan)).toEqual([]);
     expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
+  });
+
+  it("angle field (travelling wave): spatially-varying θ still yields a valid plan", () => {
+    const t = buildDodecagonTriangleTiling({ bounds: BOUNDS, scale: 78 });
+    // a spatial gradient in θ across x, clamped to a sane band
+    const angleAt = (m: Vec2) => 39 + 16 * (m[0] / BOUNDS.width);
+    const plan = strapworkPlanField(t, angleAt);
+    expect(validateRenderPlan(plan)).toEqual([]);
+    expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
+  });
+
+  it("continuity: a shared edge gets the SAME angle from both cells (field is a function of midpoint)", () => {
+    // two unit squares sharing the edge x=1. The shared edge is left's edge 1 and
+    // right's edge 3 — both with midpoint [1,0.5]. A position-only field therefore
+    // hands both cells the same contact angle there → their rays meet → strands join.
+    const left: Vec2[] = [[0, 0], [1, 0], [1, 1], [0, 1]];
+    const right: Vec2[] = [[1, 0], [2, 0], [2, 1], [1, 1]];
+    const edgeMid = (poly: Vec2[], i: number): Vec2 => { const p = poly[i], q = poly[(i + 1) % poly.length]; return [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]; };
+    const angleAt = (m: Vec2) => 30 + 20 * (m[0] / 2); // varies across x — yet agrees on the shared edge
+    expect(edgeMid(left, 1)).toEqual([1, 0.5]);
+    expect(edgeMid(right, 3)).toEqual([1, 0.5]);
+    expect(angleAt(edgeMid(left, 1))).toBe(angleAt(edgeMid(right, 3)));
   });
 
   it("multi-level rosette adds interior strands (more lines than single-pass), still valid", () => {
