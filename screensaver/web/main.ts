@@ -5,11 +5,11 @@
 //   · directed tension (c-000068): acute angles thrust → the pattern tightens/relaxes
 //   · organic motion (c-000067): never constant-rate; θ is driven by noise-perturbed
 //     oscillation so it never perfectly repeats ("perfect repetition reads as dead").
-import { buildTiling, buildOctagonSquareTiling, strapworkPlan, LINE_PALETTE, CLEAN_TYPES, type PolyTiling } from "../../toolkit/src/generators/polygonal";
+import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlan, LINE_PALETTE, CLEAN_TYPES, type PolyTiling } from "../../toolkit/src/generators/polygonal";
 import { renderToCanvas } from "../../toolkit/src/renderers/canvas";
 
 const params = new URLSearchParams(location.search);
-const GRID = params.get("grid") ?? "octsq"; // "octsq" = dense 8-star girih; else a tactile-js type
+const GRID = params.get("grid") ?? "dod12"; // "dod12" = 12-star girih · "octsq" = 8-star · else a tactile-js type
 const TYPE = Number(params.get("type") ?? CLEAN_TYPES[1]); // tactile-js tiling index (when grid≠octsq)
 const SCALE = Number(params.get("scale") ?? 70);
 const PERIOD = Number(params.get("period") ?? 12); // seconds per breath
@@ -53,7 +53,9 @@ function rebuild(): void {
   canvas.style.height = `${cssH}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
   const bounds = { width: cssW, height: cssH };
-  grid = GRID === "octsq"
+  grid = GRID === "dod12"
+    ? buildDodecagonTriangleTiling({ bounds, scale: SCALE })
+    : GRID === "octsq"
     ? buildOctagonSquareTiling({ bounds, scale: SCALE })
     : buildTiling({ typeIndex: TYPE, bounds, scale: SCALE });
   console.log(`rebuild · ${cssW}×${cssH} · grid ${GRID} · ${grid.polys.length} tiles`);

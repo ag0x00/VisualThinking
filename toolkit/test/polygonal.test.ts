@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildTiling, buildOctagonSquareTiling, strapworkPlan, generatePolygonal, CLEAN_TYPES } from "../src/generators/polygonal";
+import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlan, generatePolygonal, CLEAN_TYPES } from "../src/generators/polygonal";
 import { validateRenderPlan } from "../src/render-plan";
 
 const BOUNDS = { width: 800, height: 800 };
@@ -44,6 +44,15 @@ describe("polygonal generator: tactile-js tiling + strapwork inference → line 
     expect(t.polys.some((p) => p.length === 8)).toBe(true); // octagons present
     expect(t.polys.some((p) => p.length === 4)).toBe(true); // squares present
     const plan = strapworkPlan(t, 54); // the girih angle
+    expect(validateRenderPlan(plan)).toEqual([]);
+    expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
+  });
+
+  it("dodecagon-triangle (3.12.12) girih: dodecagons + triangles, dense 12-star plan", () => {
+    const t = buildDodecagonTriangleTiling({ bounds: BOUNDS, scale: 78 });
+    expect(t.polys.some((p) => p.length === 12)).toBe(true); // dodecagons
+    expect(t.polys.some((p) => p.length === 3)).toBe(true);  // interstitial triangles
+    const plan = strapworkPlan(t, 54);
     expect(validateRenderPlan(plan)).toEqual([]);
     expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
   });

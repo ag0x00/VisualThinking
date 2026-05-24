@@ -117,6 +117,41 @@ export function buildOctagonSquareTiling(opts: { bounds: { width: number; height
   return { polys, bounds: opts.bounds, region: rect(W, H), typeIndex: -1 };
 }
 
+// A periodic 12-fold girih tiling: regular dodecagons on a hex lattice with
+// equilateral triangles filling the interstices (the 3.12.12 Archimedean tiling).
+// Decorated at 54° the dodecagons become dense 12-pointed stars. `scale` = dodecagon
+// circumradius. (12-fold is a *local* motif on a 6-fold lattice — periodic, unlike
+// the inherently-quasiperiodic decagonal girih.)
+export function buildDodecagonTriangleTiling(opts: { bounds: { width: number; height: number }; scale?: number }): PolyTiling {
+  const R = opts.scale ?? 72;
+  const a = R * Math.cos(Math.PI / 12);       // apothem
+  const D = 2 * a;                            // dodecagon centre spacing
+  const s = 2 * R * Math.sin(Math.PI / 12);   // edge length
+  const triApexR = a + (s * Math.sqrt(3)) / 2;
+  const { width: W, height: H } = opts.bounds;
+  const u1: Vec2 = [D, 0], u2: Vec2 = [D / 2, (D * Math.sqrt(3)) / 2];
+  const Vk = (cx: number, cy: number, k: number): Vec2 => [cx + R * Math.cos((Math.PI / 6) * k + Math.PI / 12), cy + R * Math.sin((Math.PI / 6) * k + Math.PI / 12)];
+  const polys: Vec2[][] = [];
+  const triSeen = new Set<string>();
+  const rows = Math.ceil(H / u2[1]) + 2, cols = Math.ceil(W / D) + 2;
+  for (let j = -1; j <= rows; j++) {
+    for (let i = -Math.ceil(rows / 2) - 1; i <= cols; i++) {
+      const cx = i * u1[0] + j * u2[0], cy = i * u1[1] + j * u2[1];
+      if (cx < -R || cx > W + R || cy < -R || cy > H + R) continue;
+      polys.push(Array.from({ length: 12 }, (_, k) => Vk(cx, cy, k)));
+      for (let k = 1; k < 12; k += 2) {
+        const apex: Vec2 = [cx + triApexR * Math.cos((Math.PI / 6) * k), cy + triApexR * Math.sin((Math.PI / 6) * k)];
+        const tri: Vec2[] = [Vk(cx, cy, k - 1), Vk(cx, cy, k), apex];
+        const key = `${Math.round((tri[0][0] + tri[1][0] + apex[0]) / 3)},${Math.round((tri[0][1] + tri[1][1] + apex[1]) / 3)}`;
+        if (triSeen.has(key)) continue;
+        triSeen.add(key);
+        polys.push(tri);
+      }
+    }
+  }
+  return { polys, bounds: opts.bounds, region: rect(W, H), typeIndex: -1 };
+}
+
 // Decorate a static grid at one contact angle → a line-only RenderPlan.
 export function strapworkPlan(tiling: PolyTiling, contactAngle: number, opts: DecorateOpts = {}): RenderPlan {
   const palette = opts.palette ?? LINE_PALETTE;
