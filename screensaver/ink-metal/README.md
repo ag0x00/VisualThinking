@@ -16,20 +16,29 @@ See wiki: [[Lattice Boltzmann Method for Ink Dispersion]], [[Stable Fluids and G
 
 ```bash
 ./build.sh                              # builds main.swift (LBM ink-on-paper)
-./inkspike                              # 800×800 window; Esc or q to quit
-./inkspike --headless 700 out.png       # render N steps offscreen → PNG
+./inkspike                              # 800×800 window; Esc or q to quit — 工筆 gongbi (default)
+./inkspike --xieyi                      # 寫意 xieyi register: spontaneous, splashed, strong flying-white
+./inkspike --headless 700 out.png       # render N steps offscreen → PNG (+ scorecard)
 
 # the ink-in-water reference build:
 swiftc -O inkwater.swift -o inkwater -framework Cocoa -framework Metal -framework MetalKit
 ```
+
+**Two registers** (see [[Chinese Brushwork Principles]]) selected by `--xieyi`, set in the
+`Register` block near the top: **工筆 gongbi** (default — controlled, even, clean spine, minimal
+bleed, almost no flying-white, smooth paper) vs **寫意 xieyi** (spontaneous, heavy bleed, strong
+飛白, high-contrast paper grain). Each tunes water/ink/depletion/flying-white/nib-width/paper-grain.
 
 Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 
 `--headless` also prints an **eval scorecard** (the generate→score loop): negative-space ratio
 (target 30–70%), largest contiguous void, center-of-mass offset (Ma), and directed-tension
 magnitude — mirroring the wiki's `Negative Space` / `Directed Tension` technique pages. The
-negative-space metric feeds back into stroke placement. *Current register is 寫意 xieyi
-(expressive/splashed); a 工筆 gongbi knob (less bleed, cleaner spine) is the obvious next dial.*
+negative-space metric feeds back into stroke placement.
+
+Flying-white (飛白) is **organic and broken** (two irregular noise octaves across the stroke +
+breakup along its length, only at the dry tail) — deliberately *not* a regular comb, which read as
+mechanical "tire tracks".
 
 ## The LBM ink-on-paper model (`main.swift`)
 

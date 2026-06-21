@@ -23,6 +23,23 @@ import simd
 let GRID = 384
 let DT: Float = 1.0
 
+// Brush register — 工筆 gongbi (controlled, even, clean spine, minimal bleed) is the default;
+// 寫意 xieyi (spontaneous, splashed, strong flying-white) via `--xieyi`.
+struct Register {
+    var sideProb: Float    // chance of a side-tip (侧锋) stroke
+    var water: Float       // base water deposited → bleed amount
+    var ink: Float         // base ink deposited
+    var depletion: Float   // ink fade along the stroke (low = even gongbi line)
+    var fw: Float          // flying-white intensity (0 = none)
+    var rCentre: Float     // baseR divisor (larger = thinner) for centre-tip
+    var rSide: Float
+    var curve: Float       // centerline bend
+    var permContrast: Float // paper-grain contrast → percolation edge roughening (low = smooth spine)
+}
+let GONGBI = Register(sideProb:0.18, water:0.042, ink:0.16, depletion:0.7, fw:0.20, rCentre:78, rSide:62, curve:0.30, permContrast:0.40)
+let XIEYI  = Register(sideProb:0.45, water:0.10,  ink:0.135, depletion:1.9, fw:1.0,  rCentre:70, rSide:58, curve:0.50, permContrast:1.0)
+let REG = CommandLine.arguments.contains("--xieyi") ? XIEYI : GONGBI
+
 // MARK: - Shaders
 
 let shaderSource = """
@@ -48,13 +65,16 @@ static float vnoise(float2 x){
 static float fbm(float2 x){ float v=0,a=0.5; for(int i=0;i<5;i++){ v+=a*vnoise(x); x*=2.02; a*=0.5;} return v; }
 
 // paper.r = openness (permeability), .g = wet/dry zone, .b = display grain
+// contrast scales grain heterogeneity → percolation edge roughening (low = smooth gongbi spine)
 kernel void genPaper(texture2d<float, access::write> paper [[texture(0)]],
+                     constant float& contrast [[buffer(0)]],
                      uint2 gid [[thread_position_in_grid]]) {
     uint w=paper.get_width(), h=paper.get_height();
     if(gid.x>=w||gid.y>=h) return;
     float2 uv = float2(gid)/float2(w,h);
     float open = 0.42 + 0.58*fbm(uv*15.0 + 3.0);
-    open *= 0.70 + 0.55*vnoise(uv*float2(110.0,34.0));  // anisotropic fibre grain (higher contrast → feathering)
+    open *= 0.70 + 0.55*vnoise(uv*float2(110.0,34.0));  // anisotropic fibre grain
+    open = mix(0.80, open, contrast);                   // flatten toward uniform when contrast low
     open = clamp(open, 0.28, 1.0);
     float zone = smoothstep(0.46, 0.72, fbm(uv*2.1 + 7.0)); // big wet (1) vs dry (0) regions
     float grain = vnoise(uv*float2(210.0,70.0));
@@ -88,7 +108,8 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
 }
 
 struct DepositParams { float2 pos; float2 dir; float radius; float water; float ink;
-                       float lambda; float mbase; float dryness; float seed; float nibAspect; };
+                       float lambda; float mbase; float dryness; float seed; float nibAspect;
+                       float fwIntensity; };
 
 // adds water (to f) + ink (to p) under a brush footprint. An oriented elliptical
 // nib + a direction-aligned bristle texture give calligraphic width and dry-brush
@@ -112,16 +133,25 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float g = exp(-dot(e,e)*1.5);     // sharper falloff → crisper stroke edge (bone-method spine)
     if(g<0.004) return;
 
-    // bristle streaks: vary fast across the stroke, slow along it → lines parallel to travel
-    float bristle = vnoise(float2(loc.x*0.05, loc.y*1.7) + dp.seed);
-    float streak = smoothstep(dp.dryness, dp.dryness+0.30, bristle);    // gaps open as it dries
-    float tooth  = smoothstep(dp.dryness*0.6, dp.dryness*0.6+0.5, paper.read(gid).z);
-    float mask = mix(1.0, min(streak, tooth), smoothstep(0.12, 0.6, dp.dryness));
+    // Flying-white (飛白): organic, BROKEN streaks — not regular combs ("tire tracks").
+    // Two irregular octaves across the stroke + breakup ALONG its length, only at the dry tail,
+    // and only partial (wispy) removal. Scaled by register (gongbi ≈ none, xieyi ≈ full).
+    float fw = dp.fwIntensity * smoothstep(0.42, 0.86, dp.dryness);
+    float mask = 1.0;
+    if (fw > 0.001) {
+        float b1 = vnoise(float2(loc.x*0.045, loc.y*1.20) + dp.seed);
+        float b2 = vnoise(float2(loc.x*0.130, loc.y*3.10) + dp.seed*1.9);
+        float bristle = b1*0.6 + b2*0.4;
+        float along = 0.40 + 0.60*vnoise(float2(loc.x*0.20 + dp.seed*4.0, dp.seed)); // break along length
+        float gaps = smoothstep(0.42, 0.72, bristle);          // 1 = hair present, 0 = gap
+        float streak = 1.0 - (1.0 - gaps) * along;             // partial, broken (not hard gaps)
+        mask = mix(1.0, streak, fw);
+    }
 
     float r = rho.read(gid).x;
     float recept = max(1.0 - r/dp.lambda, dp.mbase);
     float addInk = dp.ink * g * recept * mask;
-    float addW   = dp.water * g * recept * mix(1.0, 0.45+0.55*mask, smoothstep(0.12,0.6,dp.dryness));
+    float addW   = dp.water * g * recept * mix(1.0, 0.55+0.45*mask, fw);
 
     float4 a=fA.read(gid), b=fB.read(gid); float c=fC.read(gid).x;
     a += float4(WT[0],WT[1],WT[2],WT[3])*addW;
@@ -242,7 +272,7 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 // MARK: - Renderer
 
-struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8 }
+struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0009; var boundEvap:Float=0.0028 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.03 }
 
@@ -257,6 +287,8 @@ struct Stroke {
     var nibAspect:Float=1.8      // 中锋 (round, ~1.4) vs 侧锋 (broad, ~2.8)
     var drynessBias:Float=0      // side-tip strokes start drier → earlier flying-white
     var exitStyle:Int=0          // 收笔: 0 = taper to point, 1 = pressed hook
+    var depletion:Float=1.9      // ink fade rate along the stroke (low = even gongbi line)
+    var fwIntensity:Float=1      // flying-white intensity (register-set)
     var dir=SIMD2<Float>(1,0), len:Float=0   // overall gesture (for directed-tension accumulator)
     var wash=false
 }
@@ -330,6 +362,8 @@ final class Renderer: NSObject, MTKViewDelegate {
     private func seed() {
         let cb=queue.makeCommandBuffer()!, enc=cb.makeComputeCommandEncoder()!
         enc.setComputePipelineState(pGen); enc.setTexture(paper,index:0)
+        var contrast = REG.permContrast
+        withUnsafeBytes(of:&contrast){ enc.setBytes($0.baseAddress!,length:4,index:0) }
         enc.dispatchThreadgroups(groups,threadsPerThreadgroup:tg)
         enc.setComputePipelineState(pInit)
         enc.setTexture(paper,index:0); enc.setTexture(fA[0],index:1); enc.setTexture(fB[0],index:2)
@@ -367,7 +401,7 @@ final class Renderer: NSObject, MTKViewDelegate {
             let cand = SIMD2<Float>(G*(0.12+0.76*nextRand()), G*(0.12+0.76*nextRand()))
             let d = simd_length(cand-center)/G
             let offCenter = gauss(d, 0.30, 0.16)        // favour a ring ~0.30 of the grid off-centre
-            let score = offCenter - 2.3*occAt(cand)     // stronger avoidance → less overlap, more breathing room
+            let score = offCenter - 3.2*occAt(cand)     // stronger avoidance → less overlap, more breathing room
             if score>bestScore { bestScore=score; best=cand }
         }
         return best
@@ -386,7 +420,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         let len = G*(0.32+0.55*nextRand())
         let dir = SIMD2<Float>(cos(ang), sin(ang))
         let perp = SIMD2<Float>(-dir.y, dir.x)
-        let c1 = (nextRand()-0.5)*0.50*len, c2 = (nextRand()-0.5)*0.50*len
+        let c1 = (nextRand()-0.5)*REG.curve*len, c2 = (nextRand()-0.5)*REG.curve*len
         var s = Stroke()
         s.p0 = start
         s.p1 = start + dir*(len*0.33) + perp*c1
@@ -395,13 +429,15 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.start = frame
         s.life = Int(len/G * 155) + 34
         s.inkConc = tones[weightedTone()]
-        let side = nextRand() < 0.42                    // 侧锋 side-tip vs 中锋 centre-tip
+        let side = nextRand() < REG.sideProb            // 侧锋 side-tip vs 中锋 centre-tip
         s.nibAspect   = side ? (2.0 + 0.5*nextRand()) : (1.3 + 0.3*nextRand())
         s.drynessBias = side ? (0.07 + 0.08*nextRand()) : 0.0
-        s.baseR = G/(side ? 58 : 70) * (0.8 + 0.4*nextRand())
+        s.baseR = G/(side ? REG.rSide : REG.rCentre) * (0.8 + 0.4*nextRand())
         s.exitStyle = nextRand() < 0.35 ? 1 : 0
-        s.ink = 0.135 * s.inkConc
-        s.water = 0.10 * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
+        s.depletion = REG.depletion
+        s.fwIntensity = REG.fw * (0.8 + 0.4*nextRand())
+        s.ink = REG.ink * s.inkConc
+        s.water = REG.water * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
         s.seed = nextRand()*60
         s.dir = dir; s.len = len
         strokes.append(s)
@@ -415,7 +451,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         let fill = occ.reduce(0,+)/Float(occ.count)
         // temporal ma: bursts of 2–4 strokes, then a rest; gated on canvas fill
         if frame >= nextSpawn {
-            if burstLeft == 0 && fill < 0.55 { burstLeft = 2 + Int(nextRand()*3) }
+            if burstLeft == 0 && fill < 0.55 { burstLeft = 2 + Int(nextRand()*2) }   // 2–3 per burst
             if burstLeft > 0 {
                 spawnOneStroke(G)
                 burstLeft -= 1
@@ -454,12 +490,12 @@ final class Renderer: NSObject, MTKViewDelegate {
             // lifts fast at the exit — keeps the tapered tail sharp (a clean 收笔), not blunted.
             let t0 = pow(max(0,Float(age-1)/Float(s.life)), 1.6)
             let t1 = pow(Float(age)/Float(s.life), 1.6)
-            let SUB = 8
+            let SUB = 10
             for k in 1...SUB {
                 let t = t0 + (t1 - t0) * Float(k)/Float(SUB)
                 let tan = bezierTangent(s, t)
                 let dir = simd_length(tan) > 1e-4 ? simd_normalize(tan) : SIMD2<Float>(1,0)
-                let load: Float = exp(-1.9 * t)               // ink depletes along the stroke
+                let load: Float = exp(-s.depletion * t)        // ink depletes along the stroke
                 var dp = DepositParams()
                 dp.pos = bezier(s, t)
                 dp.dir = dir
@@ -469,6 +505,7 @@ final class Renderer: NSObject, MTKViewDelegate {
                 dp.dryness = min(1 - min(load*1.15, 1) + s.drynessBias, 1)  // side-tip drier → flying white
                 dp.seed = s.seed
                 dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
+                dp.fwIntensity = s.fwIntensity
                 stampDeposit(enc, dp)
                 occ[occIdx(dp.pos)] += dp.ink * 0.6           // track laid ink for placement
             }
