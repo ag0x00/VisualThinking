@@ -52,10 +52,16 @@ Faithful reduction of MoXi. Per frame:
    per stroke), and direction-aligned **dry-brush flying-white** 飛白. Occasional **water wash**
    wets a region (→ wet paper).
 
-   *Composition (Ma):* stroke placement is **Ma-aware** — an occupancy grid steers strokes
-   off-centre and preserves a 30–70% blank-region budget (not uniform scatter). *Pacing (temporal
-   ma):* strokes come in **bursts then rests**, not a fixed metronome. (Wiki: [[Ma and Yohaku no
-   Bi]], [[Organic vs Mechanical Motion]], [[Directed Tension]].)
+   *Brush speed:* each stroke has a speed (biased fast) → fast strokes are **thinner, drawn
+   quicker, drier and more chaotic at the ends**; slow strokes fuller. *Composition (Ma):* placement
+   is **anti-clustering** — strokes spread apart with a gentle off-centre bias (occupancy grid),
+   for contiguous blank space, not uniform scatter or a merged mass.
+
+   *Painting lifecycle:* the canvas is **not** an endless accumulation. A painting builds to a few
+   well-placed strokes (4–7, or until the composition fills), **holds** the finished image ~5 s
+   (the held image is temporal *ma*), **fades** to clean paper (~2 s), then a **new painting**
+   begins on fresh paper. So it never overwhelms; each composition breathes and resets. (Wiki:
+   [[Ma and Yohaku no Bi]], [[Negative Space in Motion]], [[Organic vs Mechanical Motion]].)
 2. **LBE** — D2Q9 lattice-Boltzmann water percolation with MoXi's modifications:
    - **variable permeability** via half-way partial **bounce-back** (paper-grain texture → feathery/branching fronts),
    - **advection modulation** `psi = smoothstep(0,α,ρ)` to keep the free wet/dry boundary stable,

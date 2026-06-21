@@ -36,8 +36,8 @@ struct Register {
     var curve: Float       // centerline bend
     var permContrast: Float // paper-grain contrast → percolation edge roughening (low = smooth spine)
 }
-let GONGBI = Register(sideProb:0.18, water:0.042, ink:0.16, depletion:0.7, fw:0.20, rCentre:78, rSide:62, curve:0.30, permContrast:0.40)
-let XIEYI  = Register(sideProb:0.45, water:0.10,  ink:0.135, depletion:1.9, fw:1.0,  rCentre:70, rSide:58, curve:0.50, permContrast:1.0)
+let GONGBI = Register(sideProb:0.18, water:0.014, ink:0.30, depletion:0.7, fw:0.22, rCentre:100, rSide:74, curve:0.30, permContrast:0.40)
+let XIEYI  = Register(sideProb:0.45, water:0.085, ink:0.26, depletion:1.9, fw:1.0,  rCentre:88, rSide:66, curve:0.50, permContrast:1.0)
 let REG = CommandLine.arguments.contains("--xieyi") ? XIEYI : GONGBI
 
 // MARK: - Shaders
@@ -68,17 +68,25 @@ static float fbm(float2 x){ float v=0,a=0.5; for(int i=0;i<5;i++){ v+=a*vnoise(x
 // contrast scales grain heterogeneity → percolation edge roughening (low = smooth gongbi spine)
 kernel void genPaper(texture2d<float, access::write> paper [[texture(0)]],
                      constant float& contrast [[buffer(0)]],
+                     constant float& sd [[buffer(1)]],
                      uint2 gid [[thread_position_in_grid]]) {
     uint w=paper.get_width(), h=paper.get_height();
     if(gid.x>=w||gid.y>=h) return;
     float2 uv = float2(gid)/float2(w,h);
-    float open = 0.42 + 0.58*fbm(uv*15.0 + 3.0);
-    open *= 0.70 + 0.55*vnoise(uv*float2(110.0,34.0));  // anisotropic fibre grain
+    float2 o = float2(sd, sd*1.7);                      // per-painting paper variation
+    float open = 0.42 + 0.58*fbm(uv*15.0 + 3.0 + o);
+    open *= 0.70 + 0.55*vnoise(uv*float2(110.0,34.0) + o);  // anisotropic fibre grain
     open = mix(0.80, open, contrast);                   // flatten toward uniform when contrast low
     open = clamp(open, 0.28, 1.0);
-    float zone = smoothstep(0.46, 0.72, fbm(uv*2.1 + 7.0)); // big wet (1) vs dry (0) regions
-    float grain = vnoise(uv*float2(210.0,70.0));
+    float zone = smoothstep(0.46, 0.72, fbm(uv*2.1 + 7.0 + o)); // big wet (1) vs dry (0) regions
+    float grain = vnoise(uv*float2(210.0,70.0) + o);
     paper.write(float4(open, zone, grain, 0.0), gid);
+}
+
+// zero a single-channel field (for resetting ink between paintings)
+kernel void clearR(texture2d<float,access::write> t [[texture(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=t.get_width()||gid.y>=t.get_height()) return;
+    t.write(float4(0), gid);
 }
 
 // f-distributions packed: fA=(f0..3) rgba, fB=(f4..7) rgba, fC=f8 r
@@ -130,8 +138,8 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float2 loc = float2(dot(rel,t), dot(rel,n));        // brush-local (along, across)
     // elongated nib along travel; aspect sets centre-tip (round, even) vs side-tip (flat, broad)
     float2 e = float2(loc.x/(dp.radius*dp.nibAspect), loc.y/dp.radius);
-    float g = exp(-dot(e,e)*1.5);     // sharper falloff → crisper stroke edge (bone-method spine)
-    if(g<0.004) return;
+    float g = exp(-dot(e,e)*3.0);     // tight falloff → crisp thin stroke (not a wide soft halo)
+    if(g<0.012) return;
 
     // Flying-white (飛白): organic, BROKEN streaks — not regular combs ("tire tracks").
     // Two irregular octaves across the stroke + breakup ALONG its length, only at the dry tail,
@@ -273,7 +281,7 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 // MARK: - Renderer
 
 struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1 }
-struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0009; var boundEvap:Float=0.0028 }
+struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.03 }
 
 // A calligraphic sumi stroke: a cubic Bézier centerline drawn over `life` frames. Carries
@@ -300,6 +308,7 @@ func bezierTangent(_ s:Stroke,_ t:Float)->SIMD2<Float> {
 }
 func smoothstep(_ a:Float,_ b:Float,_ x:Float)->Float { let t=max(0,min(1,(x-a)/(b-a))); return t*t*(3-2*t) }
 func gauss(_ t:Float,_ mu:Float,_ sig:Float)->Float { let z=(t-mu)/sig; return exp(-z*z) }
+func mix(_ a:Float,_ b:Float,_ t:Float)->Float { a + (b-a)*t }
 // minimum-jerk easing: hand-like accelerate-then-decelerate (organic, not constant-speed)
 func minJerk(_ x:Float)->Float { let t=max(0,min(1,x)); return t*t*t*(10 - 15*t + 6*t*t) }
 
@@ -308,7 +317,7 @@ func minJerk(_ x:Float)->Float { let t=max(0,min(1,x)); return t*t*t*(10 - 15*t 
 func pressure(_ t:Float,_ exitStyle:Int,_ seed:Float)->Float {
     let entry = smoothstep(0, 0.12, t)
     let taper = 1 - smoothstep(0.62, 1.0, t)
-    let accent = 0.45 * gauss(t, 0.05, 0.045)              // 藏锋 press at the start
+    let accent = 0.22 * gauss(t, 0.06, 0.05)               // 藏锋 press at the start (subtle, not bulbous)
     let wobble = 1 + 0.10*(sin(t*9+seed)*0.6 + sin(t*17+seed*1.7)*0.4)   // organic body variation
     var p = (entry*taper + accent*entry) * wobble
     if exitStyle == 1 { p += 0.5 * gauss(t, 0.85, 0.05) * taper }        // 收笔 hook
@@ -318,7 +327,7 @@ func pressure(_ t:Float,_ exitStyle:Int,_ seed:Float)->Float {
 final class Renderer: NSObject, MTKViewDelegate {
     let device: MTLDevice
     let queue: MTLCommandQueue
-    let pGen, pInit, pDeposit, pLbe, pPigment, pDisplay: MTLComputePipelineState
+    let pGen, pInit, pDeposit, pLbe, pPigment, pDisplay, pClear: MTLComputePipelineState
 
     var fA=[MTLTexture](), fB=[MTLTexture](), fC=[MTLTexture]()
     var rho=[MTLTexture](), p=[MTLTexture]()
@@ -337,13 +346,22 @@ final class Renderer: NSObject, MTKViewDelegate {
     var nextSpawn = 0, burstLeft = 0
     var tensionAcc = SIMD2<Float>(0,0)        // decaying sum of stroke gesture vectors
 
+    // painting lifecycle: paint → hold (the complete image, temporal ma) → fade → new painting
+    enum Phase { case painting, holding, fading }
+    var phase: Phase = .painting
+    var phaseStart = 0
+    var strokesDone = 0, strokeTarget = 7
+    var inkDecay: Float = 0.9999              // driven by phase; fast during fade
+    var paperSeed: Float = 0
+    let HOLD = 300, FADE = 130, SETTLE = 45   // frames (~60fps): hold ~5s, fade ~2.2s
+
     init(device: MTLDevice) {
         self.device = device
         queue = device.makeCommandQueue()!
         let lib = try! device.makeLibrary(source: shaderSource, options: nil)
         func pipe(_ n:String)->MTLComputePipelineState { try! device.makeComputePipelineState(function: lib.makeFunction(name:n)!) }
         pGen=pipe("genPaper"); pInit=pipe("initWet"); pDeposit=pipe("deposit")
-        pLbe=pipe("lbe"); pPigment=pipe("pigment"); pDisplay=pipe("display")
+        pLbe=pipe("lbe"); pPigment=pipe("pigment"); pDisplay=pipe("display"); pClear=pipe("clearR")
 
         func tex(_ fmt:MTLPixelFormat)->MTLTexture {
             let d=MTLTextureDescriptor.texture2DDescriptor(pixelFormat:fmt,width:GRID,height:GRID,mipmapped:false)
@@ -360,16 +378,33 @@ final class Renderer: NSObject, MTKViewDelegate {
     private func nextRand()->Float { rng ^= rng<<13; rng ^= rng>>7; rng ^= rng<<17; return Float(rng % 10000)/10000.0 }
 
     private func seed() {
+        ff=0; rr=0; pp=0
         let cb=queue.makeCommandBuffer()!, enc=cb.makeComputeCommandEncoder()!
         enc.setComputePipelineState(pGen); enc.setTexture(paper,index:0)
-        var contrast = REG.permContrast
+        var contrast = REG.permContrast, sd = paperSeed
         withUnsafeBytes(of:&contrast){ enc.setBytes($0.baseAddress!,length:4,index:0) }
+        withUnsafeBytes(of:&sd){ enc.setBytes($0.baseAddress!,length:4,index:1) }
         enc.dispatchThreadgroups(groups,threadsPerThreadgroup:tg)
         enc.setComputePipelineState(pInit)
         enc.setTexture(paper,index:0); enc.setTexture(fA[0],index:1); enc.setTexture(fB[0],index:2)
         enc.setTexture(fC[0],index:3); enc.setTexture(rho[0],index:4)
         enc.dispatchThreadgroups(groups,threadsPerThreadgroup:tg)
+        // start each painting from clean paper: zero both ink fields
+        enc.setComputePipelineState(pClear)
+        for t in [p[0], p[1]] { enc.setTexture(t,index:0); enc.dispatchThreadgroups(groups,threadsPerThreadgroup:tg) }
         enc.endEncoding(); cb.commit()
+    }
+
+    // begin a fresh painting: new paper, cleared ink, reset composition state
+    private func resetPainting() {
+        paperSeed += 13.7
+        seed()
+        for i in occ.indices { occ[i]=0 }
+        tensionAcc = SIMD2<Float>(0,0)
+        strokes.removeAll(); strokesDone = 0
+        strokeTarget = 4 + Int(nextRand()*4)     // 4–7 strokes per painting
+        nextSpawn = frame + 20; burstLeft = 0
+        phase = .painting; phaseStart = frame
     }
 
     func mtkView(_ v: MTKView, drawableSizeWillChange s: CGSize) {}
@@ -391,17 +426,27 @@ final class Renderer: NSObject, MTKViewDelegate {
         return cy*OC+cx
     }
     private func occAt(_ pos:SIMD2<Float>)->Float { occ[occIdx(pos)] }
+    // ink density in a neighbourhood around a point → "is there a stroke near here"
+    private func occNear(_ pos:SIMD2<Float>)->Float {
+        let g=Float(GRID); let cx=Int(pos.x/g*Float(OC)), cy=Int(pos.y/g*Float(OC))
+        var s:Float=0
+        for dy in -2...2 { for dx in -2...2 {
+            let x=cx+dx, y=cy+dy
+            if x>=0 && x<OC && y>=0 && y<OC { s += occ[y*OC+x] }
+        }}
+        return s
+    }
 
-    // Ma-aware placement: prefer an off-centre ring, avoid piling onto existing ink → keeps the
-    // blank-region budget and shifts compositional weight off-centre (Ma and Yohaku no Bi handles).
+    // Ma-aware placement: spread strokes APART (anti-cluster) so they don't merge, with a gentle
+    // off-centre bias → contiguous blank space + off-centre weight (Ma and Yohaku no Bi handles).
     private func chooseOrigin(_ G:Float)->SIMD2<Float> {
         let center = SIMD2<Float>(G/2,G/2)
         var best = center, bestScore:Float = -1e9
-        for _ in 0..<14 {
-            let cand = SIMD2<Float>(G*(0.12+0.76*nextRand()), G*(0.12+0.76*nextRand()))
+        for _ in 0..<20 {
+            let cand = SIMD2<Float>(G*(0.14+0.72*nextRand()), G*(0.14+0.72*nextRand()))
             let d = simd_length(cand-center)/G
-            let offCenter = gauss(d, 0.30, 0.16)        // favour a ring ~0.30 of the grid off-centre
-            let score = offCenter - 3.2*occAt(cand)     // stronger avoidance → less overlap, more breathing room
+            let offCenter = 0.30*gauss(d, 0.30, 0.24)   // gentle, wide off-centre preference
+            let score = offCenter - 1.3*occNear(cand)   // dominate: keep away from existing ink
             if score>bestScore { bestScore=score; best=cand }
         }
         return best
@@ -426,16 +471,22 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.p1 = start + dir*(len*0.33) + perp*c1
         s.p2 = start + dir*(len*0.66) + perp*c2
         s.p3 = start + dir*len + perp*((nextRand()-0.5)*0.15*len)   // small exit offset → resolved direction
+        // brush speed (biased fast): fast → thinner line, drawn quicker, drier & more chaotic ends
+        let speed = pow(nextRand(), 0.7)               // 0 slow .. 1 fast (biased toward fast)
+        let widthScale = mix(1.15, 0.50, speed)        // fast → thin
+        let lifeScale  = mix(1.35, 0.50, speed)        // fast → drawn quicker
+        let fwScale    = mix(0.6,  1.7,  speed)        // fast → more flying-white / chaotic tail
+        let deplScale  = mix(0.8,  1.7,  speed)        // fast → depletes sooner (drier)
         s.start = frame
-        s.life = Int(len/G * 155) + 34
+        s.life = max(Int(len/G * 150 * lifeScale) + 14, 10)
         s.inkConc = tones[weightedTone()]
         let side = nextRand() < REG.sideProb            // 侧锋 side-tip vs 中锋 centre-tip
         s.nibAspect   = side ? (2.0 + 0.5*nextRand()) : (1.3 + 0.3*nextRand())
         s.drynessBias = side ? (0.07 + 0.08*nextRand()) : 0.0
-        s.baseR = G/(side ? REG.rSide : REG.rCentre) * (0.8 + 0.4*nextRand())
+        s.baseR = G/(side ? REG.rSide : REG.rCentre) * (0.7 + 0.4*nextRand()) * widthScale
         s.exitStyle = nextRand() < 0.35 ? 1 : 0
-        s.depletion = REG.depletion
-        s.fwIntensity = REG.fw * (0.8 + 0.4*nextRand())
+        s.depletion = REG.depletion * deplScale
+        s.fwIntensity = REG.fw * fwScale * (0.8 + 0.4*nextRand())
         s.ink = REG.ink * s.inkConc
         s.water = REG.water * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
         s.seed = nextRand()*60
@@ -446,30 +497,40 @@ final class Renderer: NSObject, MTKViewDelegate {
         for j in 0...10 { occ[occIdx(bezier(s, Float(j)/10))] += 0.05 }
     }
 
+    private func spawnWash(_ G:Float) {
+        var s = Stroke()
+        let c = SIMD2<Float>(G*(0.25+0.5*nextRand()), G*(0.25+0.5*nextRand()))
+        s.p0=c; s.p1=c; s.p2=c; s.p3=c; s.start=frame; s.life=26; s.baseR=G/6; s.wash=true
+        strokes.append(s)
+    }
+
+    // Painting lifecycle. A painting builds to a few well-placed strokes, holds (the complete
+    // image rests — temporal ma), fades to clean paper, then a new painting begins.
     private func spawnStrokes() {
         let G = Float(GRID)
         let fill = occ.reduce(0,+)/Float(occ.count)
-        // temporal ma: bursts of 2–4 strokes, then a rest; gated on canvas fill
-        if frame >= nextSpawn {
-            if burstLeft == 0 && fill < 0.55 { burstLeft = 2 + Int(nextRand()*2) }   // 2–3 per burst
-            if burstLeft > 0 {
-                spawnOneStroke(G)
-                burstLeft -= 1
-                nextSpawn = frame + (burstLeft>0 ? 16 + Int(nextRand()*26)      // within a burst
-                                                 : 150 + Int(nextRand()*130))   // rest between bursts
-            } else {
-                nextSpawn = frame + 60                                          // full → wait for fade
+        switch phase {
+        case .painting:
+            inkDecay = 0.9999
+            let complete = strokesDone >= strokeTarget || fill > 0.30   // enough strokes OR enough ink
+            if !complete && frame >= nextSpawn {
+                if burstLeft == 0 { burstLeft = 1 + Int(nextRand()*2) }  // 1–2 strokes per burst (sparser)
+                spawnOneStroke(G); strokesDone += 1; burstLeft -= 1
+                nextSpawn = frame + (burstLeft>0 ? 10 + Int(nextRand()*16)    // within a burst
+                                                 : 40 + Int(nextRand()*70))   // rest between bursts (ma)
             }
-        }
-        if frame % 600 == 280 && fill < 0.5 {   // occasional wet-paper wash (water only)
-            var s = Stroke()
-            let c = SIMD2<Float>(G*(0.25+0.5*nextRand()), G*(0.25+0.5*nextRand()))
-            s.p0=c; s.p1=c; s.p2=c; s.p3=c; s.start=frame; s.life=26; s.baseR=G/6; s.wash=true
-            strokes.append(s)
+            if REG.fw > 0.5 && frame % 500 == 250 && strokesDone < strokeTarget/2 { spawnWash(G) }   // wash only in xieyi
+            if complete && strokes.isEmpty { phase = .holding; phaseStart = frame }
+        case .holding:
+            inkDecay = 0.99997                        // the finished painting rests (held image = ma)
+            if frame - phaseStart > HOLD { phase = .fading; phaseStart = frame }
+        case .fading:
+            inkDecay = 0.955                          // dissolve ink → clean paper (~2s)
+            if frame - phaseStart > FADE { resetPainting() }
         }
         strokes.removeAll { frame - $0.start > $0.life + 2 }
-        for i in occ.indices { occ[i] *= 0.9990 }   // active emptiness regenerates as ink fades
-        tensionAcc *= 0.994
+        for i in occ.indices { occ[i] *= 0.9994 }
+        tensionAcc *= 0.995
     }
 
     func encode(target: MTLTexture, cb: MTLCommandBuffer) {
@@ -491,6 +552,9 @@ final class Renderer: NSObject, MTKViewDelegate {
             let t0 = pow(max(0,Float(age-1)/Float(s.life)), 1.6)
             let t1 = pow(Float(age)/Float(s.life), 1.6)
             let SUB = 10
+            // normalize total deposit by duration → darkness comes from the brush, not from how
+            // long the stroke took to draw (otherwise slow strokes oversaturate into black blobs)
+            let norm = min(max(70.0/Float(s.life), 0.45), 1.4)
             for k in 1...SUB {
                 let t = t0 + (t1 - t0) * Float(k)/Float(SUB)
                 let tan = bezierTangent(s, t)
@@ -500,8 +564,8 @@ final class Renderer: NSObject, MTKViewDelegate {
                 dp.pos = bezier(s, t)
                 dp.dir = dir
                 dp.radius = max(s.baseR * pressure(t, s.exitStyle, s.seed), 0.6)  // 起笔/行笔/收笔
-                dp.ink = s.ink * load
-                dp.water = s.water * (0.4 + 0.6*load)
+                dp.ink = s.ink * load * norm
+                dp.water = s.water * (0.4 + 0.6*load) * norm
                 dp.dryness = min(1 - min(load*1.15, 1) + s.drynessBias, 1)  // side-tip drier → flying white
                 dp.seed = s.seed
                 dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
@@ -522,8 +586,8 @@ final class Renderer: NSObject, MTKViewDelegate {
         dispatch(enc)
         ff = 1-ff; rr = 1-rr
 
-        // 3. pigment advection p[pp]->p[1-pp]
-        var pgp = PigParams()
+        // 3. pigment advection p[pp]->p[1-pp]  (decay driven by painting phase: frozen → fade)
+        var pgp = PigParams(); pgp.decay = inkDecay
         enc.setComputePipelineState(pPigment)
         enc.setTexture(p[pp],index:0); enc.setTexture(uTex,index:1); enc.setTexture(rho[rr],index:2)
         enc.setTexture(p[1-pp],index:3)
@@ -532,7 +596,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         pp = 1-pp
 
         // 4. display
-        var gain: Float = 3.6   // lifted so pale five-tone strokes still read
+        var gain: Float = 2.1   // lower → only the dense stroke core reads dark (thin, crisp lines)
         enc.setComputePipelineState(pDisplay)
         enc.setTexture(p[pp],index:0); enc.setTexture(rho[rr],index:1); enc.setTexture(paper,index:2)
         enc.setTexture(target,index:3)
