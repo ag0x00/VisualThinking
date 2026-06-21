@@ -8,6 +8,14 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-06-21 autoresearch | Ink & watercolor simulation on paper
+- Rounds: 2 | Searches: 5 | Sources fetched: MoXi + Curtis (full PDFs)
+- Topic: algorithms & code to animate ink applied to dry/wet paper.
+- Pages created (10): concepts [[Lattice Boltzmann Method for Ink Dispersion]] (c-000233), [[Shallow-Water Watercolor Simulation]] (c-000234), [[Stable Fluids and GPU Ink Advection]] (c-000235), [[Kubelka-Munk Optical Compositing]] (c-000236); tool [[WebGL and WebGPU Fluid Simulation Libraries]] (c-000237); sources [[Chu Tai - MoXi Real-Time Ink Dispersion]] (c-000238), [[Curtis et al - Computer-Generated Watercolor]] (c-000239), [[Stam - Stable Fluids]] (c-000240), [[Animated Ink Bleeding with CFD]] (c-000241); synthesis [[Research - Ink and Watercolor Simulation on Paper]] (c-000242).
+- Decision rule: pick the algorithm by the target *look* — porous-paper sumi-e → **Lattice Boltzmann/MoXi**; Western watercolour → **shallow-water/Curtis**; free ink-in-water → **Stable Fluids/Stam**. Render pigment layers with **Kubelka–Munk**, not alpha-over.
+- Key insight: ink-into-paper is **percolation**, not Fickian diffusion — feathery/branching/edge-darkened patterns are *emergent* (boundary flow + uneven evaporation / capillary re-entry), which is why a sim beats a faked blur. LBM wins for paper (local, Poisson-free, GPU-native); Stam dominates browser code but its semi-Lagrangian advection is dissipative (softens ink).
+- Open gap: no MoXi-grade **LBM ink-on-paper JS/WebGL library** exists — browser repos are N–S/SPH only. A faithful sumi-e generator is build-from-paper (deferred per reading-only sweep rule).
+
 ## 2026-05-23 ingest | Application-Based Principles of IGPs (Azari et al. 2023)
 - Source: `~/Downloads/s40494-022-00852-w.pdf` — *Heritage Science* 11:22 (2023), open access CC-BY.
 - Summary: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]] (c-000231)
