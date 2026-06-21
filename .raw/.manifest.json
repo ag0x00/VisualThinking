@@ -2,6 +2,24 @@
   "version": 1,
   "created": "2026-05-16",
   "description": "Ingest delta tracker and address map for the claude-obsidian vault. Do not hand-edit; wiki-ingest maintains this.",
-  "sources": {},
-  "address_map": {}
+  "sources": {
+    "~/Downloads/s40494-022-00852-w.pdf": {
+      "hash": "1b708b2c49db41334536f82fa4340996",
+      "ingested_at": "2026-05-23",
+      "title": "Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)",
+      "pages_created": [
+        "wiki/sources/Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023).md",
+        "wiki/concepts/The Variation Principle in Islamic Geometric Patterns.md"
+      ],
+      "pages_updated": [
+        "wiki/concepts/Islamic Geometric Patterns and the Polygonal Technique.md",
+        "wiki/index.md",
+        "wiki/log.md"
+      ]
+    }
+  },
+  "address_map": {
+    "wiki/sources/Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023).md": "c-000231",
+    "wiki/concepts/The Variation Principle in Islamic Geometric Patterns.md": "c-000232"
+  }
 }

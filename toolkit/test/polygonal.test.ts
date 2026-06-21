@@ -1,0 +1,92 @@
+import { describe, it, expect } from "vitest";
+import { buildTiling, buildOctagonSquareTiling, buildDodecagonTriangleTiling, strapworkPlan, strapworkPlanField, generatePolygonal, CLEAN_TYPES } from "../src/generators/polygonal";
+import { validateRenderPlan, type Vec2 } from "../src/render-plan";
+
+const BOUNDS = { width: 800, height: 800 };
+
+describe("polygonal generator: tactile-js tiling + strapwork inference → line plan", () => {
+  it("builds a non-empty polygon grid from a curated tiling type", () => {
+    const t = buildTiling({ typeIndex: CLEAN_TYPES[1], bounds: BOUNDS });
+    expect(t.polys.length).toBeGreaterThan(10);
+    expect(t.polys[0].length).toBeGreaterThanOrEqual(3); // real polygons
+  });
+
+  it("produces a valid line-only RenderPlan (background + segments, no out-of-range refs)", () => {
+    const plan = generatePolygonal({ typeIndex: CLEAN_TYPES[1], contactAngle: 45, bounds: BOUNDS });
+    expect(validateRenderPlan(plan)).toEqual([]);
+    expect(plan.elements.some((e) => e.role === "background")).toBe(true);
+    const lines = plan.elements.filter((e) => e.role === "line");
+    expect(lines.length).toBeGreaterThan(50);
+    expect(lines.every((e) => e.kind === "segment" && e.points.length === 2)).toBe(true);
+  });
+
+  it("is deterministic for a fixed type + angle", () => {
+    const a = generatePolygonal({ typeIndex: 6, contactAngle: 50, bounds: BOUNDS });
+    const b = generatePolygonal({ typeIndex: 6, contactAngle: 50, bounds: BOUNDS });
+    expect(a.elements.length).toBe(b.elements.length);
+    expect(JSON.stringify(a.elements[1])).toEqual(JSON.stringify(b.elements[1]));
+  });
+
+  it("re-decorating the SAME grid at a different angle changes the lines but not the grid", () => {
+    const grid = buildTiling({ typeIndex: 6, bounds: BOUNDS });
+    const median = strapworkPlan(grid, 50);
+    const acute = strapworkPlan(grid, 30);
+    // same number of tiles decorated, but the strand geometry differs (the breath)
+    const firstSegMedian = JSON.stringify(median.elements.find((e) => e.role === "line"));
+    const firstSegAcute = JSON.stringify(acute.elements.find((e) => e.role === "line"));
+    expect(firstSegMedian).not.toEqual(firstSegAcute);
+  });
+
+  it("octagon-square girih tiling: octagons + squares, decorates into a dense star plan", () => {
+    const t = buildOctagonSquareTiling({ bounds: BOUNDS, scale: 64 });
+    expect(t.polys.length).toBeGreaterThan(20);
+    expect(t.polys.length % 2).toBe(0); // one square per octagon
+    expect(t.polys.some((p) => p.length === 8)).toBe(true); // octagons present
+    expect(t.polys.some((p) => p.length === 4)).toBe(true); // squares present
+    const plan = strapworkPlan(t, 54); // the girih angle
+    expect(validateRenderPlan(plan)).toEqual([]);
+    expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
+  });
+
+  it("dodecagon-triangle (3.12.12) girih: dodecagons + triangles, dense 12-star plan", () => {
+    const t = buildDodecagonTriangleTiling({ bounds: BOUNDS, scale: 78 });
+    expect(t.polys.some((p) => p.length === 12)).toBe(true); // dodecagons
+    expect(t.polys.some((p) => p.length === 3)).toBe(true);  // interstitial triangles
+    const plan = strapworkPlan(t, 54);
+    expect(validateRenderPlan(plan)).toEqual([]);
+    expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
+  });
+
+  it("angle field (travelling wave): spatially-varying θ still yields a valid plan", () => {
+    const t = buildDodecagonTriangleTiling({ bounds: BOUNDS, scale: 78 });
+    // a spatial gradient in θ across x, clamped to a sane band
+    const angleAt = (m: Vec2) => 39 + 16 * (m[0] / BOUNDS.width);
+    const plan = strapworkPlanField(t, angleAt);
+    expect(validateRenderPlan(plan)).toEqual([]);
+    expect(plan.elements.filter((e) => e.role === "line").length).toBeGreaterThan(100);
+  });
+
+  it("continuity: a shared edge gets the SAME angle from both cells (field is a function of midpoint)", () => {
+    // two unit squares sharing the edge x=1. The shared edge is left's edge 1 and
+    // right's edge 3 — both with midpoint [1,0.5]. A position-only field therefore
+    // hands both cells the same contact angle there → their rays meet → strands join.
+    const left: Vec2[] = [[0, 0], [1, 0], [1, 1], [0, 1]];
+    const right: Vec2[] = [[1, 0], [2, 0], [2, 1], [1, 1]];
+    const edgeMid = (poly: Vec2[], i: number): Vec2 => { const p = poly[i], q = poly[(i + 1) % poly.length]; return [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]; };
+    const angleAt = (m: Vec2) => 30 + 20 * (m[0] / 2); // varies across x — yet agrees on the shared edge
+    expect(edgeMid(left, 1)).toEqual([1, 0.5]);
+    expect(edgeMid(right, 3)).toEqual([1, 0.5]);
+    expect(angleAt(edgeMid(left, 1))).toBe(angleAt(edgeMid(right, 3)));
+  });
+
+  it("multi-level rosette adds interior strands (more lines than single-pass), still valid", () => {
+    const grid = buildTiling({ typeIndex: 6, bounds: BOUNDS });
+    const l1 = strapworkPlan(grid, 48, { levels: 1 });
+    const l2 = strapworkPlan(grid, 48, { levels: 2 });
+    const count = (p: typeof l1) => p.elements.filter((e) => e.role === "line").length;
+    expect(count(l2)).toBeGreaterThan(count(l1)); // nested inner stars add segments
+    expect(validateRenderPlan(l2)).toEqual([]);
+    // the outer level is preserved — l2 contains every l1 segment plus more
+    expect(count(l2)).toBeGreaterThanOrEqual(count(l1) * 1.5);
+  });
+});

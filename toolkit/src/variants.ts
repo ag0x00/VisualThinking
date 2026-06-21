@@ -1,0 +1,118 @@
+import { generateIgp, defaultIgpParams } from "./generators/igp";
+import { generateTiling, defaultTilingParams } from "./generators/tiling";
+import { generateTruchet, defaultTruchetParams } from "./generators/truchet";
+import { generateGirih12, defaultGirih12Params } from "./generators/girih12";
+import type { Oklch, RenderPlan, Vec2 } from "./render-plan";
+
+export function goodPlan(): RenderPlan {
+  return generateIgp(defaultIgpParams());
+}
+
+export function tilingGood(): RenderPlan {
+  return generateTiling(defaultTilingParams());
+}
+
+// Deterministic jitter (no RNG dependency).
+export function jitter(plan: RenderPlan, mag: number): RenderPlan {
+  let i = 0;
+  const h = () => {
+    const s = Math.sin(++i * 12.9898) * 43758.5453;
+    return (s - Math.floor(s)) * 2 - 1;
+  };
+  return {
+    ...plan,
+    elements: plan.elements.map((e) =>
+      e.role === "background" ? e : { ...e, points: e.points.map(([x, y]) => [x + h() * mag, y + h() * mag] as Vec2) },
+    ),
+  };
+}
+
+export const OFF_ARC: Oklch[] = [
+  { l: 0.45, c: 0.15, h: 30 },
+  { l: 0.62, c: 0.14, h: 110 },
+  { l: 0.72, c: 0.12, h: 330 },
+  { l: 0.95, c: 0.12, h: 30 }, // chromatic white → NOT hue-exempt
+  { l: 0.30, c: 0.10, h: 120 },
+];
+
+// 8-entry off-arc palette for the girih12 wrong-chord variant (SAMARKAND_7 is
+// 8 colours incl. an accent at index 5, so the 5-entry OFF_ARC would leave that
+// colorRef undefined). All hues off the cool 180–265 arc; the cream slot is made
+// chromatic so it is NOT hue-exempt.
+export const OFF_ARC_8: Oklch[] = [
+  { l: 0.45, c: 0.15, h: 30 },
+  { l: 0.62, c: 0.14, h: 110 },
+  { l: 0.72, c: 0.12, h: 330 },
+  { l: 0.30, c: 0.10, h: 120 },
+  { l: 0.95, c: 0.12, h: 30 }, // chromatic "cream" → NOT hue-exempt
+  { l: 0.78, c: 0.13, h: 60 },
+  { l: 0.50, c: 0.11, h: 350 },
+  { l: 0.62, c: 0.10, h: 100 },
+];
+
+export interface Variant {
+  label: string;
+  description: string;
+  plan: RenderPlan;
+}
+
+// The four deliberate failures the acceptance test asserts against, shared so
+// the gallery shows exactly what is tested.
+export function degradedVariants(): Variant[] {
+  const good = goodPlan();
+  return [
+    { label: "broken-symmetry", description: "points jittered 8px beyond tolerance", plan: jitter(good, 8) },
+    { label: "under-dense", description: "1 ring, no stars", plan: generateIgp({ ...defaultIgpParams(), rings: 1, includeStars: false }) },
+    { label: "over-dense", description: "14 rings", plan: generateIgp({ ...defaultIgpParams(), rings: 14 }) },
+    { label: "disconnected lines", description: "segments retracted to 0.7 (gaps at junctions)", plan: generateIgp({ ...defaultIgpParams(), segmentScale: 0.7 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
+  ];
+}
+
+// Tile-medium deliberate failures (scored by the timurid-tiling profile).
+export function tilingVariants(): Variant[] {
+  const good = tilingGood();
+  return [
+    { label: "broken-symmetry", description: "tile points jittered 8px", plan: jitter(good, 8) },
+    { label: "overlapping cells", description: "cells scaled 1.12× (overlap)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 1.12 }) },
+    { label: "gappy cells", description: "cells scaled 0.8× (gaps)", plan: generateTiling({ ...defaultTilingParams(), cellScale: 0.8 }) },
+    { label: "uneven channels", description: "cuerda-seca jittered (uneven/missing cream lines)", plan: generateTiling({ ...defaultTilingParams(), channelJitter: 1.0 }) },
+    { label: "monotone", description: "single glaze colour (no variety)", plan: generateTiling({ ...defaultTilingParams(), colorCount: 1 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...good, palette: OFF_ARC } },
+  ];
+}
+
+export function truchetGood(): RenderPlan {
+  return generateTruchet(defaultTruchetParams());
+}
+
+// Truchet (wall-to-wall) deliberate failures, one per profile axis. Note
+// broken-lattice degrades BOTH periodicity and lineContinuity (moving cells
+// pulls their arcs off neighbours) — periodicity has the higher weight so it
+// stays the top fix; the coupling is benign (one knob heals both).
+export function truchetVariants(): Variant[] {
+  const d = defaultTruchetParams();
+  return [
+    { label: "broken-lattice", description: "cells jittered off the grid (latticeJitter 0.25)", plan: generateTruchet({ ...d, latticeJitter: 0.25 }) },
+    { label: "gappy-grid", description: "cells scaled 0.8 (gaps)", plan: generateTruchet({ ...d, cellScale: 0.8 }) },
+    { label: "disconnected-arcs", description: "arcs retracted from edges (arcGap 0.4)", plan: generateTruchet({ ...d, arcGap: 0.4 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...truchetGood(), palette: OFF_ARC } },
+  ];
+}
+
+export function girih12Good(): RenderPlan {
+  return generateGirih12(defaultGirih12Params());
+}
+
+// 12-fold girih deliberate failures, one per profile axis. broken-lattice also
+// breaks triangle dedup (cells drift apart), so coverage rises too — but
+// periodicity has equal weight and collapses harder, so it stays the top fix.
+export function girih12Variants(): Variant[] {
+  const d = defaultGirih12Params();
+  return [
+    { label: "broken-lattice", description: "dodecagons jittered off the grid (latticeJitter 0.2)", plan: generateGirih12({ ...d, latticeJitter: 0.2 }) },
+    { label: "gappy-grout", description: "oversized grout (groutGap 0.25 → gaps)", plan: generateGirih12({ ...d, groutGap: 0.25 }) },
+    { label: "uneven-channels", description: "cuerda-seca jittered (channelJitter 1.0)", plan: generateGirih12({ ...d, channelJitter: 1.0 }) },
+    { label: "wrong-chord", description: "off-arc (warm) palette", plan: { ...girih12Good(), palette: OFF_ARC_8 } },
+  ];
+}

@@ -127,7 +127,7 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 #### Movement-Rhythm-Style-Symbolism cluster (items 8 + 9 + 14 + 15) — ✅ depth-dive complete 2026-05-17
 
 - **Time-based Composition (#8, complete)**: [[Time-based Composition]] *(parent)* — sub-pages: [[Eisenstein's Montage Theory]] · [[Murch's Six Editing Rules]] · [[McCloud's Panel Transitions and the Infinite Canvas]] · [[Disney Animation Principles]]
-- **Movement, Rhythm, and Repetition (#9, complete)**: [[Movement Rhythm and Repetition]] *(parent)* — sub-pages: [[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Islamic Geometric Patterns and the Polygonal Technique]] · [[Op-Art and Cross-Modal Rhythm]]
+- **Movement, Rhythm, and Repetition (#9, complete)**: [[Movement Rhythm and Repetition]] *(parent)* — sub-pages: [[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Islamic Geometric Patterns and the Polygonal Technique]] · [[The Variation Principle in Islamic Geometric Patterns]] · [[Op-Art and Cross-Modal Rhythm]]
 - **Style as System (#14, complete)**: [[Style as System]] *(parent)* — sub-pages: [[Wölfflin's Five Axes]] · [[Style as Rule-System]] · [[Diffusion-Era Style Transfer]] · [[Brand Style Guides as Rule-Systems]]
 - **Cultural and Symbolic Iconography (#15, complete)**: [[Cultural and Symbolic Iconography]] *(parent)* — sub-pages: [[Panofsky's Three-Level Iconology]] · [[Western Iconographic Systems]] · [[Non-Western Iconographic Systems]] · [[Jungian Archetypes and Brand Archetypes]]
 - Sweep synthesis: [[Research - Movement-Rhythm-Style-Symbolism Sweep]]
@@ -206,6 +206,9 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the comparative summary and [[AI Art Toolkit Map]] for the diffusion stack. `wiki/tools/` directory now contains 30 pages. Default color library: [[culori]].
 
 ## Sources
+
+### Islamic geometric patterns
+- [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]]
 
 ### Tonal foundations
 - [[The Art Story - Chiaroscuro Tenebrism Sfumato]]

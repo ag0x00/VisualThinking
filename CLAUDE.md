@@ -4,9 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-An **Obsidian vault**, not a software project. There is no build, test, or lint. The vault is a personal knowledge base on **visual thinking**: art-school fundamentals, computational aesthetics, color theory, composition, and how to teach those concepts to an LLM for programmatic art generation.
+An **Obsidian vault** AND a workspace for code subprojects that consume the vault. The split:
 
-The founding document is `wiki/sources/Wiki Seed.md` (a Gemini conversation establishing scope). The 4-branch spine is in `wiki/index.md`. **The authoritative methodology page** is `wiki/meta/Wiki Methodology.md` — read it before planning sweeps.
+- **Vault** (`wiki/`) — personal knowledge base on **visual thinking**: art-school fundamentals, computational aesthetics, color theory, composition, and how to teach those concepts to an LLM for programmatic art generation. No build, test, or lint at this layer — it's content.
+- **Code subprojects** (`mcp/`, planned `toolkit/`, planned `screensaver/`) — operational layers built ON the vault. Each has its own build/test/lint (TypeScript, vitest, tsc).
+
+The founding document is `wiki/sources/Wiki Seed.md` (a Gemini conversation establishing scope). The 4-branch spine is in `wiki/index.md`. **The authoritative methodology page** is `wiki/meta/Wiki Methodology.md` — read it before planning sweeps. Current build-phase state lives in `.claude/memory/project_subsystem-trajectory.md` and `.claude/memory/project_brainstorm-state.md`.
+
+## Engineering discipline (all subprojects)
+
+- **Do not over-engineer.** Before committing to a plan, ask: *is this the most elegant and minimal way to do this?* Build the mechanism when it is actually load-bearing, not for a hypothetical future consumer. YAGNI is the default.
+- **Toolkit vs. project vs. wiki boundary.** There is an uncountable number of art/design directions; the toolkit must not try to contain all of them or it becomes biased toward whatever directions we happened to build. So:
+  - **Toolkit (`toolkit/`)** = the domain-neutral *spine* (RenderPlan representation, `compose`, `improve`, the operator registry) + a small set of **transferable measurements**. The bias-safe split is already in place: **operators *measure* (taste-free); profiles *set targets/weights* (where taste lives, project-owned).** A measurement earns a place in core if its underlying *property is transferable across unrelated projects* (symmetry, periodicity, complexity, balance, contrast, colour-relations, continuity, coverage — and yes, channel/grout uniformity à la cuerda-seca, which recurs in any handmade-ceramic/mosaic/stained-glass look). The test is transferable-property, **not** single-named-tradition.
+  - **Per-project** = the generator wiring + the profile (taste) + any genuinely bespoke metric only that project needs.
+  - **Generators lean on prior art.** Where a mature library exists (e.g. IGP), reuse it rather than reinventing — reinventing is both wasted effort and a bias magnet. **The wiki is where we point to that prior art** (a concept page like IGP should link the ready-made implementations we found). Build a custom generator only when nothing fits (see `.claude/memory/feedback_npm-audit-before-design.md`).
+
+## Subsystems (build trajectory)
+
+- **Subsystem A — Wiki MCP server (`mcp/`)** — ✅ shipped. Read-only MCP server exposing the wiki as typed knowledge over stdio. PR #1 merged. Publishable as `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` so any Claude Code session in this directory gets `mcp__visualthinking-wiki__*` tools (`orient`, `search`, `getRelated`, `getConcept`, `getTechnique`, `getTool`, etc.).
+- **Subsystem B — Toolkit (`toolkit/`)** — planned. Pure-function JS/TS library of scorers, generators, and pipelines, operationalizing the techniques in `wiki/techniques/`. Runtime-independent of the MCP (MCP is dev-time consultation only).
+- **Subsystem C — Screensaver (`screensaver/`)** — planned. macOS WebView `.saver` bundle as the toolkit's first test artifact. KISS-scoped: toolkit + screensaver are built together (B-via-C) so the toolkit's API is shaped by one concrete consumer instead of designed in isolation.
 
 ## Project priorities (user-stated 2026-05-17)
 
@@ -33,23 +50,30 @@ The first five sweeps (May 2026) were breadth-first within the seed's 4 branches
 
 JS/TS first. Python only when JS equivalent is meaningfully weak (advanced CV beyond OpenCV.js, scientific colour-science work, ML training). Rust/Go only with a specific 2026 reason (native binary, GPU portability, cold-start performance). Default stack: WebGPU + three.js + Anthropic TS SDK + culori/chroma.js.
 
-## Vault layout
+## Vault + workspace layout
 
 ```
-wiki/                  ← all knowledge pages
+wiki/                  ← knowledge pages (the vault)
   concepts/            ← atomic ideas (Chiaroscuro, Gestalt, Birkhoff, …)
   entities/            ← named people, works, places
   sources/             ← canonical archive of ingested material (Wiki Seed lives here)
-  techniques/          ← LLM-applicable patterns
-  tools/               ← software/libraries (p5.js, OpenCV, …)
+  techniques/          ← LLM-applicable patterns (operational recipes)
+  tools/               ← software/libraries (p5.js, three.js, OpenCV, …)
   folds/               ← rollups of wiki/log.md (DragonScale Mech 1)
   meta/                ← vault-meta pages
   index.md · hot.md · log.md
+mcp/                   ← Subsystem A: wiki MCP server (TypeScript, @visualthinking/wiki-mcp)
+toolkit/               ← Subsystem B (planned): JS/TS library consuming the wiki
+screensaver/           ← Subsystem C (planned): macOS .saver as toolkit's first artifact
+docs/                  ← cross-subsystem specs + plans (docs/superpowers/specs/, docs/superpowers/plans/)
 inbox/                 ← drop zone for incoming files; archived to wiki/sources/ after ingest
 .raw/                  ← source archive (ingest reads here); manifest at .raw/.manifest.json
 .vault-meta/           ← DragonScale runtime state (address-counter, legacy-pages, tiling-thresholds)
-scripts/               ← symlinked DragonScale scripts (allocate-address, tiling-check, boundary-score)
-skills/wiki-fold/      ← symlinked fold-operator skill
+.claude/memory/        ← per-project auto-memory (committed; symlinked from ~/.claude/projects/)
+.mcp.json              ← registers visualthinking-wiki MCP at project scope
+.superpowers/          ← brainstorming visual-companion session state (gitignored)
+scripts/               ← DragonScale scripts (copied, not symlinked — see below)
+skills/wiki-fold/      ← fold-operator skill (copied)
 _templates/            ← Obsidian templates
 ```
 
@@ -77,8 +101,9 @@ chmod +x scripts/*.sh scripts/*.py
 ```
 `.vault-meta/` is untouched by re-copy; runtime state (counters, manifests) is preserved.
 
-## How to work in this vault
+## How to work in this repo
 
+### For wiki content
 - **Use the `claude-obsidian:*` skills** for vault operations. Do not hand-roll equivalents.
   - `claude-obsidian:wiki` — bootstrap / setup
   - `claude-obsidian:wiki-ingest` — file → wiki pages
@@ -91,8 +116,14 @@ chmod +x scripts/*.sh scripts/*.py
   - `claude-obsidian:obsidian-markdown` — Obsidian-flavored markdown (wikilinks, callouts, embeds, math)
   - `claude-obsidian:obsidian-bases` — `.base` dynamic views
   - `claude-obsidian:defuddle` — strip web-page clutter before ingest
-- **Prefer `mcp__obsidian-vault__*` tools** over raw filesystem reads/writes for notes. The MCP server is configured project-locally to point at this vault.
+- **Prefer `mcp__obsidian-vault__*` tools** over raw filesystem reads/writes for notes.
+- **Use the wiki MCP** (`mcp__visualthinking-wiki__*`) for typed queries: `orient` for artist-intent → starting points, `search` for keyword/semantic lookup, `getConcept` / `getTechnique` / `getTool` for typed page reads, `getRelated` for graph traversal. Loads on session start from `.mcp.json`. **Known gap**: `orient` under-surfaces tradition-specific named-entity terms (logged to `mcp/tasks/lessons.md`). Workaround: pair `orient` with a `search` keyword call on distinctive terms.
 - New ingestion sources land in `inbox/`. After processing, the raw source moves to `wiki/sources/`; cross-referenced pages are created under the right branch. URLs are fetched directly — don't park them in `inbox/`.
+
+### For code subprojects
+- Each subproject has its own `CLAUDE.md` (see `mcp/CLAUDE.md` for the Boris-Cherny-template conventions: plan-mode default, subagent strategy, `tasks/lessons.md` self-improvement loop, verification before done, KISS).
+- TypeScript first per `.claude/memory/feedback_language-preference.md`. Python only when JS equivalent is meaningfully weak; Rust/Go only with a specific 2026 reason. Default stack per techniques in `wiki/techniques/`: culori + three.js + WebGPU + Anthropic TS SDK.
+- Specs go to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`; plans to `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`.
 
 ## Content conventions
 

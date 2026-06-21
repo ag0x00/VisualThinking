@@ -1,0 +1,14 @@
+{
+  "name": "@visualthinking/screensaver",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Subsystem C — the toolkit's first animated consumer. A web shell that endlessly dissolves one variety-engine mosaic into the next; later wrapped in a WKWebView .saver.",
+  "scripts": {
+    "dev": "esbuild web/main.ts --bundle --format=esm --outdir=web/dist --servedir=web --serve=localhost:5500 --watch=forever",
+    "build": "esbuild web/main.ts --bundle --format=esm --minify --outfile=web/dist/main.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

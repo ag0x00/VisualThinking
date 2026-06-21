@@ -8,6 +8,27 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-05-23 ingest | Application-Based Principles of IGPs (Azari et al. 2023)
+- Source: `~/Downloads/s40494-022-00852-w.pdf` — *Heritage Science* 11:22 (2023), open access CC-BY.
+- Summary: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]] (c-000231)
+- Pages created: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]], [[The Variation Principle in Islamic Geometric Patterns]] (c-000232)
+- Pages updated: [[Islamic Geometric Patterns and the Polygonal Technique]] (added the radial/polygon-in-contact/symmetry-group generation trichotomy + a variation cross-ref; removed a verbatim-duplicated Implementation-landscape section), `wiki/index.md`
+- Key insight: one IGP transforms into another by sweeping the **contact angle** (acute/median/obtuse; *Tond/Shol/Tond-o-Shol*); varied continuously — spatially or over time — patterns **flow into each other**. Maps directly onto the toolkit's strapwork θ knob (temporal morph + spatial gradient + per-cell re-decoration animation models).
+
+## 2026-05-18 — Build phase begins; toolkit-screensaver brainstorm + IGP library audit
+
+- **Subsystem A (MCP) shipped**: PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` for project-local consumption. Known gap (logged to `mcp/tasks/lessons.md`): `wiki_orient` under-surfaces named-tradition terms.
+- **Auto-memory relocated**: moved from `~/.claude/projects/-Users-ag-Lab-VisualThinking/memory/` into `.claude/memory/` (committed; symlinked from harness location for compatibility). Future sessions see project state inline.
+- **Branch `toolkit-screensaver` opened**: brainstorm for Subsystem B-via-C (toolkit + macOS screensaver). Visual genre: Samarkand IGPs (Timurid blue-tile aesthetic, 9 user-provided reference images).
+- **Mid-brainstorm reframing**: user redirected — "the goal of this exercise is NOT to build a screensaver, actually. it's to figure out what works and what doesn't in our wiki+mcp+toolkit approach." Captured as memory entries `feedback_test-artifact-vs-workflow.md` and `feedback_npm-audit-before-design.md`.
+- **IGP library audit (4 parallel subagents)**: synthesis in [[Research - IGP Library Landscape 2026-05-18]] (c-000226). New tool pages: [[tactile-js]] (c-000227), [[wallpaper-groups]] (c-000228), [[PlotBoilerplate]] (c-000229). Augmented [[Islamic Geometric Patterns and the Polygonal Technique]] (c-000191) with Implementation Landscape section. Augmented [[Symmetry-Group Pattern Generator]] (c-000221) with Build vs Borrow table.
+- **Workflow lessons surfaced**:
+  1. The wiki had concept-depth on IGPs but no tool-depth — corrected
+  2. `wiki_orient` weighting under-surfaces named-tradition terms — logged for MCP refinement
+  3. npm-search audit applies to build phases too, not just catalog phases — new convention memory
+  4. Test artifact ≠ goal; workflow is the product — new convention memory
+- **Addresses reserved**: c-000226 through c-000229 (4 used; c-000230 reserved unused). Counter at 230.
+
 ## 2026-05-17 — Wiki-lint cleanup pass
 - Ran `claude-obsidian:wiki-lint` post-Sweep-7. Vault health strong; remaining items mostly convention drift.
 - Applied 3 safe auto-fixes + 5 needs-review items in same session:
