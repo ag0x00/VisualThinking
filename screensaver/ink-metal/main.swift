@@ -132,7 +132,8 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
     rho.write(float4(r0,0,0,0), gid);
 }
 
-struct DepositParams { float2 pos; float2 dir; float radius; float water; float ink;
+struct DepositParams { float2 pos; float2 dir; float2 strokeP0; float2 strokeDir;
+                       float radius; float water; float ink;
                        float lambda; float mbase; float dryness; float seed; float nibAspect;
                        float fwIntensity; float channel; float striate; };   // channel: 0 = black ink, 1 = red
 
@@ -164,29 +165,31 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     if(g < 0.0015) return;
 
     // Dry-brush flying-white (飛白): as the ink load runs out the bristles separate and the paper
-    // shows through as streaks running ALONG travel — continuous PARALLEL HAIRS, not dashes across
-    // the stroke. A hair sits at a fixed offset ACROSS the width, so the pattern keys on loc.y
-    // (perpendicular) and stays constant along loc.x. Because loc.y is the same for every overlapping
-    // sub-stamp, the hairs come out continuous instead of the beaded "railroad tracks" a loc.x-keyed
-    // pattern produces. Depletion (dryness↑ toward the tail) opens the gaps — not an along-length chop.
-    // ...AND only where the stroke is wide enough to fit several hairs. A thin contact (a "bone"
-    // line, or a stroke's thin tip) can't show PARALLEL hairs, so flying-white there just beads it
-    // into tracks — gate it out by transverse width so thin parts stay solid.
+    // shows through as continuous PARALLEL HAIRS running along the stroke, not dashes across it.
+    // KEY: key the pattern to a FIXED world-space axis (the stroke's overall direction + origin),
+    // NOT the per-stamp tangent. The tangent rotates along a curve, so overlapping stamps disagree
+    // on "across" and the hairs chop into beaded tracks. Against the fixed axis every sub-stamp
+    // computes the IDENTICAL pattern for a given pixel → continuous hairs, even on curves. `hcoord` =
+    // perpendicular offset from the stroke axis; `halong` = distance along it. Width-gated, because a
+    // thin contact (a "bone" line, a thin tip) can't show parallel hairs — there it stays solid.
+    float2 sn = float2(-dp.strokeDir.y, dp.strokeDir.x);
+    float hcoord = dot(pt - dp.strokeP0, sn);
+    float halong = dot(pt - dp.strokeP0, dp.strokeDir);
     float fw = dp.fwIntensity * smoothstep(0.40, 0.92, dp.dryness)
                               * smoothstep(1.6, 3.2, dp.radius);
     float mask = 1.0;
     if (fw > 0.001) {
-        float hairs = vnoise(float2(dp.seed, loc.y*0.80));                    // fine stripes across width
-        float group = vnoise(float2(loc.x*0.010 + dp.seed*1.7, loc.y*0.28));  // slow clumping (very gentle along-wobble)
+        float hairs = vnoise(float2(dp.seed, hcoord*0.80));                    // fine stripes across width
+        float group = vnoise(float2(halong*0.010 + dp.seed*1.7, hcoord*0.28)); // slow clumping along length
         float bristle = hairs*0.66 + group*0.34;
         float thr = mix(0.30, 0.72, fw);                       // drier → higher threshold → more paper shows
         float keep = smoothstep(thr-0.12, thr+0.12, bristle);  // 1 = hair, 0 = paper gap
         mask = mix(1.0, keep, fw);
     }
-    // Wet side-tip striation: faint tonal streaks ALONG travel (perpendicular-keyed, like the hairs
-    // but low-contrast and not gated by dryness) so a broad 淡 wash reads as brushed, not airbrushed.
+    // Wet side-tip striation: faint tonal streaks along travel (same fixed-axis key, low-contrast,
+    // not dryness-gated) so a broad 淡 wash reads as brushed, not airbrushed.
     if (dp.striate > 0.001) {
-        float st = vnoise(float2(dp.seed*0.7, loc.y*0.55));
+        float st = vnoise(float2(dp.seed*0.7, hcoord*0.55));
         mask *= mix(1.0, 0.6 + 0.4*st, dp.striate);
     }
 
@@ -334,7 +337,7 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 // MARK: - Renderer
 
-struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0; var striate:Float=0 }
+struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var strokeP0=SIMD2<Float>(0,0); var strokeDir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0; var striate:Float=0 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.04; var diff:Float=0.06 }  // diff low → solid, non-watery blacks; softness reserved for wet areas + gray washes
 
@@ -595,7 +598,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         case .grayWash:                                  // 淡 — broad pale soft background tone
             speedBase=0.28; conc=0.15; widthMul=1.5;  waterMul=1.7; lenMul=0.9; fwMul=0.25; curveMul=0.8; deplMul=0.5; splatBase=0.0;  sideTip=true;  snap=0
         case .vigorousDry:                               // 枯 — fast dry DRAG: broad, side-tip, breaks into flying-white hairs
-            speedBase=0.80; conc=0.95; widthMul=1.7;  waterMul=0.30;lenMul=0.95;fwMul=2.2;  curveMul=1.3; deplMul=1.5; splatBase=0.9;  sideTip=true;  snap=1
+            speedBase=0.80; conc=0.95; widthMul=1.7;  waterMul=0.30;lenMul=0.95;fwMul=2.2;  curveMul=0.7; deplMul=1.5; splatBase=0.9;  sideTip=true;  snap=1
         }
         let speed = min(max(speedBase + (dynamic ? vig*0.18 : 0) + (nextRand()-0.5)*0.28, 0), 1)
         let widthScale = mix(1.15, 0.50, speed) * widthMul
@@ -747,6 +750,7 @@ final class Renderer: NSObject, MTKViewDelegate {
                 var dp = DepositParams()
                 dp.pos = curPos
                 dp.dir = dir
+                dp.strokeP0 = s.p0; dp.strokeDir = s.dir   // fixed axis → flying-white hairs stay coherent on curves
                 let press = s.even ? smoothstep(0,0.05,t)*(1 - smoothstep(0.92,1.0,t))   // even line, sharp tips
                                    : pressure(t, s.exitStyle, s.seed, s.snap)            // 起笔/行笔/收笔 (snap = vigor)
                 dp.radius = max(s.baseR * press, 0.5)
