@@ -172,9 +172,11 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float hh = clamp(dot(pt - aa, abv) / max(segLen2, 1e-6), 0.0, 1.0);
     float2 closest = aa + abv*hh;
     float dist = length(pt - closest);
-    float ee = dist / dp.radius; ee = ee*ee;
-    float g = exp(-ee*3.0) * smoothstep(2.2, 1.1, ee);
-    if(g < 0.0015) return;
+    // SDF coverage: a solid core (dist < radius − aa) and a fixed ~1.4px antialiased rim. This renders
+    // cleanly at ANY width — a Gaussian footprint is sub-pixel for a thin radius and aliases into a
+    // dotted/ribbed line on diagonals. (Distance-field stroke coverage — see [[Programmatic Stroke Rendering]].)
+    float g = smoothstep(dp.radius + 0.7, dp.radius - 0.7, dist);
+    if(g < 0.003) return;
 
     // Dry-brush flying-white (飛白): as the ink load runs out the bristles separate and the paper
     // shows through as continuous PARALLEL HAIRS running ALONG the stroke, not dashes across it.
@@ -187,7 +189,7 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float hcoord = dot(pt - closest, segPerp);
     float halong = dot(pt - dp.strokeP0, dp.strokeDir);
     float fw = dp.fwIntensity * smoothstep(0.40, 0.92, dp.dryness)
-                              * smoothstep(1.6, 3.2, dp.radius);
+                              * smoothstep(2.8, 5.0, dp.radius);   // only broad strokes show hairs; thin tips/lines stay solid
     float mask = 1.0;
     if (fw > 0.001) {
         float hairs = vnoise(float2(dp.seed, hcoord*0.80));                    // fine stripes across width
@@ -214,8 +216,13 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     b += float4(WT[4],WT[5],WT[6],WT[7])*addW;
     c += WT[8]*addW;
     fA.write(a,gid); fB.write(b,gid); fC.write(float4(c,0,0,0),gid);
+    // Pigment is written with MAX (union coverage), NOT additive accumulation. Overlapping capsules —
+    // within a frame and at frame joints — take the nearest/strongest coverage, never a sum, so the
+    // joint double-counting that produced perpendicular "rung" banding on thin strokes cannot occur
+    // (the union/field principle, see [[Programmatic Stroke Rendering]] / repo issue #4). Water stays
+    // additive above: it's a flow source for percolation and shows no banding.
     float2 pv = p.read(gid).xy;                 // .x = black pigment, .y = red
-    if (dp.channel < 0.5) pv.x += addInk; else pv.y += addInk;
+    if (dp.channel < 0.5) pv.x = max(pv.x, addInk); else pv.y = max(pv.y, addInk);
     p.write(float4(pv, 0, 0), gid);
 }
 
@@ -644,7 +651,11 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.fwIntensity = reg.fw * fwScale * fwMul * (0.8 + 0.4*nextRand()) * (dynamic ? (1 + vig*1.2) : 1)
         s.splatter = min(splatBase * aSplatter * (0.5 + vig), 1.0)
         s.ink = reg.ink * conc
-        s.water = reg.water * waterMul * (0.6 + 0.4*conc)   // grays carry more water (soft); blacks ~dry
+        // Ink strokes deposit ~NO water of their own: a per-frame self-water pulse at the brush tip
+        // modulates the wet-gated pigment into per-frame bands ("rungs"). Bleed comes only from the
+        // stable, pre-laid clear-water strokes (a settled wet field → smooth bleed). grayWash keeps a
+        // touch so a 淡 wash can still soften. (See [[Programmatic Stroke Rendering]].)
+        s.water = (kind == .grayWash) ? reg.water * waterMul * 0.5 : 0
         s.seed = nextRand()*60
         s.dir = dir; s.len = len
         strokes.append(s)
@@ -749,15 +760,19 @@ final class Renderer: NSObject, MTKViewDelegate {
             let ez = mix(1.6, 1.02, s.snap)
             let t0 = pow(max(0,Float(age-1)/Float(s.life)), ez)
             let t1 = pow(Float(age)/Float(s.life), ez)
-            // Each sub-deposit is a capsule (segment), so the stroke stays a continuous ribbon; a
-            // modest fixed count suffices — SUB only needs to track curvature within one frame's advance.
-            let SUB = 10
+            // Deposit only THIS frame's fresh segment (t0→t1) as a MAX-union of SDF capsules. Pigment
+            // is max (union coverage — overlapping capsules never sum, so no joint "rung" banding) and
+            // already-drawn regions are NOT re-touched, so in wet areas they bleed/advect naturally
+            // instead of being re-pinned each frame (re-pinning fought the LBM flow and beat into bands).
+            // (See [[Programmatic Stroke Rendering]] — union/field coverage, not accumulation.)
+            let fseg = max(Float(1e-4), t1 - t0)
+            let N = max(3, min(48, Int(s.len * fseg / 1.0) + 2))   // ~1px capsule spacing along the fresh advance
             var prevPos = bezier(s, t0)
-            for k in 1...SUB {
-                let t = t0 + (t1 - t0) * Float(k)/Float(SUB)
+            for k in 1...N {
+                let t = t0 + fseg * Float(k)/Float(N)
                 let curPos = bezier(s, t)
                 let segStart = prevPos
-                let seg = simd_length(curPos - prevPos); prevPos = curPos   // distance moved this substamp
+                let seg = simd_length(curPos - prevPos); prevPos = curPos
                 let tan = bezierTangent(s, t)
                 let dir = simd_length(tan) > 1e-4 ? simd_normalize(tan) : SIMD2<Float>(1,0)
                 let load: Float = exp(-s.depletion * t)        // ink depletes along the stroke
@@ -768,13 +783,9 @@ final class Renderer: NSObject, MTKViewDelegate {
                 dp.strokeP0 = s.p0; dp.strokeDir = s.dir   // fixed axis → flying-white hairs stay coherent on curves
                 let press = s.even ? smoothstep(0,0.05,t)*(1 - smoothstep(0.92,1.0,t))   // even line, sharp tips
                                    : pressure(t, s.exitStyle, s.seed, s.snap)            // 起笔/行笔/收笔 (snap = vigor)
-                dp.radius = max(s.baseR * press, 0.5)
-                // dose ∝ distance the brush MOVED (not frame/substamp count): a slow or short stroke
-                // no longer piles overlapping stamps into an oversaturated blob. Darkness comes from
-                // the brush load + how many times the sweeping nib overlaps a point, as in real ink.
-                let dose = min(seg / max(s.baseR, 1.0), 1.6) * 2.3
-                dp.ink = s.ink * load * dose
-                dp.water = s.water * (0.4 + 0.6*load) * dose
+                dp.radius = max(s.baseR * press, 1.0)   // floor ~2px wide: a sub-pixel tip aliases into dots
+                dp.ink = s.ink * load * 1.8      // MAX-coverage: peak = ink·load (max isn't additive → no dose needed). 1.8 → loaded core reads solid
+                dp.water = s.water * (0.4 + 0.6*load) * min(seg/max(s.baseR,1.0),1.6)*2.3   // additive flow source for percolation
                 dp.dryness = min(1 - min(load*1.15, 1) + s.drynessBias, 1)  // side-tip drier → flying white
                 dp.seed = s.seed
                 dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
