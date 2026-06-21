@@ -216,6 +216,12 @@ Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the compar
 
 ## Sources
 
+### Ink & watercolor simulation
+- [[Chu Tai - MoXi Real-Time Ink Dispersion]] *(SIGGRAPH 2005 — LBM ink percolation)*
+- [[Curtis et al - Computer-Generated Watercolor]] *(SIGGRAPH 1997 — shallow-water + K–M)*
+- [[Stam - Stable Fluids]] *(SIGGRAPH 1999 — stable N–S, browser-fluid foundation)*
+- [[Animated Ink Bleeding with CFD]] *(2024 — LBM via TCLB)*
+
 ### Islamic geometric patterns
 - [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]]
 
