@@ -8,6 +8,11 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-06-21 autoresearch | Programmatic stroke rendering (the geometry layer)
+- Filed [[Programmatic Stroke Rendering]] (c-000245) — closes a vault gap found while building the ink screensaver: the wiki had the **craft** ([[Chinese Brushwork Principles]]) and **fluid-sim** ([[Lattice Boltzmann Method for Ink Dispersion]]) layers but nothing on **how a stroke is laid down** (path → shape).
+- Six technique families surveyed (stamp/dab spacing · skeletal strokes · offset-curve/swept-disk ribbon · **SDF/coverage** · NPR painterly · Chinese-ink brush+paper models). Organizing principle: **accumulation (double-counts overlap) vs union/field-evaluation (idempotent)** — joint over-darkening / "rung" banding is *the* accumulation failure mode.
+- Directly informs repo **issue #4**: the screensaver's additive Gaussian-stamp deposit double-counts at joints → rungs on thin strokes. Recommended fix grounded in the literature: **per-pixel SDF coverage** (distance-to-centerline, written once) + flying-white as MoXi-style depletion-gated noise modulation, deposited into the paper sim as a saturating field. Sources: Hsu & Lee, Quilez, Kilgard, MoXi (Chu & Tai), Hertzmann, MetalNanoVG, et al.
+
 ## 2026-06-21 build-loop | Vigorous, varied sumi strokes (physical-dynamics layer)
 - Expanded [[Chinese Brushwork Principles]] (c-000243) with a **Physical dynamics** section: the coupled **speed↔moisture↔value** axis (the engine of vigor), the **five shades as stroke archetypes** (焦/濃/淡/湿/枯), side-ink/edge-loading, **潑墨 splatter**, brush-landing/drag (起笔), and motion-proportional ink deposit. Build table + sources updated.
 - `screensaver/ink-metal/main.swift`: reworked to a **one-painter** sequential scheduler (no two strokes at once); a per-painting **stroke recipe** of archetypes (pale 淡 washes laid first, crisp 焦 thin-line "bones", 濃 darks, fast 枯 dry strokes, red accent last); **less-watery solid blacks** (diff 0.14→0.06); **vigor** (speed/flying-white/curvature/entry-snap); **潑墨 splatter** specks; new **Vigor** + **Splatter** GUI dials.
