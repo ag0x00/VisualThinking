@@ -17,6 +17,10 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 3. **LLM techniques for visual reasoning** — strict structural criteria, JSON archetypes, multimodal eval loops.
 4. **Tools and libraries** — p5.js, Py5, colormath, chroma.js, OpenCV.
 
+## Process
+
+- [[Build Working Loop]] — the 6-step build SOP (understand → consult wiki → research gaps → aesthetics → build → evaluate). Sibling of [[Wiki Methodology]].
+
 ## Research syntheses
 
 - [[Research - Tonal Foundations in Classical Painting]] — chiaroscuro / sfumato / tenebrism.
@@ -194,6 +198,7 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 - [[Style Transfer Pipeline]] *(IP-Adapter + ControlNet + ICAS)*
 
 ### Ink & fluid simulation
+- [[Chinese Brushwork Principles]] *(三步 stroke, bone method, centre/side tip, 墨分五色 — brush craft for ink generation)*
 - [[Lattice Boltzmann Method for Ink Dispersion]] *(MoXi — real-time sumi-e percolation)*
 - [[Shallow-Water Watercolor Simulation]] *(Curtis — three-layer watercolour)*
 - [[Stable Fluids and GPU Ink Advection]] *(Stam — browser ink-in-water default)*

@@ -8,6 +8,12 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-06-21 build-loop | Chinese-ink brushwork + adopt Build Working Loop
+- Adopted [[Build Working Loop]] (c-000244) — the 6-step build SOP (understand → consult wiki FIRST → research gaps → aesthetics → build → evaluate). Sibling of [[Wiki Methodology]]. Memory: `feedback_build-working-loop`.
+- Ran the loop on "natural Chinese-ink strokes": wiki supplied composition ([[Ma and Yohaku no Bi]]) + gesture ([[Organic vs Mechanical Motion]], [[Directed Tension]]); research filled the gap → new page [[Chinese Brushwork Principles]] (c-000243): 起笔/行笔/收笔 three-phase stroke, 骨法 bone method, 中锋/侧锋 centre/side tip, 墨分五色 five ink tones.
+- Implementation in `screensaver/ink-metal/`: brush dynamics (three-phase pressure, ease-in draw-speed, centre/side-tip nib, five-tone ink), Ma-aware placement (off-centre + blank-region budget via occupancy grid), temporal-ma pacing (bursts + rests), and an eval scorecard (negative-space / void / COM / directed-tension) feeding placement.
+- Key lesson: I'd built the prior demo with aesthetics ad-hoc and the wiki unconsulted; consulting it first immediately supplied the composition + gesture layer. Hence the SOP.
+
 ## 2026-06-21 autoresearch | Ink & watercolor simulation on paper
 - Rounds: 2 | Searches: 5 | Sources fetched: MoXi + Curtis (full PDFs)
 - Topic: algorithms & code to animate ink applied to dry/wet paper.

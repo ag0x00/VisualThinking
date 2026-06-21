@@ -88,7 +88,7 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
 }
 
 struct DepositParams { float2 pos; float2 dir; float radius; float water; float ink;
-                       float lambda; float mbase; float dryness; float seed; float pad; };
+                       float lambda; float mbase; float dryness; float seed; float nibAspect; };
 
 // adds water (to f) + ink (to p) under a brush footprint. An oriented elliptical
 // nib + a direction-aligned bristle texture give calligraphic width and dry-brush
@@ -107,10 +107,10 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float2 rel = pt - dp.pos;
     float2 t = dp.dir, n = float2(-dp.dir.y, dp.dir.x);
     float2 loc = float2(dot(rel,t), dot(rel,n));        // brush-local (along, across)
-    // elongated nib along travel → continuous ribbon, less dotty
-    float2 e = float2(loc.x/(dp.radius*1.8), loc.y/dp.radius);
-    float g = exp(-dot(e,e));
-    if(g<0.003) return;
+    // elongated nib along travel; aspect sets centre-tip (round, even) vs side-tip (flat, broad)
+    float2 e = float2(loc.x/(dp.radius*dp.nibAspect), loc.y/dp.radius);
+    float g = exp(-dot(e,e)*1.5);     // sharper falloff → crisper stroke edge (bone-method spine)
+    if(g<0.004) return;
 
     // bristle streaks: vary fast across the stroke, slow along it → lines parallel to travel
     float bristle = vnoise(float2(loc.x*0.05, loc.y*1.7) + dp.seed);
@@ -242,16 +242,22 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 // MARK: - Renderer
 
-struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var pad:Float=0 }
+struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0009; var boundEvap:Float=0.0028 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.03 }
 
-// A calligraphic sumi stroke: a cubic Bézier centerline drawn over `life` frames with a
-// pressure profile (tapered ends, fuller belly) and ink-load depletion (wet→dry, flying white).
+// A calligraphic sumi stroke: a cubic Bézier centerline drawn over `life` frames. Carries
+// brush dynamics — three-phase pressure (起笔/行笔/收笔), centre/side-tip nib, ink tone
+// (墨分五色), and a per-stroke seed driving organic micro-variation.
 struct Stroke {
     var p0=SIMD2<Float>(0,0), p1=SIMD2<Float>(0,0), p2=SIMD2<Float>(0,0), p3=SIMD2<Float>(0,0)
     var start=0, life=60
     var baseR:Float=6, ink:Float=0.09, water:Float=0.13, seed:Float=0
+    var inkConc:Float=1          // 墨分五色 tone (burnt..clear)
+    var nibAspect:Float=1.8      // 中锋 (round, ~1.4) vs 侧锋 (broad, ~2.8)
+    var drynessBias:Float=0      // side-tip strokes start drier → earlier flying-white
+    var exitStyle:Int=0          // 收笔: 0 = taper to point, 1 = pressed hook
+    var dir=SIMD2<Float>(1,0), len:Float=0   // overall gesture (for directed-tension accumulator)
     var wash=false
 }
 func bezier(_ s:Stroke,_ t:Float)->SIMD2<Float> {
@@ -260,9 +266,22 @@ func bezier(_ s:Stroke,_ t:Float)->SIMD2<Float> {
 func bezierTangent(_ s:Stroke,_ t:Float)->SIMD2<Float> {
     let u=1-t; return 3*u*u*(s.p1-s.p0) + 6*u*t*(s.p2-s.p1) + 3*t*t*(s.p3-s.p2)
 }
-// pressure: soft entry taper, long dark body, taper to a point — a calligraphic ribbon
-func pressure(_ t:Float)->Float { smoothstep(0,0.16,t) * (1 - smoothstep(0.55,1.0,t)) }
 func smoothstep(_ a:Float,_ b:Float,_ x:Float)->Float { let t=max(0,min(1,(x-a)/(b-a))); return t*t*(3-2*t) }
+func gauss(_ t:Float,_ mu:Float,_ sig:Float)->Float { let z=(t-mu)/sig; return exp(-z*z) }
+// minimum-jerk easing: hand-like accelerate-then-decelerate (organic, not constant-speed)
+func minJerk(_ x:Float)->Float { let t=max(0,min(1,x)); return t*t*t*(10 - 15*t + 6*t*t) }
+
+// Three-phase calligraphic pressure: 起笔 entry accent (hidden-tip press) → 行笔 modulated body →
+// 收笔 exit (taper to a point, or a pressed hook). seed drives organic body wobble.
+func pressure(_ t:Float,_ exitStyle:Int,_ seed:Float)->Float {
+    let entry = smoothstep(0, 0.12, t)
+    let taper = 1 - smoothstep(0.62, 1.0, t)
+    let accent = 0.45 * gauss(t, 0.05, 0.045)              // 藏锋 press at the start
+    let wobble = 1 + 0.10*(sin(t*9+seed)*0.6 + sin(t*17+seed*1.7)*0.4)   // organic body variation
+    var p = (entry*taper + accent*entry) * wobble
+    if exitStyle == 1 { p += 0.5 * gauss(t, 0.85, 0.05) * taper }        // 收笔 hook
+    return max(p, 0)
+}
 
 final class Renderer: NSObject, MTKViewDelegate {
     let device: MTLDevice
@@ -279,6 +298,12 @@ final class Renderer: NSObject, MTKViewDelegate {
     var strokes: [Stroke] = []
     let tg = MTLSize(width:16, height:16, depth:1)
     let groups = MTLSize(width:(GRID+15)/16, height:(GRID+15)/16, depth:1)
+
+    // composition state (Ma-aware placement) + temporal-ma scheduler + directed-tension accumulator
+    let OC = 32                               // coarse occupancy grid
+    var occ = [Float](repeating:0, count:32*32)
+    var nextSpawn = 0, burstLeft = 0
+    var tensionAcc = SIMD2<Float>(0,0)        // decaying sum of stroke gesture vectors
 
     init(device: MTLDevice) {
         self.device = device
@@ -326,36 +351,89 @@ final class Renderer: NSObject, MTKViewDelegate {
         dispatch(enc)
     }
 
+    private func occIdx(_ pos:SIMD2<Float>)->Int {
+        let g=Float(GRID)
+        let cx=max(0,min(OC-1,Int(pos.x/g*Float(OC)))), cy=max(0,min(OC-1,Int(pos.y/g*Float(OC))))
+        return cy*OC+cx
+    }
+    private func occAt(_ pos:SIMD2<Float>)->Float { occ[occIdx(pos)] }
+
+    // Ma-aware placement: prefer an off-centre ring, avoid piling onto existing ink → keeps the
+    // blank-region budget and shifts compositional weight off-centre (Ma and Yohaku no Bi handles).
+    private func chooseOrigin(_ G:Float)->SIMD2<Float> {
+        let center = SIMD2<Float>(G/2,G/2)
+        var best = center, bestScore:Float = -1e9
+        for _ in 0..<14 {
+            let cand = SIMD2<Float>(G*(0.12+0.76*nextRand()), G*(0.12+0.76*nextRand()))
+            let d = simd_length(cand-center)/G
+            let offCenter = gauss(d, 0.30, 0.16)        // favour a ring ~0.30 of the grid off-centre
+            let score = offCenter - 2.3*occAt(cand)     // stronger avoidance → less overlap, more breathing room
+            if score>bestScore { bestScore=score; best=cand }
+        }
+        return best
+    }
+
+    private func weightedTone()->Int {           // 墨分五色, biased toward mid/dark
+        let r=nextRand(), cum:[Float]=[0.22,0.50,0.74,0.90,1.0]
+        for i in 0..<cum.count where r<cum[i] { return i }
+        return cum.count-1
+    }
+
+    private func spawnOneStroke(_ G:Float) {
+        let tones:[Float]=[1.0, 0.74, 0.52, 0.36, 0.22]   // burnt→clear
+        let start = chooseOrigin(G)
+        let ang = nextRand()*6.2832
+        let len = G*(0.32+0.55*nextRand())
+        let dir = SIMD2<Float>(cos(ang), sin(ang))
+        let perp = SIMD2<Float>(-dir.y, dir.x)
+        let c1 = (nextRand()-0.5)*0.50*len, c2 = (nextRand()-0.5)*0.50*len
+        var s = Stroke()
+        s.p0 = start
+        s.p1 = start + dir*(len*0.33) + perp*c1
+        s.p2 = start + dir*(len*0.66) + perp*c2
+        s.p3 = start + dir*len + perp*((nextRand()-0.5)*0.15*len)   // small exit offset → resolved direction
+        s.start = frame
+        s.life = Int(len/G * 155) + 34
+        s.inkConc = tones[weightedTone()]
+        let side = nextRand() < 0.42                    // 侧锋 side-tip vs 中锋 centre-tip
+        s.nibAspect   = side ? (2.0 + 0.5*nextRand()) : (1.3 + 0.3*nextRand())
+        s.drynessBias = side ? (0.07 + 0.08*nextRand()) : 0.0
+        s.baseR = G/(side ? 58 : 70) * (0.8 + 0.4*nextRand())
+        s.exitStyle = nextRand() < 0.35 ? 1 : 0
+        s.ink = 0.135 * s.inkConc
+        s.water = 0.10 * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
+        s.seed = nextRand()*60
+        s.dir = dir; s.len = len
+        strokes.append(s)
+        tensionAcc += dir * (len/G)
+        // pre-register the stroke footprint so sibling strokes in the same burst avoid overlapping it
+        for j in 0...10 { occ[occIdx(bezier(s, Float(j)/10))] += 0.05 }
+    }
+
     private func spawnStrokes() {
         let G = Float(GRID)
-        // a new calligraphic stroke every ~165 frames
-        if frame % 165 == 0 {
-            let start = SIMD2<Float>(G*(0.14+0.55*nextRand()), G*(0.14+0.55*nextRand()))
-            let ang = nextRand()*6.2832
-            let len = G*(0.30+0.45*nextRand())
-            let dir = SIMD2<Float>(cos(ang), sin(ang))
-            let perp = SIMD2<Float>(-dir.y, dir.x)
-            let c1 = (nextRand()-0.5)*0.55*len, c2 = (nextRand()-0.5)*0.55*len   // gentle flowing curve
-            var s = Stroke()
-            s.p0 = start
-            s.p1 = start + dir*(len*0.33) + perp*c1
-            s.p2 = start + dir*(len*0.66) + perp*c2
-            s.p3 = start + dir*len + perp*((nextRand()-0.5)*0.2*len)
-            s.start = frame
-            s.life = Int(len/G * 135) + 30          // longer stroke = drawn slower
-            s.baseR = G/60 * (0.75 + 0.5*nextRand())
-            s.ink = 0.10; s.water = 0.14
-            s.seed = nextRand()*60
-            strokes.append(s)
+        let fill = occ.reduce(0,+)/Float(occ.count)
+        // temporal ma: bursts of 2–4 strokes, then a rest; gated on canvas fill
+        if frame >= nextSpawn {
+            if burstLeft == 0 && fill < 0.55 { burstLeft = 2 + Int(nextRand()*3) }
+            if burstLeft > 0 {
+                spawnOneStroke(G)
+                burstLeft -= 1
+                nextSpawn = frame + (burstLeft>0 ? 16 + Int(nextRand()*26)      // within a burst
+                                                 : 150 + Int(nextRand()*130))   // rest between bursts
+            } else {
+                nextSpawn = frame + 60                                          // full → wait for fade
+            }
         }
-        if frame % 600 == 280 {   // wet-paper wash (water only, big soft area)
+        if frame % 600 == 280 && fill < 0.5 {   // occasional wet-paper wash (water only)
             var s = Stroke()
             let c = SIMD2<Float>(G*(0.25+0.5*nextRand()), G*(0.25+0.5*nextRand()))
-            s.p0 = c; s.p1 = c; s.p2 = c; s.p3 = c
-            s.start = frame; s.life = 26; s.baseR = G/6; s.wash = true
+            s.p0=c; s.p1=c; s.p2=c; s.p3=c; s.start=frame; s.life=26; s.baseR=G/6; s.wash=true
             strokes.append(s)
         }
         strokes.removeAll { frame - $0.start > $0.life + 2 }
+        for i in occ.indices { occ[i] *= 0.9990 }   // active emptiness regenerates as ink fades
+        tensionAcc *= 0.994
     }
 
     func encode(target: MTLTexture, cb: MTLCommandBuffer) {
@@ -372,8 +450,10 @@ final class Renderer: NSObject, MTKViewDelegate {
                 dp.pos = s.p0; dp.radius = s.baseR; dp.water = 0.16; dp.ink = 0
                 stampDeposit(enc, dp); continue
             }
-            let t0 = max(0, Float(age-1)/Float(s.life))
-            let t1 = Float(age)/Float(s.life)
+            // ease-in draw-speed: brush presses/dwells at the start (起笔) then accelerates and
+            // lifts fast at the exit — keeps the tapered tail sharp (a clean 收笔), not blunted.
+            let t0 = pow(max(0,Float(age-1)/Float(s.life)), 1.6)
+            let t1 = pow(Float(age)/Float(s.life), 1.6)
             let SUB = 8
             for k in 1...SUB {
                 let t = t0 + (t1 - t0) * Float(k)/Float(SUB)
@@ -383,12 +463,14 @@ final class Renderer: NSObject, MTKViewDelegate {
                 var dp = DepositParams()
                 dp.pos = bezier(s, t)
                 dp.dir = dir
-                dp.radius = max(s.baseR * pressure(t), 0.6)   // tapered ends, fuller belly
+                dp.radius = max(s.baseR * pressure(t, s.exitStyle, s.seed), 0.6)  // 起笔/行笔/收笔
                 dp.ink = s.ink * load
                 dp.water = s.water * (0.4 + 0.6*load)
-                dp.dryness = 1 - min(load*1.15, 1)            // wet head → dry, flying-white tail
+                dp.dryness = min(1 - min(load*1.15, 1) + s.drynessBias, 1)  // side-tip drier → flying white
                 dp.seed = s.seed
+                dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
                 stampDeposit(enc, dp)
+                occ[occIdx(dp.pos)] += dp.ink * 0.6           // track laid ink for placement
             }
         }
 
@@ -413,7 +495,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         pp = 1-pp
 
         // 4. display
-        var gain: Float = 3.2
+        var gain: Float = 3.6   // lifted so pale five-tone strokes still read
         enc.setComputePipelineState(pDisplay)
         enc.setTexture(p[pp],index:0); enc.setTexture(rho[rr],index:1); enc.setTexture(paper,index:2)
         enc.setTexture(target,index:3)
@@ -443,7 +525,55 @@ final class Renderer: NSObject, MTKViewDelegate {
             samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:GRID*4,bitsPerPixel:32)!
         memcpy(rep.bitmapData!,buf,buf.count)
         try! rep.representation(using:.png,properties:[:])!.write(to:URL(fileURLWithPath:path))
-        FileHandle.standardError.write("wrote \(path) after \(frames) frames\n".data(using:.utf8)!)
+        scoreFrame(buf, label: path)
+    }
+
+    // Eval loop (generate→score): composition metrics from the rendered frame, mirroring the wiki
+    // technique pages — negative-space budget + center-of-mass offset (Ma), largest contiguous
+    // void, and directed-tension magnitude/angle. Targets: negSpace 30–70%, off-centre COM.
+    private func scoreFrame(_ buf:[UInt8], label:String) {
+        let N=GRID
+        var marked=0; var mx:Float=0; var my:Float=0
+        var cell=[Bool](repeating:false, count:24*24)     // coarse marked grid for void search
+        for y in 0..<N { for x in 0..<N {
+            let i=(y*N+x)*4
+            let lum=(0.299*Float(buf[i])+0.587*Float(buf[i+1])+0.114*Float(buf[i+2]))/255
+            if lum < 0.80 {                                // darker than paper → ink
+                marked+=1; mx+=Float(x); my+=Float(y)
+                cell[(y*24/N)*24 + (x*24/N)] = true
+            }
+        }}
+        let total=Float(N*N)
+        let negSpace = 1 - Float(marked)/total
+        let comOff: Float = marked>0
+            ? simd_length(SIMD2<Float>(mx/Float(marked), my/Float(marked)) - SIMD2<Float>(Float(N)/2,Float(N)/2))/Float(N)
+            : 0
+        // largest contiguous empty region (flood fill over the 24×24 unmarked cells)
+        var seen=[Bool](repeating:false, count:24*24); var largest=0
+        for s in 0..<(24*24) where !cell[s] && !seen[s] {
+            var stack=[s]; seen[s]=true; var sz=0
+            while let c=stack.popLast() {
+                sz+=1; let cx=c%24, cy=c/24
+                for (dx,dy) in [(-1,0),(1,0),(0,-1),(0,1)] {
+                    let nx=cx+dx, ny=cy+dy
+                    if nx>=0&&nx<24&&ny>=0&&ny<24 { let n=ny*24+nx; if !cell[n] && !seen[n] { seen[n]=true; stack.append(n) } }
+                }
+            }
+            largest=max(largest,sz)
+        }
+        let voidFrac = Float(largest)/Float(24*24)
+        let tension = simd_length(tensionAcc)
+        let angle = tension>1e-4 ? atan2(tensionAcc.y, tensionAcc.x)*180/Float.pi : 0
+        let ok = { (b:Bool)->String in b ? "✓" : "✗" }
+        FileHandle.standardError.write("""
+        wrote \(label) after \(frame) frames
+          scorecard (wiki: Ma / Negative-Space / Directed-Tension)
+            negative-space   \(String(format:"%.0f%%",negSpace*100))   target 30–70%  \(ok(negSpace>=0.30 && negSpace<=0.70))
+            largest void     \(String(format:"%.0f%%",voidFrac*100))   contiguous active emptiness
+            COM off-centre   \(String(format:"%.3f",comOff))    target >0.04 off-centre  \(ok(comOff>0.04))
+            directed-tension \(String(format:"%.2f",tension)) @ \(String(format:"%.0f°",angle))   (resolved gesture energy)
+
+        """.data(using:.utf8)!)
     }
 }
 

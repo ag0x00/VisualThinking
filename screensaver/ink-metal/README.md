@@ -25,16 +25,28 @@ swiftc -O inkwater.swift -o inkwater -framework Cocoa -framework Metal -framewor
 
 Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 
+`--headless` also prints an **eval scorecard** (the generate→score loop): negative-space ratio
+(target 30–70%), largest contiguous void, center-of-mass offset (Ma), and directed-tension
+magnitude — mirroring the wiki's `Negative Space` / `Directed Tension` technique pages. The
+negative-space metric feeds back into stroke placement. *Current register is 寫意 xieyi
+(expressive/splashed); a 工筆 gongbi knob (less bleed, cleaner spine) is the obvious next dial.*
+
 ## The LBM ink-on-paper model (`main.swift`)
 
 Faithful reduction of MoXi. Per frame:
 
-1. **deposit (brush dynamics)** — autonomous calligraphic *strokes*: a **cubic Bézier**
-   centerline drawn over its lifetime, sub-stamped for a continuous ribbon, with a **pressure
-   profile** (soft entry taper → dark body → tapered point), **ink-load depletion** (wet dark
-   head → dry tail), and a direction-aligned **bristle texture** that opens into **dry-brush
-   flying-white (飛白)** as the load runs out. Footprints are masked by paper receptivity.
-   Occasional broad **water wash** wets a region (→ wet paper).
+1. **deposit (brush dynamics)** — autonomous calligraphic *strokes* grounded in
+   [[Chinese Brushwork Principles]]: a **cubic Bézier** centerline, sub-stamped for a continuous
+   ribbon, with **three-phase pressure** 起笔/行笔/收笔 (entry accent → modulated body → taper or
+   hook), **ease-in draw-speed** (dwell at start, fast clean lift), **centre vs side-tip** nib
+   中锋/侧锋 (round even line vs broad textured sweep), **five ink tones** 墨分五色 (burnt→clear
+   per stroke), and direction-aligned **dry-brush flying-white** 飛白. Occasional **water wash**
+   wets a region (→ wet paper).
+
+   *Composition (Ma):* stroke placement is **Ma-aware** — an occupancy grid steers strokes
+   off-centre and preserves a 30–70% blank-region budget (not uniform scatter). *Pacing (temporal
+   ma):* strokes come in **bursts then rests**, not a fixed metronome. (Wiki: [[Ma and Yohaku no
+   Bi]], [[Organic vs Mechanical Motion]], [[Directed Tension]].)
 2. **LBE** — D2Q9 lattice-Boltzmann water percolation with MoXi's modifications:
    - **variable permeability** via half-way partial **bounce-back** (paper-grain texture → feathery/branching fronts),
    - **advection modulation** `psi = smoothstep(0,α,ρ)` to keep the free wet/dry boundary stable,
