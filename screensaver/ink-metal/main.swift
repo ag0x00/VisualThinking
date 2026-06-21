@@ -163,19 +163,21 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float g = exp(-ee*3.0) * smoothstep(2.2, 1.1, ee);
     if(g < 0.0015) return;
 
-    // Flying-white (飛白): organic, BROKEN streaks — not regular combs ("tire tracks").
-    // Two irregular octaves across the stroke + breakup ALONG its length, only at the dry tail,
-    // and only partial (wispy) removal. Scaled by register (gongbi ≈ none, xieyi ≈ full).
-    float fw = dp.fwIntensity * smoothstep(0.42, 0.86, dp.dryness);
+    // Dry-brush flying-white (飛白): as the ink load runs out the bristles separate and the paper
+    // shows through as streaks running ALONG travel — continuous PARALLEL HAIRS, not dashes across
+    // the stroke. A hair sits at a fixed offset ACROSS the width, so the pattern keys on loc.y
+    // (perpendicular) and stays constant along loc.x. Because loc.y is the same for every overlapping
+    // sub-stamp, the hairs come out continuous instead of the beaded "railroad tracks" a loc.x-keyed
+    // pattern produces. Depletion (dryness↑ toward the tail) opens the gaps — not an along-length chop.
+    float fw = dp.fwIntensity * smoothstep(0.40, 0.92, dp.dryness);
     float mask = 1.0;
     if (fw > 0.001) {
-        float b1 = vnoise(float2(loc.x*0.045, loc.y*1.20) + dp.seed);
-        float b2 = vnoise(float2(loc.x*0.130, loc.y*3.10) + dp.seed*1.9);
-        float bristle = b1*0.6 + b2*0.4;
-        float along = 0.40 + 0.60*vnoise(float2(loc.x*0.20 + dp.seed*4.0, dp.seed)); // break along length
-        float gaps = smoothstep(0.42, 0.72, bristle);          // 1 = hair present, 0 = gap
-        float streak = 1.0 - (1.0 - gaps) * along;             // partial, broken (not hard gaps)
-        mask = mix(1.0, streak, fw);
+        float hairs = vnoise(float2(dp.seed, loc.y*0.80));                    // fine stripes across width
+        float group = vnoise(float2(loc.x*0.010 + dp.seed*1.7, loc.y*0.28));  // slow clumping (very gentle along-wobble)
+        float bristle = hairs*0.66 + group*0.34;
+        float thr = mix(0.30, 0.72, fw);                       // drier → higher threshold → more paper shows
+        float keep = smoothstep(thr-0.12, thr+0.12, bristle);  // 1 = hair, 0 = paper gap
+        mask = mix(1.0, keep, fw);
     }
 
     float r = rho.read(gid).x;
@@ -574,14 +576,14 @@ final class Renderer: NSObject, MTKViewDelegate {
         let speedBase:Float, conc:Float, widthMul:Float, waterMul:Float, lenMul:Float
         let fwMul:Float, curveMul:Float, deplMul:Float, splatBase:Float, sideTip:Bool, snap:Float
         switch kind {
-        case .thinLine:                                  // 焦 — crisp dark structural "bone": long, thin
-            speedBase=0.88; conc=1.0;  widthMul=0.52; waterMul=0.4; lenMul=1.1; fwMul=0.4;  curveMul=0.7; deplMul=0.4; splatBase=0.05; sideTip=false; snap=1
-        case .dark:                                      // 浓 — solid, confident structure
-            speedBase=0.55; conc=0.92; widthMul=0.82; waterMul=0.8; lenMul=0.85;fwMul=0.9;  curveMul=1.0; deplMul=0.8; splatBase=0.18; sideTip=false; snap=0.4
+        case .thinLine:                                  // 焦 — crisp dark structural "bone": long, thin, SOLID
+            speedBase=0.88; conc=1.0;  widthMul=0.52; waterMul=0.4; lenMul=1.1; fwMul=0.10; curveMul=0.7; deplMul=0.4; splatBase=0.05; sideTip=false; snap=1
+        case .dark:                                      // 浓 — solid, confident structure (too thin for parallel hairs → keep solid)
+            speedBase=0.55; conc=0.92; widthMul=0.82; waterMul=0.8; lenMul=0.85;fwMul=0.22; curveMul=1.0; deplMul=0.8; splatBase=0.18; sideTip=false; snap=0.4
         case .grayWash:                                  // 淡 — broad pale soft background tone
             speedBase=0.28; conc=0.15; widthMul=1.5;  waterMul=1.7; lenMul=0.9; fwMul=0.25; curveMul=0.8; deplMul=0.5; splatBase=0.0;  sideTip=true;  snap=0
-        case .vigorousDry:                               // 枯 — fast, low-moisture, flying-white + splatter: short
-            speedBase=0.82; conc=0.85; widthMul=0.8;  waterMul=0.35;lenMul=0.65;fwMul=2.0;  curveMul=1.7; deplMul=1.6; splatBase=1.0;  sideTip=false; snap=1
+        case .vigorousDry:                               // 枯 — fast dry DRAG: broad, side-tip, breaks into flying-white hairs
+            speedBase=0.80; conc=0.95; widthMul=1.7;  waterMul=0.30;lenMul=0.95;fwMul=2.2;  curveMul=1.3; deplMul=1.5; splatBase=0.9;  sideTip=true;  snap=1
         }
         let speed = min(max(speedBase + (dynamic ? vig*0.18 : 0) + (nextRand()-0.5)*0.28, 0), 1)
         let widthScale = mix(1.15, 0.50, speed) * widthMul

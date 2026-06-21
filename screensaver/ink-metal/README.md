@@ -53,9 +53,14 @@ Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 magnitude — mirroring the wiki's `Negative Space` / `Directed Tension` technique pages. The
 negative-space metric feeds back into stroke placement.
 
-Flying-white (飛白) is **organic and broken** (two irregular noise octaves across the stroke +
-breakup along its length, only at the dry tail) — deliberately *not* a regular comb, which read as
-mechanical "tire tracks".
+Flying-white (飛白) reads as **continuous parallel hairs running along the stroke** (like a real dry
+brush dragging until the ink runs out), not beaded "railroad tracks". The key: a bristle sits at a
+fixed offset *across* the width, so the streak pattern is keyed to the **perpendicular** coordinate
+(`loc.y`) and held constant along the length — and because `loc.y` is consistent between overlapping
+sub-stamps, the hairs come out continuous. (Keying on the *along-travel* axis, as an earlier version
+did, re-randomised the texture down the length → the beaded tracks.) It needs **width** to show as
+*parallel* hairs, so it lives on the broad side-tip 枯 *dry-drag* archetype; thin "bone" lines stay
+solid.
 
 ## The LBM ink-on-paper model (`main.swift`)
 
