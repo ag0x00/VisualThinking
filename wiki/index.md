@@ -31,6 +31,7 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 - [[Research - Affect Foundations Sweep]] — clustered depth-dive (items 1+2+3): Russell circumplex, Plutchik, PAD, constructionism, appraisal, EVT, Goethe-Kandinsky, cross-cultural color, Berlyne, fluency, neuroaesthetics, cross-modal mapping.
 - [[Research - L1 Cleanup Sweep]] — clustered depth-dive (items 5+12): the 5 constancies, size/lightness/color illusions, Helmholtz-Gibson-Bayesian, cross-cultural perception, FFA, configural face processing, FACS, uncanny valley, face-recognition universality debate.
 - [[Research - Algorithmic Composition and Tools Sweep]] — clustered depth-dive (item 4 + tools): Galanter, Stuttgart-school history, procedural paradigms, L-systems, cellular automata, computational creativity, autonomy-control gradient, library evaluation rubric + 10 evaluated tools.
+- [[Research - Ink and Watercolor Simulation on Paper]] — autoresearch (2026-06-21): the three ink-on-paper algorithm families (Lattice Boltzmann/MoXi, shallow-water/Curtis, Stable Fluids/Stam) + Kubelka–Munk rendering + WebGL prior-art. Decision rule by target look; build-from-paper gap for sumi-e.
 
 ## Concepts (atomic ideas)
 
