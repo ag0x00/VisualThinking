@@ -117,7 +117,7 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
 
 struct DepositParams { float2 pos; float2 dir; float radius; float water; float ink;
                        float lambda; float mbase; float dryness; float seed; float nibAspect;
-                       float fwIntensity; };
+                       float fwIntensity; float channel; };   // channel: 0 = black ink, 1 = red
 
 // adds water (to f) + ink (to p) under a brush footprint. An oriented elliptical
 // nib + a direction-aligned bristle texture give calligraphic width and dry-brush
@@ -166,7 +166,9 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     b += float4(WT[4],WT[5],WT[6],WT[7])*addW;
     c += WT[8]*addW;
     fA.write(a,gid); fB.write(b,gid); fC.write(float4(c,0,0,0),gid);
-    p.write(float4(p.read(gid).x + addInk, 0,0,0), gid);
+    float2 pv = p.read(gid).xy;                 // .x = black pigment, .y = red
+    if (dp.channel < 0.5) pv.x += addInk; else pv.y += addInk;
+    p.write(float4(pv, 0, 0), gid);
 }
 
 struct LbeParams { float omega; float alpha; float evap; float boundEvap; };
@@ -246,14 +248,13 @@ kernel void pigment(texture2d<float,access::sample> pIn [[texture(0)]],
     float2 size=float2(w,h);
     float2 u = uIn.read(gid).xy;
     float2 coord = (float2(gid)+0.5) - pp.dt*u;
-    float pStar = pIn.sample(samp, coord/size).x;     // advected-in pigment
-    float pHere = pIn.sample(samp, (float2(gid)+0.5)/size).x;
+    float2 pStar = pIn.sample(samp, coord/size).xy;   // advected-in pigment (black, red)
+    float2 pHere = pIn.sample(samp, (float2(gid)+0.5)/size).xy;
     float speed = length(u);
     // gamma -> 1 (stay/pinned) when slow, -> gammaMove when fast
     float gamma = mix(1.0, pp.gammaMove, smoothstep(0.0, pp.velThr, speed));
-    float pNew = mix(pStar, pHere, gamma);
-    pNew *= pp.decay;                                  // slow screensaver fade
-    pOut.write(float4(pNew,0,0,0), gid);
+    float2 pNew = mix(pStar, pHere, gamma) * pp.decay; // slow fade / fast during the fade phase
+    pOut.write(float4(pNew,0,0), gid);
 }
 
 kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
@@ -265,7 +266,9 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
     uint w=out.get_width(), h=out.get_height();
     if(gid.x>=w||gid.y>=h) return;
     float2 uv = (float2(gid)+0.5)/float2(w,h);
-    float ink = clamp(p.sample(samp, uv).x * inkGain, 0.0, 1.0);
+    float2 pig = p.sample(samp, uv).xy * inkGain;
+    float blackD = clamp(pig.x, 0.0, 1.0);
+    float redD   = clamp(pig.y, 0.0, 1.0);
     uint2 pg = uint2(uv*float2(paper.get_width(), paper.get_height()));
     float grain = paper.read(pg).z;
     float r = rho.read(pg).x;
@@ -273,14 +276,16 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
     paperCol *= 1.0 - 0.035*smoothstep(0.10,0.55,r);                 // damp paper reads slightly cooler/darker
     float3 inkCol = float3(0.06,0.06,0.075);                         // sumi black (slightly cool)
     // ponytail: linear mix stands in for Kubelka-Munk absorption.
-    float3 col = mix(paperCol, inkCol, ink);
+    float3 col = mix(paperCol, inkCol, blackD);
+    float3 vermilion = float3(0.70, 0.11, 0.09);                     // 朱 cinnabar red, sits on top
+    col = mix(col, vermilion, redD);
     out.write(float4(col,1.0), gid);
 }
 """
 
 // MARK: - Renderer
 
-struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1 }
+struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.03 }
 
@@ -297,6 +302,8 @@ struct Stroke {
     var exitStyle:Int=0          // 收笔: 0 = taper to point, 1 = pressed hook
     var depletion:Float=1.9      // ink fade rate along the stroke (low = even gongbi line)
     var fwIntensity:Float=1      // flying-white intensity (register-set)
+    var channel:Int=0            // 0 = black ink, 1 = red accent
+    var even=false               // even thin line (red sweep) vs calligraphic belly
     var dir=SIMD2<Float>(1,0), len:Float=0   // overall gesture (for directed-tension accumulator)
     var wash=false
 }
@@ -351,6 +358,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     var phase: Phase = .painting
     var phaseStart = 0
     var strokesDone = 0, strokeTarget = 7
+    var redAdded = false                      // the final red accent stroke (after black completes)
     var inkDecay: Float = 0.9999              // driven by phase; fast during fade
     var paperSeed: Float = 0
     let HOLD = 300, FADE = 130, SETTLE = 45   // frames (~60fps): hold ~5s, fade ~2.2s
@@ -370,7 +378,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         }
         fA=[tex(.rgba16Float),tex(.rgba16Float)]; fB=[tex(.rgba16Float),tex(.rgba16Float)]
         fC=[tex(.r16Float),tex(.r16Float)]; rho=[tex(.r16Float),tex(.r16Float)]
-        p=[tex(.r16Float),tex(.r16Float)]; uTex=tex(.rg16Float); paper=tex(.rgba16Float)
+        p=[tex(.rg16Float),tex(.rg16Float)]; uTex=tex(.rg16Float); paper=tex(.rgba16Float)  // p: x=black, y=red
         super.init()
         seed()
     }
@@ -401,7 +409,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         seed()
         for i in occ.indices { occ[i]=0 }
         tensionAcc = SIMD2<Float>(0,0)
-        strokes.removeAll(); strokesDone = 0
+        strokes.removeAll(); strokesDone = 0; redAdded = false
         strokeTarget = 4 + Int(nextRand()*4)     // 4–7 strokes per painting
         nextSpawn = frame + 20; burstLeft = 0
         phase = .painting; phaseStart = frame
@@ -446,7 +454,7 @@ final class Renderer: NSObject, MTKViewDelegate {
             let cand = SIMD2<Float>(G*(0.14+0.72*nextRand()), G*(0.14+0.72*nextRand()))
             let d = simd_length(cand-center)/G
             let offCenter = 0.30*gauss(d, 0.30, 0.24)   // gentle, wide off-centre preference
-            let score = offCenter - 1.3*occNear(cand)   // dominate: keep away from existing ink
+            let score = offCenter - 0.45*occNear(cand)  // mild spread — strokes may still cross & interact
             if score>bestScore { bestScore=score; best=cand }
         }
         return best
@@ -497,6 +505,30 @@ final class Renderer: NSObject, MTKViewDelegate {
         for j in 0...10 { occ[occIdx(bezier(s, Float(j)/10))] += 0.05 }
     }
 
+    // A single very-thin, very-long RED stroke swept across the whole canvas — the final accent,
+    // added after the black painting meets its stop criteria. Crosses and sits on top of the ink.
+    private func spawnRedStroke(_ G:Float) {
+        let ang = nextRand()*6.2832
+        let dir = SIMD2<Float>(cos(ang), sin(ang)), perp = SIMD2<Float>(-dir.y, dir.x)
+        let center = SIMD2<Float>(G/2,G/2) + perp*((nextRand()-0.5)*0.45*G)   // not always through centre
+        let half = 0.78*G
+        let bend = (nextRand()-0.5)*0.16*G
+        var s = Stroke()
+        s.p0 = center - dir*half
+        s.p1 = center - dir*(half*0.4) + perp*bend
+        s.p2 = center + dir*(half*0.4) + perp*bend*0.5
+        s.p3 = center + dir*half
+        s.start = frame; s.life = 85
+        s.baseR = G/285            // very thin
+        s.inkConc = 1; s.nibAspect = 1.3; s.drynessBias = 0
+        s.depletion = 0.45; s.fwIntensity = 0.18; s.exitStyle = 0
+        s.ink = 0.30; s.water = 0.004   // saturated, almost no bleed → a clean thin line
+        s.seed = nextRand()*60
+        s.channel = 1; s.even = true     // RED, even thin sweep
+        s.dir = dir; s.len = 2*half
+        strokes.append(s)
+    }
+
     private func spawnWash(_ G:Float) {
         var s = Stroke()
         let c = SIMD2<Float>(G*(0.25+0.5*nextRand()), G*(0.25+0.5*nextRand()))
@@ -520,7 +552,11 @@ final class Renderer: NSObject, MTKViewDelegate {
                                                  : 40 + Int(nextRand()*70))   // rest between bursts (ma)
             }
             if REG.fw > 0.5 && frame % 500 == 250 && strokesDone < strokeTarget/2 { spawnWash(G) }   // wash only in xieyi
-            if complete && strokes.isEmpty { phase = .holding; phaseStart = frame }
+            // black painting done → add the final red sweep → then hold the finished image
+            if complete && strokes.isEmpty {
+                if !redAdded { spawnRedStroke(G); redAdded = true }
+                else { phase = .holding; phaseStart = frame }
+            }
         case .holding:
             inkDecay = 0.99997                        // the finished painting rests (held image = ma)
             if frame - phaseStart > HOLD { phase = .fading; phaseStart = frame }
@@ -563,13 +599,16 @@ final class Renderer: NSObject, MTKViewDelegate {
                 var dp = DepositParams()
                 dp.pos = bezier(s, t)
                 dp.dir = dir
-                dp.radius = max(s.baseR * pressure(t, s.exitStyle, s.seed), 0.6)  // 起笔/行笔/收笔
+                let press = s.even ? smoothstep(0,0.05,t)*(1 - smoothstep(0.92,1.0,t))   // even line, sharp tips
+                                   : pressure(t, s.exitStyle, s.seed)                    // 起笔/行笔/收笔
+                dp.radius = max(s.baseR * press, 0.5)
                 dp.ink = s.ink * load * norm
                 dp.water = s.water * (0.4 + 0.6*load) * norm
                 dp.dryness = min(1 - min(load*1.15, 1) + s.drynessBias, 1)  // side-tip drier → flying white
                 dp.seed = s.seed
                 dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
                 dp.fwIntensity = s.fwIntensity
+                dp.channel = Float(s.channel)                 // black or red
                 stampDeposit(enc, dp)
                 occ[occIdx(dp.pos)] += dp.ink * 0.6           // track laid ink for placement
             }

@@ -58,9 +58,11 @@ Faithful reduction of MoXi. Per frame:
    for contiguous blank space, not uniform scatter or a merged mass.
 
    *Painting lifecycle:* the canvas is **not** an endless accumulation. A painting builds to a few
-   well-placed strokes (4–7, or until the composition fills), **holds** the finished image ~5 s
-   (the held image is temporal *ma*), **fades** to clean paper (~2 s), then a **new painting**
-   begins on fresh paper. So it never overwhelms; each composition breathes and resets. (Wiki:
+   well-placed strokes (4–7, or until the composition fills) that are free to **cross and interact**
+   (ink over ink); then a single very-thin, very-long **red accent** (朱) is swept across the whole
+   canvas; the finished image **holds** ~5 s (temporal *ma*), **fades** to clean paper (~2 s), and a
+   **new painting** begins on fresh paper. So it never overwhelms; each composition breathes and
+   resets. Pigment is two-channel (black `x`, red `y`); the red composites on top. (Wiki:
    [[Ma and Yohaku no Bi]], [[Negative Space in Motion]], [[Organic vs Mechanical Motion]].)
 2. **LBE** — D2Q9 lattice-Boltzmann water percolation with MoXi's modifications:
    - **variable permeability** via half-way partial **bounce-back** (paper-grain texture → feathery/branching fronts),
