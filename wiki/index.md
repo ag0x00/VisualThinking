@@ -193,6 +193,12 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 - [[Symmetry-Group Pattern Generator]] *(17 wallpaper groups + Hat monotile + Bonner-IGP)*
 - [[Style Transfer Pipeline]] *(IP-Adapter + ControlNet + ICAS)*
 
+### Ink & fluid simulation
+- [[Lattice Boltzmann Method for Ink Dispersion]] *(MoXi — real-time sumi-e percolation)*
+- [[Shallow-Water Watercolor Simulation]] *(Curtis — three-layer watercolour)*
+- [[Stable Fluids and GPU Ink Advection]] *(Stam — browser ink-in-water default)*
+- [[Kubelka-Munk Optical Compositing]] *(translucent pigment-layer rendering)*
+
 ### Sweep synthesis
 - [[Research - Implementation-notes Pass]] *(c-000223)*
 
