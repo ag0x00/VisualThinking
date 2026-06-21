@@ -63,6 +63,15 @@ accumulate stamps.** Concretely:
    MIT snippets; for full vector-path fidelity (caps/joins/miter), **MetalNanoVG** (MIT, Metal-native)
    is the cleanest permissive drop-in. Avoid GPL engines (Krita/Inkscape) for code reuse.
 
+> [!caution] Depositing into a wet sim — the per-frame pulse trap
+> When the stroke feeds a fluid/percolation sim (step 3), do **not** also inject the stroke's own
+> **water** incrementally at the brush tip each frame: that lays a *per-frame wetness pulse* which, via
+> any wetness-gated pigment term, modulates the ink into **per-frame bands** — a "rung" artifact that
+> looks identical to the deposit-geometry one but survives every geometry fix. (Cost us a long hunt on
+> the ink screensaver, issue #4.) Keep the wet field **stable**: pre-lay wetness (separate water
+> strokes) and let ink strokes self-wet ~zero. Diagnose by toggling water off — if the bands vanish
+> with dry paper, the cause is the sim interaction, not the stroke renderer.
+
 ## Evaluate
 - **Adversarial test:** the "rung" check above — render a *thin, slow, curved* stroke (the worst case)
   and confirm uniform density along its length. A correct union/SDF deposit is flat there by construction.
