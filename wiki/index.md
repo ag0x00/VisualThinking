@@ -210,7 +210,9 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 
 ## Tools
 
-Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the comparative summary and [[AI Art Toolkit Map]] for the diffusion stack. `wiki/tools/` directory now contains 30 pages. Default color library: [[culori]].
+Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the comparative summary and [[AI Art Toolkit Map]] for the diffusion stack. `wiki/tools/` directory now contains 31 pages. Default color library: [[culori]].
+
+- [[WebGL and WebGPU Fluid Simulation Libraries]] *(ink/dye fluid solvers to adapt — PavelDoGreat, kishimisu, loicmagne, …)*
 
 ## Sources
 
