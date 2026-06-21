@@ -8,6 +8,11 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-06-21 build-loop | Vigorous, varied sumi strokes (physical-dynamics layer)
+- Expanded [[Chinese Brushwork Principles]] (c-000243) with a **Physical dynamics** section: the coupled **speed↔moisture↔value** axis (the engine of vigor), the **five shades as stroke archetypes** (焦/濃/淡/湿/枯), side-ink/edge-loading, **潑墨 splatter**, brush-landing/drag (起笔), and motion-proportional ink deposit. Build table + sources updated.
+- `screensaver/ink-metal/main.swift`: reworked to a **one-painter** sequential scheduler (no two strokes at once); a per-painting **stroke recipe** of archetypes (pale 淡 washes laid first, crisp 焦 thin-line "bones", 濃 darks, fast 枯 dry strokes, red accent last); **less-watery solid blacks** (diff 0.14→0.06); **vigor** (speed/flying-white/curvature/entry-snap); **潑墨 splatter** specks; new **Vigor** + **Splatter** GUI dials.
+- Key lesson: per-frame deposit oversaturated slow/short strokes into "tadpole" blobs — fixed by **dosing ink by distance the nib moved**, not by frame count (mirrors real ink build-up). Minimalist sumi-e sits at 80–95% void, so the generic 30–70% negative-space target reads as a "fail" by design.
+
 ## 2026-06-21 build-loop | Chinese-ink brushwork + adopt Build Working Loop
 - Adopted [[Build Working Loop]] (c-000244) — the 6-step build SOP (understand → consult wiki FIRST → research gaps → aesthetics → build → evaluate). Sibling of [[Wiki Methodology]]. Memory: `feedback_build-working-loop`.
 - Ran the loop on "natural Chinese-ink strokes": wiki supplied composition ([[Ma and Yohaku no Bi]]) + gesture ([[Organic vs Mechanical Motion]], [[Directed Tension]]); research filled the gap → new page [[Chinese Brushwork Principles]] (c-000243): 起笔/行笔/收笔 three-phase stroke, 骨法 bone method, 中锋/侧锋 centre/side tip, 墨分五色 five ink tones.
