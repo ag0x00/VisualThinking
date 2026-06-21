@@ -143,7 +143,7 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
     rho.write(float4(r0,0,0,0), gid);
 }
 
-struct DepositParams { float2 pos; float2 dir; float2 strokeP0; float2 strokeDir;
+struct DepositParams { float2 pos; float2 dir; float2 strokeP0; float2 strokeDir; float2 posPrev;
                        float radius; float water; float ink;
                        float lambda; float mbase; float dryness; float seed; float nibAspect;
                        float fwIntensity; float channel; float striate; };   // channel: 0 = black ink, 1 = red
@@ -162,29 +162,29 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     uint w=fA.get_width(), h=fA.get_height();
     if(gid.x>=w||gid.y>=h) return;
     float2 pt = float2(gid)+0.5;
-    float2 rel = pt - dp.pos;
-    float2 t = dp.dir, n = float2(-dp.dir.y, dp.dir.x);
-    float2 loc = float2(dot(rel,t), dot(rel,n));        // brush-local (along, across)
-    // elongated nib along travel; aspect sets centre-tip (round, even) vs side-tip (flat, broad)
-    float2 e = float2(loc.x/(dp.radius*dp.nibAspect), loc.y/dp.radius);
-    float ee = dot(e,e);
-    // Tight gaussian falloff → crisp thin stroke (not a wide soft halo). A hard `g < cutoff`
-    // truncation would show its elliptical boundary as a hard geometric edge whenever the stamp is
-    // heavily loaded (the value AT the cutoff still reads as ink). So window g smoothly to zero at
-    // the rim instead — the footprint always fades out, regardless of how dark the core is.
+    // Distance to the swept SEGMENT [posPrev, pos]: each sub-deposit is a continuous CAPSULE, not a
+    // point stamp, so the stroke is a smooth ribbon no matter how far the brush moved between stamps.
+    // (Point stamps spaced wider than their footprint — a fast/thin stroke — render as a string of
+    // separate blobs: the bead "tracks".) Gaussian falloff across the capsule, windowed to zero at
+    // the rim so a heavily-loaded stamp can't show a hard truncation edge.
+    float2 aa = dp.posPrev, abv = dp.pos - aa;
+    float segLen2 = dot(abv, abv);
+    float hh = clamp(dot(pt - aa, abv) / max(segLen2, 1e-6), 0.0, 1.0);
+    float2 closest = aa + abv*hh;
+    float dist = length(pt - closest);
+    float ee = dist / dp.radius; ee = ee*ee;
     float g = exp(-ee*3.0) * smoothstep(2.2, 1.1, ee);
     if(g < 0.0015) return;
 
     // Dry-brush flying-white (飛白): as the ink load runs out the bristles separate and the paper
-    // shows through as continuous PARALLEL HAIRS running along the stroke, not dashes across it.
-    // KEY: key the pattern to a FIXED world-space axis (the stroke's overall direction + origin),
-    // NOT the per-stamp tangent. The tangent rotates along a curve, so overlapping stamps disagree
-    // on "across" and the hairs chop into beaded tracks. Against the fixed axis every sub-stamp
-    // computes the IDENTICAL pattern for a given pixel → continuous hairs, even on curves. `hcoord` =
-    // perpendicular offset from the stroke axis; `halong` = distance along it. Width-gated, because a
-    // thin contact (a "bone" line, a thin tip) can't show parallel hairs — there it stays solid.
-    float2 sn = float2(-dp.strokeDir.y, dp.strokeDir.x);
-    float hcoord = dot(pt - dp.strokeP0, sn);
+    // shows through as continuous PARALLEL HAIRS running ALONG the stroke, not dashes across it.
+    // `hcoord` = signed lateral offset from the LOCAL segment (so hairs follow the stroke direction,
+    // even where it curves) — coherent because consecutive capsules are locally collinear, so it
+    // neither beads (per-stamp tangent rotating) nor crosses a curved tail as rungs (a fixed global
+    // axis). Width-gated: a thin contact (a "bone" line, a thin tip) can't show parallel hairs.
+    float2 segDir = segLen2 > 1e-6 ? abv * rsqrt(segLen2) : dp.strokeDir;
+    float2 segPerp = float2(-segDir.y, segDir.x);
+    float hcoord = dot(pt - closest, segPerp);
     float halong = dot(pt - dp.strokeP0, dp.strokeDir);
     float fw = dp.fwIntensity * smoothstep(0.40, 0.92, dp.dryness)
                               * smoothstep(1.6, 3.2, dp.radius);
@@ -348,7 +348,7 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 // MARK: - Renderer
 
-struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var strokeP0=SIMD2<Float>(0,0); var strokeDir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0; var striate:Float=0 }
+struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var strokeP0=SIMD2<Float>(0,0); var strokeDir=SIMD2<Float>(1,0); var posPrev=SIMD2<Float>(0,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0; var striate:Float=0 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.04; var diff:Float=0.06 }  // diff low → solid, non-watery blacks; softness reserved for wet areas + gray washes
 
@@ -602,12 +602,12 @@ final class Renderer: NSObject, MTKViewDelegate {
         let speedBase:Float, conc:Float, widthMul:Float, waterMul:Float, lenMul:Float
         let fwMul:Float, curveMul:Float, deplMul:Float, splatBase:Float, sideTip:Bool, snap:Float
         switch kind {
-        case .thinLine:                                  // 焦 — crisp dark structural "bone": long, thin, SOLID
-            speedBase=0.88; conc=1.0;  widthMul=0.52; waterMul=0.4; lenMul=1.1; fwMul=0.10; curveMul=0.7; deplMul=0.4; splatBase=0.05; sideTip=false; snap=1
+        case .thinLine:                                  // 焦 — crisp dark structural "bone": long, thin, SOLID, no splatter
+            speedBase=0.88; conc=1.0;  widthMul=0.52; waterMul=0.4; lenMul=1.1; fwMul=0.10; curveMul=0.7; deplMul=0.4; splatBase=0.0;  sideTip=false; snap=1
         case .dark:                                      // 浓 — solid, confident structure (too thin for parallel hairs → keep solid)
-            speedBase=0.55; conc=0.92; widthMul=0.82; waterMul=0.8; lenMul=0.85;fwMul=0.22; curveMul=1.0; deplMul=0.8; splatBase=0.18; sideTip=false; snap=0.4
-        case .grayWash:                                  // 淡 — broad pale soft background tone
-            speedBase=0.28; conc=0.15; widthMul=1.5;  waterMul=1.7; lenMul=0.9; fwMul=0.25; curveMul=0.8; deplMul=0.5; splatBase=0.0;  sideTip=true;  snap=0
+            speedBase=0.55; conc=0.92; widthMul=0.82; waterMul=0.8; lenMul=0.85;fwMul=0.22; curveMul=1.0; deplMul=0.8; splatBase=0.0;  sideTip=false; snap=0.4
+        case .grayWash:                                  // 淡 — broad pale brushed background tone (dry-ish, not a wet blob)
+            speedBase=0.28; conc=0.20; widthMul=1.3;  waterMul=0.5; lenMul=0.9; fwMul=0.25; curveMul=0.8; deplMul=0.5; splatBase=0.0;  sideTip=true;  snap=0
         case .vigorousDry:                               // 枯 — fast dry DRAG: broad, side-tip, breaks into flying-white hairs
             speedBase=0.80; conc=0.95; widthMul=1.7;  waterMul=0.30;lenMul=0.95;fwMul=2.2;  curveMul=0.7; deplMul=1.5; splatBase=0.9;  sideTip=true;  snap=1
         }
@@ -639,7 +639,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.exitStyle = snap > 0.5 ? 0 : (nextRand() < 0.35 ? 1 : 0)   // vigorous strokes lift to a taper, not a hook
         s.snap = snap
         s.even = (kind == .vigorousDry)            // 枯 = flat broad dry-DRAG (even width → flying-white develops across it)
-        s.striate = (kind == .grayWash) ? 0.5 : 0  // 淡 wash gets faint brushed streaks, not a smooth airbrush blob
+        s.striate = (kind == .grayWash) ? 0.7 : 0  // 淡 wash gets clear brushed streaks, not a smooth airbrush blob
         s.depletion = reg.depletion * deplScale * deplMul
         s.fwIntensity = reg.fw * fwScale * fwMul * (0.8 + 0.4*nextRand()) * (dynamic ? (1 + vig*1.2) : 1)
         s.splatter = min(splatBase * aSplatter * (0.5 + vig), 1.0)
@@ -749,17 +749,21 @@ final class Renderer: NSObject, MTKViewDelegate {
             let ez = mix(1.6, 1.02, s.snap)
             let t0 = pow(max(0,Float(age-1)/Float(s.life)), ez)
             let t1 = pow(Float(age)/Float(s.life), ez)
+            // Each sub-deposit is a capsule (segment), so the stroke stays a continuous ribbon; a
+            // modest fixed count suffices — SUB only needs to track curvature within one frame's advance.
             let SUB = 10
             var prevPos = bezier(s, t0)
             for k in 1...SUB {
                 let t = t0 + (t1 - t0) * Float(k)/Float(SUB)
                 let curPos = bezier(s, t)
+                let segStart = prevPos
                 let seg = simd_length(curPos - prevPos); prevPos = curPos   // distance moved this substamp
                 let tan = bezierTangent(s, t)
                 let dir = simd_length(tan) > 1e-4 ? simd_normalize(tan) : SIMD2<Float>(1,0)
                 let load: Float = exp(-s.depletion * t)        // ink depletes along the stroke
                 var dp = DepositParams()
                 dp.pos = curPos
+                dp.posPrev = segStart                      // capsule: deposit along the whole segment, not a point
                 dp.dir = dir
                 dp.strokeP0 = s.p0; dp.strokeDir = s.dir   // fixed axis → flying-white hairs stay coherent on curves
                 let press = s.even ? smoothstep(0,0.05,t)*(1 - smoothstep(0.92,1.0,t))   // even line, sharp tips
@@ -784,22 +788,25 @@ final class Renderer: NSObject, MTKViewDelegate {
             // 潑墨 splatter: tiny dark specks flicked off a vigorous/loaded brush — a burst at the
             // landing (起笔) and a scatter along the path, biased forward (the flick). Pure pigment,
             // no water → hard dots that don't bleed. (Black channel only.)
-            if s.splatter > 0 && s.channel == 0 {
-                let landing: Float = age < 6 ? 2.6 : 1.0      // heavier at the brush landing
+            // 潑墨 splatter: droplets flung OFF a vigorous brush — sparse, scattered WIDE of the path
+            // into the blank (heaviest at the landing). NOT a per-frame trail hugging the stroke —
+            // that just reads as beading along the body. Black channel only.
+            if s.splatter > 0 && s.channel == 0 && nextRand() < 0.16 {   // occasional, not every frame
+                let burst = age < 8 ? 3 : 1                              // a spray as the brush lands
                 let tip = bezier(s, t1)
                 let tan = bezierTangent(s, t1)
                 let fdir = simd_length(tan) > 1e-4 ? simd_normalize(tan) : SIMD2<Float>(1,0)
                 let fperp = SIMD2<Float>(-fdir.y, fdir.x)
-                let tries = Int(s.splatter * landing * 3) + 1
-                for _ in 0..<tries {
-                    if nextRand() > s.splatter * 0.6 + 0.12 { continue }   // sparse — mostly skips
-                    let along  = (nextRand()-0.15) * 16 * s.splatter       // biased forward (the flick)
-                    let across = (nextRand()-0.5)  * 11 * s.splatter
+                for _ in 0..<burst {
+                    let along  = (nextRand()-0.4) * 14
+                    let side: Float = nextRand() < 0.5 ? -1 : 1
+                    let across = side * (s.baseR*1.8 + nextRand()*20*s.splatter)   // land CLEAR of the stroke body
                     var sp = DepositParams()
                     sp.pos = tip + fdir*along + fperp*across
+                    sp.posPrev = sp.pos                     // zero-length capsule → a round speck
                     sp.dir = fdir
-                    sp.radius = 0.6 + 1.3*nextRand()           // tiny speck
-                    sp.ink = s.ink * (0.5 + 0.8*nextRand())
+                    sp.radius = 0.5 + 1.0*nextRand()           // tiny speck
+                    sp.ink = s.ink * (0.4 + 0.6*nextRand())
                     sp.water = 0; sp.dryness = 0; sp.seed = s.seed
                     sp.nibAspect = 1.0; sp.fwIntensity = 0; sp.channel = 0
                     stampDeposit(enc, sp)
