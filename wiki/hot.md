@@ -27,6 +27,10 @@ Lessons (toolkit build):
 
 Pages most recently touched or most relevant to current work. Read this first when answering queries from the vault.
 
+## Recent autoresearch (2026-06-21): ink-on-paper simulation
+
+New art direction researched for the screensaver/dynamic-art track → [[Research - Ink and Watercolor Simulation on Paper]]. Three algorithm families, **picked by target look**: porous-paper sumi-e → [[Lattice Boltzmann Method for Ink Dispersion|Lattice Boltzmann/MoXi]]; Western watercolour → [[Shallow-Water Watercolor Simulation|shallow-water/Curtis]]; free ink-in-water → [[Stable Fluids and GPU Ink Advection|Stable Fluids/Stam]]. Render pigment layers with [[Kubelka-Munk Optical Compositing|Kubelka–Munk]] (optical, not alpha-over). Adapt prior-art code: [[WebGL and WebGPU Fluid Simulation Libraries]]. Core insight: ink-into-paper is **percolation, not diffusion** — feathery/branching/edge-darkened edges are emergent. Gap: no MoXi-grade LBM ink-on-paper JS library exists (sumi-e = build-from-paper).
+
 ## Standing principles
 
 - **Programmability principle:** Pages exist for concepts, techniques, measurable phenomena, computational frameworks, and source pointers — things that translate into prompt constraints, metrics, or generative rules. People and biographies don't get pages.
