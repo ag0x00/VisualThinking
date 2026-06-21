@@ -36,14 +36,18 @@ struct Register {
     var curve: Float       // centerline bend
     var permContrast: Float // paper-grain contrast → percolation edge roughening (low = smooth spine)
 }
-let GONGBI = Register(sideProb:0.16, water:0.014, ink:0.32, depletion:0.7, fw:0.22, rCentre:128, rSide:94, curve:0.32, permContrast:0.40)
-let XIEYI  = Register(sideProb:0.45, water:0.085, ink:0.27, depletion:1.9, fw:1.0,  rCentre:104, rSide:78, curve:0.50, permContrast:1.0)
+// NOTE: `water` is tiny — an ink stroke barely self-wets, so on DRY paper it stays crisp.
+// Bleed/merge happens where the paper is already wet (from the clear-water strokes). This is what
+// makes the wet-% / water-stroke-count dials actually control wetness.
+let GONGBI = Register(sideProb:0.16, water:0.004, ink:0.32, depletion:0.7, fw:0.22, rCentre:128, rSide:94, curve:0.32, permContrast:0.40)
+let XIEYI  = Register(sideProb:0.45, water:0.020, ink:0.27, depletion:1.9, fw:1.0,  rCentre:104, rSide:78, curve:0.50, permContrast:1.0)
 
 // Live-tunable settings (shared with the GUI). The renderer snapshots these at each painting
 // RESET, so edits never disturb the painting in progress — they take effect on the next one.
 final class Settings {
     var register   = CommandLine.arguments.contains("--xieyi") ? 1 : 0   // 0 gongbi, 1 xieyi
-    var wetPercent: Float = 0.18     // size of the clear-water stroke (wet area on otherwise dry paper)
+    var wetPercent: Float = 0.18     // size of each clear-water stroke (wet area on otherwise dry paper)
+    var waterStrokes = 1             // number of clear-water strokes (0–5)
     var strokeCount = 6              // black strokes before the red accent
     var redOn = true
     var avgSpeed:   Float = 0.62     // 0 slow/thick .. 1 fast/thin
@@ -391,7 +395,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     // snapshot of Settings, taken at each reset (so edits apply only to the next painting)
     var reg = GONGBI
     var aSpeed:Float = 0.62, aLen:Float = 1.0, aWet:Float = 0.18
-    var aRedOn = true, aHold = 300
+    var aRedOn = true, aHold = 300, aWaterN = 1
 
     init(device: MTLDevice) {
         self.device = device
@@ -438,6 +442,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         reg = settings.register == 1 ? XIEYI : GONGBI
         aSpeed = settings.avgSpeed; aLen = settings.lengthScale; aWet = settings.wetPercent
         aRedOn = settings.redOn; aHold = max(30, Int(settings.holdSeconds*60))
+        aWaterN = settings.waterStrokes
         strokeTarget = max(1, settings.strokeCount)
     }
 
@@ -471,7 +476,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         tensionAcc = SIMD2<Float>(0,0)
         strokes.removeAll(); strokesDone = 0; dry = false
         nextSpawn = frame + 30; burstLeft = 0
-        spawnWaterStroke(Float(GRID))            // the single wet area, before any ink
+        for _ in 0..<aWaterN { spawnWaterStroke(Float(GRID)) }   // the wet area(s), before any ink
         phase = .painting; phaseStart = frame
     }
 
@@ -792,6 +797,11 @@ if CommandLine.arguments.contains("--headless") {
     let a=CommandLine.arguments
     let frames = a.count>2 ? (Int(a[2]) ?? 600) : 600
     let path = a.count>3 ? a[3] : "ink-paper.png"
+    for arg in a {   // optional overrides for headless tuning, e.g. --waterN=0 --wet=0.05
+        if arg.hasPrefix("--wet=")    { settings.wetPercent  = Float(arg.dropFirst(6)) ?? settings.wetPercent }
+        if arg.hasPrefix("--waterN=") { settings.waterStrokes = Int(arg.dropFirst(9)) ?? settings.waterStrokes }
+        if arg.hasPrefix("--speed=")  { settings.avgSpeed     = Float(arg.dropFirst(8)) ?? settings.avgSpeed }
+    }
     Renderer(device:device).renderToPNG(frames:frames, path:path)
     exit(0)
 }
@@ -808,11 +818,11 @@ final class FlippedView: NSView { override var isFlipped: Bool { true } }
 final class ControlPanel: NSObject {
     let s: Settings
     let win: NSWindow
-    let content = FlippedView(frame: NSRect(x:0,y:0,width:280,height:430))
+    let content = FlippedView(frame: NSRect(x:0,y:0,width:280,height:484))
     let reg = NSSegmentedControl(labels:["Gongbi","Xieyi"], trackingMode:.selectOne, target:nil, action:nil)
     let red = NSButton(checkboxWithTitle:"Red accent", target:nil, action:nil)
-    var wet=NSSlider(), count=NSSlider(), speed=NSSlider(), length=NSSlider(), hold=NSSlider()
-    var vWet=NSTextField(), vCount=NSTextField(), vSpeed=NSTextField(), vLength=NSTextField(), vHold=NSTextField()
+    var wet=NSSlider(), waterN=NSSlider(), count=NSSlider(), speed=NSSlider(), length=NSSlider(), hold=NSSlider()
+    var vWet=NSTextField(), vWaterN=NSTextField(), vCount=NSTextField(), vSpeed=NSTextField(), vLength=NSTextField(), vHold=NSTextField()
 
     init(settings: Settings) {
         s = settings
@@ -835,17 +845,19 @@ final class ControlPanel: NSObject {
         reg.selectedSegment = s.register; content.addSubview(reg)
         red.frame = NSRect(x:184, y:34, width:90, height:20); red.target=self; red.action=#selector(changed)
         red.state = s.redOn ? .on : .off; content.addSubview(red)
-        (wet,   vWet)    = slider("Wet paper %",        0.0, 0.5, Double(s.wetPercent),  78)
-        (count, vCount)  = slider("Strokes before red", 1,  12,  Double(s.strokeCount),  130)
-        (speed, vSpeed)  = slider("Avg stroke speed",   0.0, 1.0, Double(s.avgSpeed),    182)
-        (length,vLength) = slider("Stroke length",      0.5, 1.5, Double(s.lengthScale), 234)
-        (hold,  vHold)   = slider("Hold seconds",       1.0, 10.0,Double(s.holdSeconds), 286)
-        _ = lbl("changes apply on the next painting", 14, 340, 252)
+        (wet,   vWet)    = slider("Wet area size",       0.0, 0.5, Double(s.wetPercent),   78)
+        (waterN,vWaterN) = slider("Clear-water strokes", 0,   5,   Double(s.waterStrokes), 130)
+        (count, vCount)  = slider("Strokes before red",  1,  12,   Double(s.strokeCount),  182)
+        (speed, vSpeed)  = slider("Avg stroke speed",    0.0, 1.0, Double(s.avgSpeed),     234)
+        (length,vLength) = slider("Stroke length",       0.5, 1.5, Double(s.lengthScale),  286)
+        (hold,  vHold)   = slider("Hold seconds",        1.0, 10.0,Double(s.holdSeconds),  338)
+        _ = lbl("changes apply on the next painting", 14, 394, 252)
         updateValues()
         win.makeKeyAndOrderFront(nil)
     }
     private func updateValues() {
         vWet.stringValue = String(format:"%.0f%%", s.wetPercent*100)
+        vWaterN.stringValue = "\(s.waterStrokes)"
         vCount.stringValue = "\(s.strokeCount)"
         vSpeed.stringValue = String(format:"%.2f", s.avgSpeed)
         vLength.stringValue = String(format:"%.2f×", s.lengthScale)
@@ -855,6 +867,7 @@ final class ControlPanel: NSObject {
         s.register = reg.selectedSegment
         s.redOn = (red.state == .on)
         s.wetPercent = wet.floatValue
+        s.waterStrokes = Int(waterN.doubleValue.rounded())
         s.strokeCount = Int(count.doubleValue.rounded())
         s.avgSpeed = speed.floatValue
         s.lengthScale = length.floatValue

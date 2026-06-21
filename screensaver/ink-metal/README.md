@@ -34,10 +34,14 @@ most — register, red accent on/off, wet-paper %, strokes-before-red, avg strok
 length, hold seconds. Edits write to a shared `Settings` and are **snapshotted at each painting
 reset**, so they never disturb the painting in progress — they take effect on the next one.
 
-**Wet vs dry paper.** The paper starts fully **dry**; a single **clear-water stroke** is laid first
-and defines the one wet area (sized by the wet-% dial). Black strokes that cross it bleed
-(wet-on-wet); elsewhere they stay crisp. Where two *wet* inks meet, a wetness-gated **diffusion**
-term lets them blend/merge instead of one's water shoving the other (a harsh backrun).
+**Wet vs dry paper.** The paper starts fully **dry**, and an ink stroke deposits almost no water of
+its own, so on dry paper it stays **crisp**. Wetness comes only from **clear-water strokes** laid
+first (count 0–5 and size are both dials). A black stroke that crosses a wet area bleeds
+(wet-on-wet); elsewhere it stays crisp. Where two *wet* inks meet, a wetness-gated **diffusion**
+term lets them blend/merge instead of one's water shoving the other (a harsh backrun). With
+`waterN = 0` the whole painting is crisp/dry; raise it (or the wet size) for more bleed.
+
+For headless tuning: `--waterN=N`, `--wet=X`, `--speed=X` override the defaults.
 
 Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 
