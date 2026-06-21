@@ -39,8 +39,8 @@ struct Register {
 // NOTE: `water` is tiny — an ink stroke barely self-wets, so on DRY paper it stays crisp.
 // Bleed/merge happens where the paper is already wet (from the clear-water strokes). This is what
 // makes the wet-% / water-stroke-count dials actually control wetness.
-let GONGBI = Register(sideProb:0.16, water:0.004, ink:0.32, depletion:0.7, fw:0.22, rCentre:128, rSide:94, curve:0.32, permContrast:0.40)
-let XIEYI  = Register(sideProb:0.45, water:0.020, ink:0.27, depletion:1.9, fw:1.0,  rCentre:104, rSide:78, curve:0.50, permContrast:1.0)
+let GONGBI = Register(sideProb:0.16, water:0.004, ink:0.30, depletion:0.7, fw:0.22, rCentre:170, rSide:120, curve:0.34, permContrast:0.40)
+let XIEYI  = Register(sideProb:0.45, water:0.020, ink:0.26, depletion:1.9, fw:1.0,  rCentre:140, rSide:100, curve:0.52, permContrast:1.0)
 
 // Live-tunable settings (shared with the GUI). The renderer snapshots these at each painting
 // RESET, so edits never disturb the painting in progress — they take effect on the next one.
@@ -51,6 +51,8 @@ final class Settings {
     var strokeCount = 6              // black strokes before the red accent
     var redOn = true
     var avgSpeed:   Float = 0.62     // 0 slow/thick .. 1 fast/thin
+    var vigor:      Float = 0.55     // 0 calm .. 1 vigorous (speed + flying-white + curvature + splatter)
+    var splatter:   Float = 0.45     // 0 none .. 1 heavy 潑墨 droplets off vigorous/loaded strokes
     var lengthScale:Float = 1.0      // stroke-length multiplier (≈0.6–1.4)
     var holdSeconds:Float = 5.0      // how long the finished painting holds
 }
@@ -317,11 +319,16 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
-struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.04; var diff:Float=0.14 }
+struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.04; var diff:Float=0.06 }  // diff low → solid, non-watery blacks; softness reserved for wet areas + gray washes
 
 // A calligraphic sumi stroke: a cubic Bézier centerline drawn over `life` frames. Carries
 // brush dynamics — three-phase pressure (起笔/行笔/收笔), centre/side-tip nib, ink tone
 // (墨分五色), and a per-stroke seed driving organic micro-variation.
+// 墨分五色 as stroke archetypes (see [[Chinese Brushwork Principles]] physical-dynamics layer):
+// 焦 thinLine = crisp dark "bone" · 浓 dark = solid structure · 淡 grayWash = broad soft background
+// tone · 枯 vigorousDry = fast, low-moisture, strong flying-white + splatter.
+enum Kind { case grayWash, thinLine, dark, vigorousDry }
+
 struct Stroke {
     var p0=SIMD2<Float>(0,0), p1=SIMD2<Float>(0,0), p2=SIMD2<Float>(0,0), p3=SIMD2<Float>(0,0)
     var start=0, life=60
@@ -334,6 +341,9 @@ struct Stroke {
     var fwIntensity:Float=1      // flying-white intensity (register-set)
     var channel:Int=0            // 0 = black ink, 1 = red accent
     var even=false               // even thin line (red sweep) vs calligraphic belly
+    var kind:Kind = .dark        // 五色 archetype (drives the per-kind character)
+    var snap:Float=0             // 0 = smooth, 1 = vigorous: sharper entry press + faster exit
+    var splatter:Float=0         // 潑墨 droplet amount flicked off the brush (0 = none)
     var dir=SIMD2<Float>(1,0), len:Float=0   // overall gesture (for directed-tension accumulator)
 }
 func bezier(_ s:Stroke,_ t:Float)->SIMD2<Float> {
@@ -350,11 +360,11 @@ func minJerk(_ x:Float)->Float { let t=max(0,min(1,x)); return t*t*t*(10 - 15*t 
 
 // Three-phase calligraphic pressure: 起笔 entry accent (hidden-tip press) → 行笔 modulated body →
 // 收笔 exit (taper to a point, or a pressed hook). seed drives organic body wobble.
-func pressure(_ t:Float,_ exitStyle:Int,_ seed:Float)->Float {
-    let entry = smoothstep(0, 0.09, t)                     // establish width fast
-    let taper = 1 - smoothstep(0.74, 1.0, t)               // long even body, taper only near the tip → leaner line
-    let accent = 0.18 * gauss(t, 0.06, 0.05)               // 藏锋 press at the start (subtle, not bulbous)
-    let wobble = 1 + 0.08*(sin(t*9+seed)*0.6 + sin(t*17+seed*1.7)*0.4)   // organic body variation
+func pressure(_ t:Float,_ exitStyle:Int,_ seed:Float,_ snap:Float)->Float {
+    let entry = smoothstep(0, mix(0.09, 0.05, snap), t)       // snap → establish width faster
+    let taper = 1 - smoothstep(mix(0.74, 0.60, snap), 1.0, t) // snap → exit sooner / lift faster
+    let accent = (0.16 + 0.26*snap) * gauss(t, 0.06, 0.045)   // 藏锋 press; snap → firmer landing (not a lollipop)
+    let wobble = 1 + (0.08+0.06*snap)*(sin(t*9+seed)*0.6 + sin(t*17+seed*1.7)*0.4)   // organic body variation
     var p = (entry*taper + accent*entry) * wobble
     if exitStyle == 1 { p += 0.5 * gauss(t, 0.85, 0.05) * taper }        // 收笔 hook
     return max(p, 0)
@@ -379,7 +389,8 @@ final class Renderer: NSObject, MTKViewDelegate {
     // composition state (Ma-aware placement) + temporal-ma scheduler + directed-tension accumulator
     let OC = 32                               // coarse occupancy grid
     var occ = [Float](repeating:0, count:32*32)
-    var nextSpawn = 0, burstLeft = 0
+    var nextSpawn = 0
+    var kindPlan: [Kind] = []                 // the painting's stroke recipe, popped one per spawn (one painter)
     var tensionAcc = SIMD2<Float>(0,0)        // decaying sum of stroke gesture vectors
 
     // painting lifecycle: paint black → wait (settle) → dry+red → hold → fade → new painting
@@ -395,6 +406,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     // snapshot of Settings, taken at each reset (so edits apply only to the next painting)
     var reg = GONGBI
     var aSpeed:Float = 0.62, aLen:Float = 1.0, aWet:Float = 0.18
+    var aVigor:Float = 0.55, aSplatter:Float = 0.45
     var aRedOn = true, aHold = 300, aWaterN = 1
 
     init(device: MTLDevice) {
@@ -441,6 +453,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     private func applySettings() {
         reg = settings.register == 1 ? XIEYI : GONGBI
         aSpeed = settings.avgSpeed; aLen = settings.lengthScale; aWet = settings.wetPercent
+        aVigor = settings.vigor; aSplatter = settings.splatter
         aRedOn = settings.redOn; aHold = max(30, Int(settings.holdSeconds*60))
         aWaterN = settings.waterStrokes
         strokeTarget = max(1, settings.strokeCount)
@@ -475,9 +488,30 @@ final class Renderer: NSObject, MTKViewDelegate {
         for i in occ.indices { occ[i]=0 }
         tensionAcc = SIMD2<Float>(0,0)
         strokes.removeAll(); strokesDone = 0; dry = false
-        nextSpawn = frame + 30; burstLeft = 0
+        nextSpawn = frame + 24
+        kindPlan = buildKindPlan(strokeTarget)                  // grays first (background), blacks over
         for _ in 0..<aWaterN { spawnWaterStroke(Float(GRID)) }   // the wet area(s), before any ink
         phase = .painting; phaseStart = frame
+    }
+
+    // The painting recipe: a few gray washes laid first as background tone, then the blacks
+    // (a crisp thinLine "bone" + a vigorousDry + a shuffled mix). 五色 expressed as stroke kinds.
+    private func buildKindPlan(_ n:Int)->[Kind] {
+        var plan:[Kind] = []
+        let grays = min(max(0, n-1), n >= 4 ? 1 + Int(nextRand()*2) : (nextRand()<0.5 ? 1 : 0))
+        for _ in 0..<grays { plan.append(.grayWash) }
+        var blacks:[Kind] = []
+        let rest = n - grays
+        for i in 0..<rest {
+            if i == 0 { blacks.append(.thinLine) }                       // always a structural bone
+            else if i == 1 && rest >= 3 { blacks.append(.vigorousDry) }  // and one vigorous dry stroke
+            else { let r=nextRand(); blacks.append(r<0.4 ? .dark : (r<0.72 ? .thinLine : .vigorousDry)) }
+        }
+        for i in stride(from:blacks.count-1, through:1, by:-1) {         // shuffle the blacks
+            let j = Int(nextRand()*Float(i+1)); blacks.swapAt(i, j)
+        }
+        plan.append(contentsOf: blacks)
+        return plan
     }
 
     func mtkView(_ v: MTKView, drawableSizeWillChange s: CGSize) {}
@@ -525,48 +559,62 @@ final class Renderer: NSObject, MTKViewDelegate {
         return best
     }
 
-    private func weightedTone()->Int {           // 墨分五色, biased toward mid/dark
-        let r=nextRand(), cum:[Float]=[0.22,0.50,0.74,0.90,1.0]
-        for i in 0..<cum.count where r<cum[i] { return i }
-        return cum.count-1
-    }
+    // Lay one stroke of a given 五色 archetype. Speed↔moisture↔value are coupled (the engine of
+    // vigor): fast+dry → thin, flying-white, light; slow+saturated → broad, soft, dark. The Vigor
+    // dial pushes the dynamic kinds harder (speed, flying-white, curvature, splatter).
+    private func spawnOneStroke(_ G:Float, _ kind:Kind) {
+        let vig = aVigor
+        let dynamic = kind != .grayWash                 // grays stay calm regardless of vigor
+        // per-kind character: speed, ink concentration, width/water/fw/curve/depletion/splatter muls
+        let speedBase:Float, conc:Float, widthMul:Float, waterMul:Float, lenMul:Float
+        let fwMul:Float, curveMul:Float, deplMul:Float, splatBase:Float, sideTip:Bool, snap:Float
+        switch kind {
+        case .thinLine:                                  // 焦 — crisp dark structural "bone": long, thin
+            speedBase=0.88; conc=1.0;  widthMul=0.52; waterMul=0.4; lenMul=1.1; fwMul=0.4;  curveMul=0.7; deplMul=0.4; splatBase=0.05; sideTip=false; snap=1
+        case .dark:                                      // 浓 — solid, confident structure
+            speedBase=0.55; conc=0.92; widthMul=0.82; waterMul=0.8; lenMul=0.85;fwMul=0.9;  curveMul=1.0; deplMul=0.8; splatBase=0.18; sideTip=false; snap=0.4
+        case .grayWash:                                  // 淡 — broad pale soft background tone
+            speedBase=0.28; conc=0.15; widthMul=1.5;  waterMul=1.7; lenMul=0.9; fwMul=0.25; curveMul=0.8; deplMul=0.5; splatBase=0.0;  sideTip=true;  snap=0
+        case .vigorousDry:                               // 枯 — fast, low-moisture, flying-white + splatter: short
+            speedBase=0.82; conc=0.85; widthMul=0.8;  waterMul=0.35;lenMul=0.65;fwMul=2.0;  curveMul=1.7; deplMul=1.6; splatBase=1.0;  sideTip=false; snap=1
+        }
+        let speed = min(max(speedBase + (dynamic ? vig*0.18 : 0) + (nextRand()-0.5)*0.28, 0), 1)
+        let widthScale = mix(1.15, 0.50, speed) * widthMul
+        let lifeScale  = mix(1.35, 0.55, speed)
+        let fwScale    = mix(0.6,  1.7,  speed)
+        let deplScale  = mix(0.8,  1.7,  speed)
 
-    private func spawnOneStroke(_ G:Float) {
-        let tones:[Float]=[1.0, 0.74, 0.52, 0.36, 0.22]   // burnt→clear
         let start = chooseOrigin(G)
         let ang = nextRand()*6.2832
-        let len = G*(0.32+0.55*nextRand())*aLen
+        let len = G*(0.24+0.42*nextRand())*lenMul*aLen
         let dir = SIMD2<Float>(cos(ang), sin(ang))
         let perp = SIMD2<Float>(-dir.y, dir.x)
-        let c1 = (nextRand()-0.5)*reg.curve*len, c2 = (nextRand()-0.5)*reg.curve*len
+        let curveAmt = reg.curve * curveMul * (dynamic ? (1 + vig*0.5) : 1)
+        let c1 = (nextRand()-0.5)*curveAmt*len, c2 = (nextRand()-0.5)*curveAmt*len
         var s = Stroke()
+        s.kind = kind
         s.p0 = start
         s.p1 = start + dir*(len*0.33) + perp*c1
         s.p2 = start + dir*(len*0.66) + perp*c2
         s.p3 = start + dir*len + perp*((nextRand()-0.5)*0.15*len)   // small exit offset → resolved direction
-        // brush speed centred on the avg-speed dial: fast → thinner, quicker, drier & more chaotic
-        let speed = min(max(aSpeed + (nextRand()-0.5)*0.6, 0), 1)   // avg ± spread
-        let widthScale = mix(1.15, 0.50, speed)        // fast → thin
-        let lifeScale  = mix(1.35, 0.50, speed)        // fast → drawn quicker
-        let fwScale    = mix(0.6,  1.7,  speed)        // fast → more flying-white / chaotic tail
-        let deplScale  = mix(0.8,  1.7,  speed)        // fast → depletes sooner (drier)
         s.start = frame
         s.life = max(Int(len/G * 150 * lifeScale) + 14, 10)
-        s.inkConc = tones[weightedTone()]
-        let side = nextRand() < reg.sideProb            // 侧锋 side-tip vs 中锋 centre-tip
-        s.nibAspect   = side ? (2.0 + 0.5*nextRand()) : (1.3 + 0.3*nextRand())
-        s.drynessBias = side ? (0.07 + 0.08*nextRand()) : 0.0
-        s.baseR = G/(side ? reg.rSide : reg.rCentre) * (0.7 + 0.4*nextRand()) * widthScale
-        s.exitStyle = nextRand() < 0.35 ? 1 : 0
-        s.depletion = reg.depletion * deplScale
-        s.fwIntensity = reg.fw * fwScale * (0.8 + 0.4*nextRand())
-        s.ink = reg.ink * s.inkConc
-        s.water = reg.water * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
+        s.inkConc = conc
+        s.nibAspect   = sideTip ? (2.2 + 0.6*nextRand()) : (1.3 + 0.3*nextRand())  // 侧锋 broad vs 中锋 round
+        s.drynessBias = sideTip ? (0.06 + 0.06*nextRand()) : 0.0
+        s.baseR = G/(sideTip ? reg.rSide : reg.rCentre) * (0.8 + 0.3*nextRand()) * widthScale
+        s.exitStyle = snap > 0.5 ? 0 : (nextRand() < 0.35 ? 1 : 0)   // vigorous strokes lift to a taper, not a hook
+        s.snap = snap
+        s.depletion = reg.depletion * deplScale * deplMul
+        s.fwIntensity = reg.fw * fwScale * fwMul * (0.8 + 0.4*nextRand()) * (dynamic ? (1 + vig*1.2) : 1)
+        s.splatter = min(splatBase * aSplatter * (0.5 + vig), 1.0)
+        s.ink = reg.ink * conc
+        s.water = reg.water * waterMul * (0.6 + 0.4*conc)   // grays carry more water (soft); blacks ~dry
         s.seed = nextRand()*60
         s.dir = dir; s.len = len
         strokes.append(s)
         tensionAcc += dir * (len/G)
-        // pre-register the stroke footprint so sibling strokes in the same burst avoid overlapping it
+        // register the footprint so the next stroke's placement avoids overlapping it
         for j in 0...10 { occ[occIdx(bezier(s, Float(j)/10))] += 0.05 }
     }
 
@@ -614,14 +662,19 @@ final class Renderer: NSObject, MTKViewDelegate {
         switch phase {
         case .painting:
             inkDecay = 0.9999
-            let complete = strokesDone >= strokeTarget || fill > 0.30   // enough strokes OR enough ink
-            if !complete && frame >= nextSpawn {
-                if burstLeft == 0 { burstLeft = 1 + Int(nextRand()*2) }  // 1–2 strokes per burst (sparser)
-                spawnOneStroke(G); strokesDone += 1; burstLeft -= 1
-                nextSpawn = frame + (burstLeft>0 ? 10 + Int(nextRand()*16)    // within a burst
-                                                 : 40 + Int(nextRand()*70))   // rest between bursts (ma)
+            // ONE PAINTER: the next stroke begins only after the current one has fully lifted
+            // (strokes empty), plus a short "breath". No two strokes draw at once.
+            let complete = strokesDone >= strokeTarget || fill > 0.34
+            if strokes.isEmpty {
+                if !complete && frame >= nextSpawn {
+                    let kind = strokesDone < kindPlan.count ? kindPlan[strokesDone] : .dark
+                    spawnOneStroke(G, kind); strokesDone += 1
+                } else if complete {
+                    phase = .waiting; phaseStart = frame
+                }
+            } else {
+                nextSpawn = frame + 16 + Int(nextRand()*22)   // breath starts ticking when the brush lifts
             }
-            if complete && strokes.isEmpty { phase = .waiting; phaseStart = frame }
         case .waiting:                                // black settles for ~2s (still bleeding)
             inkDecay = 0.99995
             if frame - phaseStart > WAIT {            // → dry the paper, then sweep the red
@@ -656,25 +709,32 @@ final class Renderer: NSObject, MTKViewDelegate {
             if age < 0 || age > s.life { continue }
             // ease-in draw-speed: brush presses/dwells at the start (起笔) then accelerates and
             // lifts fast at the exit — keeps the tapered tail sharp (a clean 收笔), not blunted.
-            let t0 = pow(max(0,Float(age-1)/Float(s.life)), 1.6)
-            let t1 = pow(Float(age)/Float(s.life), 1.6)
+            // ease-in dwell sharpens tapered tails, but a strong dwell piles stamps at the origin
+            // (a "tadpole" head). Vigorous (snap) strokes attack immediately → near-linear easing.
+            let ez = mix(1.6, 1.02, s.snap)
+            let t0 = pow(max(0,Float(age-1)/Float(s.life)), ez)
+            let t1 = pow(Float(age)/Float(s.life), ez)
             let SUB = 10
-            // normalize total deposit by duration → darkness comes from the brush, not from how
-            // long the stroke took to draw (otherwise slow strokes oversaturate into black blobs)
-            let norm = min(max(70.0/Float(s.life), 0.45), 1.4)
+            var prevPos = bezier(s, t0)
             for k in 1...SUB {
                 let t = t0 + (t1 - t0) * Float(k)/Float(SUB)
+                let curPos = bezier(s, t)
+                let seg = simd_length(curPos - prevPos); prevPos = curPos   // distance moved this substamp
                 let tan = bezierTangent(s, t)
                 let dir = simd_length(tan) > 1e-4 ? simd_normalize(tan) : SIMD2<Float>(1,0)
                 let load: Float = exp(-s.depletion * t)        // ink depletes along the stroke
                 var dp = DepositParams()
-                dp.pos = bezier(s, t)
+                dp.pos = curPos
                 dp.dir = dir
                 let press = s.even ? smoothstep(0,0.05,t)*(1 - smoothstep(0.92,1.0,t))   // even line, sharp tips
-                                   : pressure(t, s.exitStyle, s.seed)                    // 起笔/行笔/收笔
+                                   : pressure(t, s.exitStyle, s.seed, s.snap)            // 起笔/行笔/收笔 (snap = vigor)
                 dp.radius = max(s.baseR * press, 0.5)
-                dp.ink = s.ink * load * norm
-                dp.water = s.water * (0.4 + 0.6*load) * norm
+                // dose ∝ distance the brush MOVED (not frame/substamp count): a slow or short stroke
+                // no longer piles overlapping stamps into an oversaturated blob. Darkness comes from
+                // the brush load + how many times the sweeping nib overlaps a point, as in real ink.
+                let dose = min(seg / max(s.baseR, 1.0), 1.6) * 2.3
+                dp.ink = s.ink * load * dose
+                dp.water = s.water * (0.4 + 0.6*load) * dose
                 dp.dryness = min(1 - min(load*1.15, 1) + s.drynessBias, 1)  // side-tip drier → flying white
                 dp.seed = s.seed
                 dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
@@ -682,6 +742,31 @@ final class Renderer: NSObject, MTKViewDelegate {
                 dp.channel = Float(s.channel)                 // black or red
                 stampDeposit(enc, dp)
                 occ[occIdx(dp.pos)] += dp.ink * 0.6           // track laid ink for placement
+            }
+
+            // 潑墨 splatter: tiny dark specks flicked off a vigorous/loaded brush — a burst at the
+            // landing (起笔) and a scatter along the path, biased forward (the flick). Pure pigment,
+            // no water → hard dots that don't bleed. (Black channel only.)
+            if s.splatter > 0 && s.channel == 0 {
+                let landing: Float = age < 6 ? 2.6 : 1.0      // heavier at the brush landing
+                let tip = bezier(s, t1)
+                let tan = bezierTangent(s, t1)
+                let fdir = simd_length(tan) > 1e-4 ? simd_normalize(tan) : SIMD2<Float>(1,0)
+                let fperp = SIMD2<Float>(-fdir.y, fdir.x)
+                let tries = Int(s.splatter * landing * 3) + 1
+                for _ in 0..<tries {
+                    if nextRand() > s.splatter * 0.6 + 0.12 { continue }   // sparse — mostly skips
+                    let along  = (nextRand()-0.15) * 16 * s.splatter       // biased forward (the flick)
+                    let across = (nextRand()-0.5)  * 11 * s.splatter
+                    var sp = DepositParams()
+                    sp.pos = tip + fdir*along + fperp*across
+                    sp.dir = fdir
+                    sp.radius = 0.6 + 1.3*nextRand()           // tiny speck
+                    sp.ink = s.ink * (0.5 + 0.8*nextRand())
+                    sp.water = 0; sp.dryness = 0; sp.seed = s.seed
+                    sp.nibAspect = 1.0; sp.fwIntensity = 0; sp.channel = 0
+                    stampDeposit(enc, sp)
+                }
             }
         }
 
@@ -801,6 +886,9 @@ if CommandLine.arguments.contains("--headless") {
         if arg.hasPrefix("--wet=")    { settings.wetPercent  = Float(arg.dropFirst(6)) ?? settings.wetPercent }
         if arg.hasPrefix("--waterN=") { settings.waterStrokes = Int(arg.dropFirst(9)) ?? settings.waterStrokes }
         if arg.hasPrefix("--speed=")  { settings.avgSpeed     = Float(arg.dropFirst(8)) ?? settings.avgSpeed }
+        if arg.hasPrefix("--vigor=")  { settings.vigor        = Float(arg.dropFirst(8)) ?? settings.vigor }
+        if arg.hasPrefix("--splatter="){ settings.splatter    = Float(arg.dropFirst(11)) ?? settings.splatter }
+        if arg.hasPrefix("--count=")  { settings.strokeCount  = Int(arg.dropFirst(8)) ?? settings.strokeCount }
     }
     Renderer(device:device).renderToPNG(frames:frames, path:path)
     exit(0)
@@ -818,11 +906,11 @@ final class FlippedView: NSView { override var isFlipped: Bool { true } }
 final class ControlPanel: NSObject {
     let s: Settings
     let win: NSWindow
-    let content = FlippedView(frame: NSRect(x:0,y:0,width:280,height:484))
+    let content = FlippedView(frame: NSRect(x:0,y:0,width:280,height:540))
     let reg = NSSegmentedControl(labels:["Gongbi","Xieyi"], trackingMode:.selectOne, target:nil, action:nil)
     let red = NSButton(checkboxWithTitle:"Red accent", target:nil, action:nil)
-    var wet=NSSlider(), waterN=NSSlider(), count=NSSlider(), speed=NSSlider(), length=NSSlider(), hold=NSSlider()
-    var vWet=NSTextField(), vWaterN=NSTextField(), vCount=NSTextField(), vSpeed=NSTextField(), vLength=NSTextField(), vHold=NSTextField()
+    var wet=NSSlider(), waterN=NSSlider(), count=NSSlider(), speed=NSSlider(), vigor=NSSlider(), splat=NSSlider(), length=NSSlider(), hold=NSSlider()
+    var vWet=NSTextField(), vWaterN=NSTextField(), vCount=NSTextField(), vSpeed=NSTextField(), vVigor=NSTextField(), vSplat=NSTextField(), vLength=NSTextField(), vHold=NSTextField()
 
     init(settings: Settings) {
         s = settings
@@ -849,9 +937,11 @@ final class ControlPanel: NSObject {
         (waterN,vWaterN) = slider("Clear-water strokes", 0,   5,   Double(s.waterStrokes), 130)
         (count, vCount)  = slider("Strokes before red",  1,  12,   Double(s.strokeCount),  182)
         (speed, vSpeed)  = slider("Avg stroke speed",    0.0, 1.0, Double(s.avgSpeed),     234)
-        (length,vLength) = slider("Stroke length",       0.5, 1.5, Double(s.lengthScale),  286)
-        (hold,  vHold)   = slider("Hold seconds",        1.0, 10.0,Double(s.holdSeconds),  338)
-        _ = lbl("changes apply on the next painting", 14, 394, 252)
+        (vigor, vVigor)  = slider("Vigor",               0.0, 1.0, Double(s.vigor),        286)
+        (splat, vSplat)  = slider("Splatter",            0.0, 1.0, Double(s.splatter),     338)
+        (length,vLength) = slider("Stroke length",       0.5, 1.5, Double(s.lengthScale),  390)
+        (hold,  vHold)   = slider("Hold seconds",        1.0, 10.0,Double(s.holdSeconds),  442)
+        _ = lbl("changes apply on the next painting", 14, 498, 252)
         updateValues()
         win.makeKeyAndOrderFront(nil)
     }
@@ -860,6 +950,8 @@ final class ControlPanel: NSObject {
         vWaterN.stringValue = "\(s.waterStrokes)"
         vCount.stringValue = "\(s.strokeCount)"
         vSpeed.stringValue = String(format:"%.2f", s.avgSpeed)
+        vVigor.stringValue = String(format:"%.2f", s.vigor)
+        vSplat.stringValue = String(format:"%.2f", s.splatter)
         vLength.stringValue = String(format:"%.2f×", s.lengthScale)
         vHold.stringValue = String(format:"%.1fs", s.holdSeconds)
     }
@@ -870,6 +962,8 @@ final class ControlPanel: NSObject {
         s.waterStrokes = Int(waterN.doubleValue.rounded())
         s.strokeCount = Int(count.doubleValue.rounded())
         s.avgSpeed = speed.floatValue
+        s.vigor = vigor.floatValue
+        s.splatter = splat.floatValue
         s.lengthScale = length.floatValue
         s.holdSeconds = hold.floatValue
         updateValues()

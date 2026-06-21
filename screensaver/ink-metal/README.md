@@ -30,9 +30,11 @@ even, clean spine, minimal bleed, almost no flying-white, smooth paper) vs **寫
 water/ink/depletion/flying-white/nib-width/paper-grain.
 
 **Controls window** (windowed mode only): a second "Ink controls" window exposes the dials we tune
-most — register, red accent on/off, wet-paper %, strokes-before-red, avg stroke speed, stroke
-length, hold seconds. Edits write to a shared `Settings` and are **snapshotted at each painting
-reset**, so they never disturb the painting in progress — they take effect on the next one.
+most — register, red accent on/off, wet-paper %, clear-water strokes, strokes-before-red, avg stroke
+speed, **Vigor** (speed + flying-white + curvature + splatter for the dynamic strokes), **Splatter**
+(潑墨 droplet amount), stroke length, hold seconds. Edits write to a shared `Settings` and are
+**snapshotted at each painting reset**, so they never disturb the painting in progress — they take
+effect on the next one.
 
 **Wet vs dry paper.** The paper starts fully **dry**, and an ink stroke deposits almost no water of
 its own, so on dry paper it stays **crisp**. Wetness comes only from **clear-water strokes** laid
@@ -41,7 +43,8 @@ first (count 0–5 and size are both dials). A black stroke that crosses a wet a
 term lets them blend/merge instead of one's water shoving the other (a harsh backrun). With
 `waterN = 0` the whole painting is crisp/dry; raise it (or the wet size) for more bleed.
 
-For headless tuning: `--waterN=N`, `--wet=X`, `--speed=X` override the defaults.
+For headless tuning: `--waterN=N`, `--wet=X`, `--speed=X`, `--vigor=X`, `--splatter=X`, `--count=N`
+override the defaults.
 
 Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 
@@ -66,13 +69,19 @@ Faithful reduction of MoXi. Per frame:
    per stroke), and direction-aligned **dry-brush flying-white** 飛白. Occasional **water wash**
    wets a region (→ wet paper).
 
-   *Brush speed:* each stroke has a speed (biased fast) → fast strokes are **thinner, drawn
-   quicker, drier and more chaotic at the ends**; slow strokes fuller. *Composition (Ma):* placement
-   is **anti-clustering** — strokes spread apart with a gentle off-centre bias (occupancy grid),
-   for contiguous blank space, not uniform scatter or a merged mass.
+   *One painter, varied strokes:* the next stroke begins only after the current one has lifted —
+   a single hand, never two strokes at once. Each painting draws a small **recipe of 五色
+   archetypes** (see [[Chinese Brushwork Principles]] → Physical dynamics): broad **pale washes**
+   (淡) laid first as background tone, then crisp dark **thin-line "bones"** (焦), solid **darks**
+   (濃), and fast **dry strokes** (枯) with strong flying-white + **潑墨 splatter** specks — ending
+   with the red accent. **Speed↔moisture↔value are coupled** (fast→thin/dry/light); a **Vigor** dial
+   pushes the dynamic archetypes (speed, flying-white, curvature, entry-snap, splatter). Ink is
+   **dosed by distance the nib moves**, not per-frame, so slow/short strokes stay crisp instead of
+   blooming into oversaturated blobs. *Composition (Ma):* placement is **anti-clustering** — strokes
+   spread apart with a gentle off-centre bias (occupancy grid), for contiguous blank space.
 
    *Painting lifecycle:* the canvas is **not** an endless accumulation. A painting builds to a few
-   well-placed strokes (4–7, or until the composition fills) that are free to **cross and interact**
+   well-placed strokes (or until the composition fills) that are free to **cross and interact**
    (ink over ink). When done it **waits ~2 s** (the wet ink settles), then the **paper dries** —
    pigment freezes, so the black marks stop growing — and a single very-thin, very-long **red
    accent** (朱) is swept across the canvas (endpoints kept *inside* the frame, no bleed). The
