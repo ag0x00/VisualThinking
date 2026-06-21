@@ -20,7 +20,7 @@ import Cocoa
 import MetalKit
 import simd
 
-let GRID = 384
+let GRID = 600     // sim resolution; higher = crisper edges in the window (was 384 → pixelated when upscaled)
 let DT: Float = 1.0
 
 // Brush register — 工筆 gongbi (controlled, even, clean spine, minimal bleed) is the default;
@@ -134,7 +134,7 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
 
 struct DepositParams { float2 pos; float2 dir; float radius; float water; float ink;
                        float lambda; float mbase; float dryness; float seed; float nibAspect;
-                       float fwIntensity; float channel; };   // channel: 0 = black ink, 1 = red
+                       float fwIntensity; float channel; float striate; };   // channel: 0 = black ink, 1 = red
 
 // adds water (to f) + ink (to p) under a brush footprint. An oriented elliptical
 // nib + a direction-aligned bristle texture give calligraphic width and dry-brush
@@ -169,7 +169,11 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     // (perpendicular) and stays constant along loc.x. Because loc.y is the same for every overlapping
     // sub-stamp, the hairs come out continuous instead of the beaded "railroad tracks" a loc.x-keyed
     // pattern produces. Depletion (dryness↑ toward the tail) opens the gaps — not an along-length chop.
-    float fw = dp.fwIntensity * smoothstep(0.40, 0.92, dp.dryness);
+    // ...AND only where the stroke is wide enough to fit several hairs. A thin contact (a "bone"
+    // line, or a stroke's thin tip) can't show PARALLEL hairs, so flying-white there just beads it
+    // into tracks — gate it out by transverse width so thin parts stay solid.
+    float fw = dp.fwIntensity * smoothstep(0.40, 0.92, dp.dryness)
+                              * smoothstep(1.6, 3.2, dp.radius);
     float mask = 1.0;
     if (fw > 0.001) {
         float hairs = vnoise(float2(dp.seed, loc.y*0.80));                    // fine stripes across width
@@ -178,6 +182,12 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
         float thr = mix(0.30, 0.72, fw);                       // drier → higher threshold → more paper shows
         float keep = smoothstep(thr-0.12, thr+0.12, bristle);  // 1 = hair, 0 = paper gap
         mask = mix(1.0, keep, fw);
+    }
+    // Wet side-tip striation: faint tonal streaks ALONG travel (perpendicular-keyed, like the hairs
+    // but low-contrast and not gated by dryness) so a broad 淡 wash reads as brushed, not airbrushed.
+    if (dp.striate > 0.001) {
+        float st = vnoise(float2(dp.seed*0.7, loc.y*0.55));
+        mask *= mix(1.0, 0.6 + 0.4*st, dp.striate);
     }
 
     float r = rho.read(gid).x;
@@ -324,7 +334,7 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 // MARK: - Renderer
 
-struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0 }
+struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0; var striate:Float=0 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
 struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.04; var diff:Float=0.06 }  // diff low → solid, non-watery blacks; softness reserved for wet areas + gray washes
 
@@ -351,6 +361,7 @@ struct Stroke {
     var kind:Kind = .dark        // 五色 archetype (drives the per-kind character)
     var snap:Float=0             // 0 = smooth, 1 = vigorous: sharper entry press + faster exit
     var splatter:Float=0         // 潑墨 droplet amount flicked off the brush (0 = none)
+    var striate:Float=0          // faint wet brushed striations (side-tip wash texture; not dry gaps)
     var dir=SIMD2<Float>(1,0), len:Float=0   // overall gesture (for directed-tension accumulator)
 }
 func bezier(_ s:Stroke,_ t:Float)->SIMD2<Float> {
@@ -388,6 +399,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     var ff=0, rr=0, pp=0
 
     var frame = 0
+    var paused = false                        // Space toggles; freezes the animation on the current frame
     var rng: UInt64 = 0x9e3779b97f4a7c15
     var strokes: [Stroke] = []
     let tg = MTLSize(width:16, height:16, depth:1)
@@ -612,6 +624,8 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.baseR = G/(sideTip ? reg.rSide : reg.rCentre) * (0.8 + 0.3*nextRand()) * widthScale
         s.exitStyle = snap > 0.5 ? 0 : (nextRand() < 0.35 ? 1 : 0)   // vigorous strokes lift to a taper, not a hook
         s.snap = snap
+        s.even = (kind == .vigorousDry)            // 枯 = flat broad dry-DRAG (even width → flying-white develops across it)
+        s.striate = (kind == .grayWash) ? 0.5 : 0  // 淡 wash gets faint brushed streaks, not a smooth airbrush blob
         s.depletion = reg.depletion * deplScale * deplMul
         s.fwIntensity = reg.fw * fwScale * fwMul * (0.8 + 0.4*nextRand()) * (dynamic ? (1 + vig*1.2) : 1)
         s.splatter = min(splatBase * aSplatter * (0.5 + vig), 1.0)
@@ -747,6 +761,7 @@ final class Renderer: NSObject, MTKViewDelegate {
                 dp.nibAspect = s.nibAspect                    // 中锋 round vs 侧锋 broad
                 dp.fwIntensity = s.fwIntensity
                 dp.channel = Float(s.channel)                 // black or red
+                dp.striate = s.striate
                 stampDeposit(enc, dp)
                 occ[occIdx(dp.pos)] += dp.ink * 0.6           // track laid ink for placement
             }
@@ -814,9 +829,37 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     func draw(in view: MTKView) {
+        if paused { return }     // freeze on the current frame; the window keeps the last presented image
         guard let drawable=view.currentDrawable, let cb=queue.makeCommandBuffer() else { return }
         encode(target: drawable.texture, cb: cb)
         cb.present(drawable); cb.commit()
+    }
+
+    // Save the current frame as a high-res PNG into ~/Downloads (the "s" hotkey). Re-runs only the
+    // display kernel into a shared texture at a larger size (pigment is sampled linearly → smooth).
+    func saveSnapshot() {
+        let S = 1600
+        let d=MTLTextureDescriptor.texture2DDescriptor(pixelFormat:.rgba8Unorm,width:S,height:S,mipmapped:false)
+        d.usage=[.shaderRead,.shaderWrite]; d.storageMode = .shared
+        let tex=device.makeTexture(descriptor:d)!
+        let cb=queue.makeCommandBuffer()!, enc=cb.makeComputeCommandEncoder()!
+        var gain: Float = 2.1
+        enc.setComputePipelineState(pDisplay)
+        enc.setTexture(p[pp],index:0); enc.setTexture(rho[rr],index:1); enc.setTexture(paper,index:2); enc.setTexture(tex,index:3)
+        let gb=bytes(gain); gb.withUnsafeBytes{ enc.setBytes($0.baseAddress!,length:gb.count,index:0) }
+        enc.dispatchThreadgroups(MTLSize(width:(S+15)/16,height:(S+15)/16,depth:1),threadsPerThreadgroup:tg)
+        enc.endEncoding(); cb.commit(); cb.waitUntilCompleted()
+        var buf=[UInt8](repeating:0,count:S*S*4)
+        tex.getBytes(&buf,bytesPerRow:S*4,from:MTLRegionMake2D(0,0,S,S),mipmapLevel:0)
+        let rep=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:S,pixelsHigh:S,bitsPerSample:8,
+            samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:S*4,bitsPerPixel:32)!
+        memcpy(rep.bitmapData!,buf,buf.count)
+        let fmt=DateFormatter(); fmt.dateFormat="yyyyMMdd-HHmmss"
+        let dir=FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
+        let url=dir.appendingPathComponent("sumi-\(fmt.string(from:Date())).png")
+        try? rep.representation(using:.png,properties:[:])!.write(to:url)
+        FileHandle.standardError.write("saved \(url.path)\n".data(using:.utf8)!)
+        _ = gain
     }
 
     func renderToPNG(frames: Int, path: String) {
@@ -903,7 +946,12 @@ if CommandLine.arguments.contains("--headless") {
 
 final class InkView: MTKView {
     override var acceptsFirstResponder: Bool { true }
-    override func keyDown(with e: NSEvent) { if e.keyCode==53 || e.charactersIgnoringModifiers=="q" { NSApp.terminate(nil) } }
+    override func keyDown(with e: NSEvent) {
+        let k = e.charactersIgnoringModifiers
+        if e.keyCode==53 || k=="q" { NSApp.terminate(nil) }            // Esc / q — quit
+        else if k==" " { (delegate as? Renderer)?.paused.toggle() }    // Space — pause/unpause
+        else if k=="s" { (delegate as? Renderer)?.saveSnapshot() }     // s — save PNG to ~/Downloads
+    }
 }
 
 final class FlippedView: NSView { override var isFlipped: Bool { true } }

@@ -16,9 +16,11 @@ See wiki: [[Lattice Boltzmann Method for Ink Dispersion]], [[Stable Fluids and G
 
 ```bash
 ./build.sh                              # builds main.swift (LBM ink-on-paper)
-./inkspike                              # 800×800 window; Esc or q to quit — 工筆 gongbi (default)
+./inkspike                              # 800×800 window — 工筆 gongbi (default)
 ./inkspike --xieyi                      # 寫意 xieyi register: spontaneous, splashed, strong flying-white
 ./inkspike --headless 700 out.png       # render N steps offscreen → PNG (+ scorecard)
+
+# Window hotkeys:  Esc/q quit · Space pause/unpause · s save a PNG snapshot to ~/Downloads/
 
 # the ink-in-water reference build:
 swiftc -O inkwater.swift -o inkwater -framework Cocoa -framework Metal -framework MetalKit
@@ -113,7 +115,7 @@ physical; it's the one non-MoXi knob.
 | Dynamic σ-pinning + pinning texture | edge roughening comes only from static permeability | want stronger toe/branch control |
 | Pigment fixture layer | ink "fixes" implicitly (doesn't evaporate) | want rewettable dried marks |
 | Kubelka–Munk compositing | flat `mix()` to black | want coloured/layered ink → [[Kubelka-Munk Optical Compositing]] |
-| Fixed 384² square grid | stretches on non-square windows | wrap into a `.saver` (match screen aspect) |
+| Fixed 600² square grid | stretches on non-square windows; upscaled to the window | wrap into a `.saver` (match screen aspect) |
 
 ## Path to a real screensaver
 
