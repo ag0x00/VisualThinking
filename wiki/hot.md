@@ -2,14 +2,38 @@
 title: Hot Cache
 tags: [meta, hot]
 status: living
-updated: 2026-05-17
+updated: 2026-06-21
 ---
 
-> **Status: 🏁 LOCKED SWEEP SEQUENCE COMPLETE 2026-05-17.** Sweep 7 (Implementation-notes pass, final) ✅ done. 12 technique pages + 1 synthesis ([[Research - Implementation-notes Pass]]) translate the reading layer into operational recipes: [[OKLCH Pair-Relation Classifier]] · [[Contrast Checking Pipeline]] · [[Directed Tension Score]] · [[Visual Hierarchy and Negative Space Scoring]] · [[Aesthetic Measure Stack]] · [[Pose-Emotion Dimension Scorer]] · [[Contrapposto Scorer]] · [[Cultural Emblem Detector]] · [[Audio-to-Visual Cross-Modal Mapping]] · [[Realtime Pose-to-Visualizer Loop]] · [[Symmetry-Group Pattern Generator]] · [[Style Transfer Pipeline]]. **The 15-gap queue is now covered at both reading AND technique layers.** Default stack consolidated: **culori + MediaPipe Tasks + TFJS WebGPU + three.js + meyda + AudioWorklet + Anthropic SDK**. **Wiki transitions from "knowledge base" to "operational reference."** Next phase: **build** — one of the four priority projects (generative art system / brand tooling / graphic-design tools / music-reactive visualizer).
+> **Status: 🛠️ BUILD PHASE ACTIVE 2026-05-18.** Wiki layer LOCKED (sweep sequence complete 2026-05-17 — see Build state below for current activity). Sweep 7 (Implementation-notes pass, final) ✅ done. 12 technique pages + 1 synthesis ([[Research - Implementation-notes Pass]]) translate the reading layer into operational recipes: [[OKLCH Pair-Relation Classifier]] · [[Contrast Checking Pipeline]] · [[Directed Tension Score]] · [[Visual Hierarchy and Negative Space Scoring]] · [[Aesthetic Measure Stack]] · [[Pose-Emotion Dimension Scorer]] · [[Contrapposto Scorer]] · [[Cultural Emblem Detector]] · [[Audio-to-Visual Cross-Modal Mapping]] · [[Realtime Pose-to-Visualizer Loop]] · [[Symmetry-Group Pattern Generator]] · [[Style Transfer Pipeline]]. **The 15-gap queue is now covered at both reading AND technique layers.** Default stack consolidated: **culori + MediaPipe Tasks + TFJS WebGPU + three.js + meyda + AudioWorklet + Anthropic SDK**.
+
+## Build state (2026-05-20, active)
+
+- **Subsystem A — Wiki MCP (`mcp/`)** ✅ shipped. PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json`. Known gap: `orient` under-surfaces tradition-specific terms; pair with `search` keyword.
+- **Subsystem B — Toolkit (`toolkit/`)** 🛠️ first slice shipped, **PR #2 open** on branch `toolkit-screensaver`. The toolkit IS the operator library: pure functions over a `RenderPlan`, **operators measure / profiles set targets**, a composer returns composite + ranked fixes. Key reframe: **evaluate self-generated render-plans, not bitmaps** (removes CV risk; deterministic generate→score loop). **7 operators**: symmetry · complexity · colorChord · constructionGrammar · lineContinuity · cuerdaSeca · tileComplexity. **2 generators** (igp lines, tiling cells) + **2 profiles** (timurid-igp strapwork, timurid-tiling cells). Scorecard gallery (`npm run gallery`) shows good vs 8 deliberate failures, each isolating its axis. 53 tests pass. See `toolkit/README.md` + `docs/superpowers/specs/2026-05-20-operator-composition-slice-design.md`.
+- **Operational readiness** — every concept page must equip Perceive/Build/Evaluate OR compose Evaluate from general operators (cross-domain composition). Triage registry at [[Operational Readiness Registry]] (141 pages scored; Evaluate is the systemic gap). IGP (c-000191) re-scored 3→4 (Evaluate now composes from toolkit operators).
+- **Auto-memory** ✅ in `.claude/memory/` (committed; symlinked for harness). Future sessions see project state inline.
+
+**Next session (2026-05-21): close the loop.** Wire the composer's `fixes` back into the generators — an `improve(plan, profile)` step that nudges params toward targets, turning evaluation into generate→score→**fix→regenerate**. This is the "optimize" capability the architecture was built for. (Deferred: external-image CV/VLM front-end; the O4 organized-complexity composite — not triggered, weighted sum hasn't mis-ranked; full wiki write-back binding all 7 operators to their concept pages.)
+
+Lessons (toolkit build):
+1. **Test artifact ≠ goal** — the screensaver/IGP is a test case for the wiki+MCP+toolkit *workflow*; the workflow is the product.
+2. **npm-search audit before designing**, not just cataloging.
+3. **Cross-domain composition over per-page completeness** — medium pages bind to general operators with weights+targets; don't duplicate machinery per medium.
+4. **Aesthetic target is OPEN** — user likes the geometric direction but it may not be IGP; the operators/composer are medium-agnostic, so retargeting = swap generator + profile only.
+5. **Visual companion / scorecard gallery is load-bearing** — seeing scored failures surfaced a real legibility bug (score vs measured).
 
 # Hot Cache
 
 Pages most recently touched or most relevant to current work. Read this first when answering queries from the vault.
+
+## Process adopted (2026-06-21): Build Working Loop
+
+[[Build Working Loop]] is now the standard for build tasks — **understand → consult the wiki FIRST → research gaps (file pages) → work aesthetics into knobs BEFORE coding → build → evaluate + commit**. Adopted after the ink demo was built with aesthetics ad-hoc and the wiki unconsulted. First run produced [[Chinese Brushwork Principles]] and wired Ma/negative-space + directed-tension into `screensaver/ink-metal/`.
+
+## Recent autoresearch (2026-06-21): ink-on-paper simulation
+
+New art direction researched for the screensaver/dynamic-art track → [[Research - Ink and Watercolor Simulation on Paper]]. Three algorithm families, **picked by target look**: porous-paper sumi-e → [[Lattice Boltzmann Method for Ink Dispersion|Lattice Boltzmann/MoXi]]; Western watercolour → [[Shallow-Water Watercolor Simulation|shallow-water/Curtis]]; free ink-in-water → [[Stable Fluids and GPU Ink Advection|Stable Fluids/Stam]]. Render pigment layers with [[Kubelka-Munk Optical Compositing|Kubelka–Munk]] (optical, not alpha-over). Adapt prior-art code: [[WebGL and WebGPU Fluid Simulation Libraries]]. Core insight: ink-into-paper is **percolation, not diffusion** — feathery/branching/edge-darkened edges are emergent. Gap: no MoXi-grade LBM ink-on-paper JS library exists (sumi-e = build-from-paper).
 
 ## Standing principles
 

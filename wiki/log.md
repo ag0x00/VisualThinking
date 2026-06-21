@@ -8,6 +8,51 @@ status: living
 
 Chronological wiki activity. Newest first.
 
+## 2026-06-21 autoresearch | Programmatic stroke rendering (the geometry layer)
+- Filed [[Programmatic Stroke Rendering]] (c-000245) — closes a vault gap found while building the ink screensaver: the wiki had the **craft** ([[Chinese Brushwork Principles]]) and **fluid-sim** ([[Lattice Boltzmann Method for Ink Dispersion]]) layers but nothing on **how a stroke is laid down** (path → shape).
+- Six technique families surveyed (stamp/dab spacing · skeletal strokes · offset-curve/swept-disk ribbon · **SDF/coverage** · NPR painterly · Chinese-ink brush+paper models). Organizing principle: **accumulation (double-counts overlap) vs union/field-evaluation (idempotent)** — joint over-darkening / "rung" banding is *the* accumulation failure mode.
+- Directly informs repo **issue #4**: the screensaver's additive Gaussian-stamp deposit double-counts at joints → rungs on thin strokes. Recommended fix grounded in the literature: **per-pixel SDF coverage** (distance-to-centerline, written once) + flying-white as MoXi-style depletion-gated noise modulation, deposited into the paper sim as a saturating field. Sources: Hsu & Lee, Quilez, Kilgard, MoXi (Chu & Tai), Hertzmann, MetalNanoVG, et al.
+
+## 2026-06-21 build-loop | Vigorous, varied sumi strokes (physical-dynamics layer)
+- Expanded [[Chinese Brushwork Principles]] (c-000243) with a **Physical dynamics** section: the coupled **speed↔moisture↔value** axis (the engine of vigor), the **five shades as stroke archetypes** (焦/濃/淡/湿/枯), side-ink/edge-loading, **潑墨 splatter**, brush-landing/drag (起笔), and motion-proportional ink deposit. Build table + sources updated.
+- `screensaver/ink-metal/main.swift`: reworked to a **one-painter** sequential scheduler (no two strokes at once); a per-painting **stroke recipe** of archetypes (pale 淡 washes laid first, crisp 焦 thin-line "bones", 濃 darks, fast 枯 dry strokes, red accent last); **less-watery solid blacks** (diff 0.14→0.06); **vigor** (speed/flying-white/curvature/entry-snap); **潑墨 splatter** specks; new **Vigor** + **Splatter** GUI dials.
+- Key lesson: per-frame deposit oversaturated slow/short strokes into "tadpole" blobs — fixed by **dosing ink by distance the nib moved**, not by frame count (mirrors real ink build-up). Minimalist sumi-e sits at 80–95% void, so the generic 30–70% negative-space target reads as a "fail" by design.
+
+## 2026-06-21 build-loop | Chinese-ink brushwork + adopt Build Working Loop
+- Adopted [[Build Working Loop]] (c-000244) — the 6-step build SOP (understand → consult wiki FIRST → research gaps → aesthetics → build → evaluate). Sibling of [[Wiki Methodology]]. Memory: `feedback_build-working-loop`.
+- Ran the loop on "natural Chinese-ink strokes": wiki supplied composition ([[Ma and Yohaku no Bi]]) + gesture ([[Organic vs Mechanical Motion]], [[Directed Tension]]); research filled the gap → new page [[Chinese Brushwork Principles]] (c-000243): 起笔/行笔/收笔 three-phase stroke, 骨法 bone method, 中锋/侧锋 centre/side tip, 墨分五色 five ink tones.
+- Implementation in `screensaver/ink-metal/`: brush dynamics (three-phase pressure, ease-in draw-speed, centre/side-tip nib, five-tone ink), Ma-aware placement (off-centre + blank-region budget via occupancy grid), temporal-ma pacing (bursts + rests), and an eval scorecard (negative-space / void / COM / directed-tension) feeding placement.
+- Key lesson: I'd built the prior demo with aesthetics ad-hoc and the wiki unconsulted; consulting it first immediately supplied the composition + gesture layer. Hence the SOP.
+
+## 2026-06-21 autoresearch | Ink & watercolor simulation on paper
+- Rounds: 2 | Searches: 5 | Sources fetched: MoXi + Curtis (full PDFs)
+- Topic: algorithms & code to animate ink applied to dry/wet paper.
+- Pages created (10): concepts [[Lattice Boltzmann Method for Ink Dispersion]] (c-000233), [[Shallow-Water Watercolor Simulation]] (c-000234), [[Stable Fluids and GPU Ink Advection]] (c-000235), [[Kubelka-Munk Optical Compositing]] (c-000236); tool [[WebGL and WebGPU Fluid Simulation Libraries]] (c-000237); sources [[Chu Tai - MoXi Real-Time Ink Dispersion]] (c-000238), [[Curtis et al - Computer-Generated Watercolor]] (c-000239), [[Stam - Stable Fluids]] (c-000240), [[Animated Ink Bleeding with CFD]] (c-000241); synthesis [[Research - Ink and Watercolor Simulation on Paper]] (c-000242).
+- Decision rule: pick the algorithm by the target *look* — porous-paper sumi-e → **Lattice Boltzmann/MoXi**; Western watercolour → **shallow-water/Curtis**; free ink-in-water → **Stable Fluids/Stam**. Render pigment layers with **Kubelka–Munk**, not alpha-over.
+- Key insight: ink-into-paper is **percolation**, not Fickian diffusion — feathery/branching/edge-darkened patterns are *emergent* (boundary flow + uneven evaporation / capillary re-entry), which is why a sim beats a faked blur. LBM wins for paper (local, Poisson-free, GPU-native); Stam dominates browser code but its semi-Lagrangian advection is dissipative (softens ink).
+- Open gap: no MoXi-grade **LBM ink-on-paper JS/WebGL library** exists — browser repos are N–S/SPH only. A faithful sumi-e generator is build-from-paper (deferred per reading-only sweep rule).
+
+## 2026-05-23 ingest | Application-Based Principles of IGPs (Azari et al. 2023)
+- Source: `~/Downloads/s40494-022-00852-w.pdf` — *Heritage Science* 11:22 (2023), open access CC-BY.
+- Summary: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]] (c-000231)
+- Pages created: [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]], [[The Variation Principle in Islamic Geometric Patterns]] (c-000232)
+- Pages updated: [[Islamic Geometric Patterns and the Polygonal Technique]] (added the radial/polygon-in-contact/symmetry-group generation trichotomy + a variation cross-ref; removed a verbatim-duplicated Implementation-landscape section), `wiki/index.md`
+- Key insight: one IGP transforms into another by sweeping the **contact angle** (acute/median/obtuse; *Tond/Shol/Tond-o-Shol*); varied continuously — spatially or over time — patterns **flow into each other**. Maps directly onto the toolkit's strapwork θ knob (temporal morph + spatial gradient + per-cell re-decoration animation models).
+
+## 2026-05-18 — Build phase begins; toolkit-screensaver brainstorm + IGP library audit
+
+- **Subsystem A (MCP) shipped**: PR #1 merged. `@visualthinking/wiki-mcp@0.1.0`. Registered at `.mcp.json` for project-local consumption. Known gap (logged to `mcp/tasks/lessons.md`): `wiki_orient` under-surfaces named-tradition terms.
+- **Auto-memory relocated**: moved from `~/.claude/projects/-Users-ag-Lab-VisualThinking/memory/` into `.claude/memory/` (committed; symlinked from harness location for compatibility). Future sessions see project state inline.
+- **Branch `toolkit-screensaver` opened**: brainstorm for Subsystem B-via-C (toolkit + macOS screensaver). Visual genre: Samarkand IGPs (Timurid blue-tile aesthetic, 9 user-provided reference images).
+- **Mid-brainstorm reframing**: user redirected — "the goal of this exercise is NOT to build a screensaver, actually. it's to figure out what works and what doesn't in our wiki+mcp+toolkit approach." Captured as memory entries `feedback_test-artifact-vs-workflow.md` and `feedback_npm-audit-before-design.md`.
+- **IGP library audit (4 parallel subagents)**: synthesis in [[Research - IGP Library Landscape 2026-05-18]] (c-000226). New tool pages: [[tactile-js]] (c-000227), [[wallpaper-groups]] (c-000228), [[PlotBoilerplate]] (c-000229). Augmented [[Islamic Geometric Patterns and the Polygonal Technique]] (c-000191) with Implementation Landscape section. Augmented [[Symmetry-Group Pattern Generator]] (c-000221) with Build vs Borrow table.
+- **Workflow lessons surfaced**:
+  1. The wiki had concept-depth on IGPs but no tool-depth — corrected
+  2. `wiki_orient` weighting under-surfaces named-tradition terms — logged for MCP refinement
+  3. npm-search audit applies to build phases too, not just catalog phases — new convention memory
+  4. Test artifact ≠ goal; workflow is the product — new convention memory
+- **Addresses reserved**: c-000226 through c-000229 (4 used; c-000230 reserved unused). Counter at 230.
+
 ## 2026-05-17 — Wiki-lint cleanup pass
 - Ran `claude-obsidian:wiki-lint` post-Sweep-7. Vault health strong; remaining items mostly convention drift.
 - Applied 3 safe auto-fixes + 5 needs-review items in same session:

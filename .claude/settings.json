@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "claude-obsidian@claude-obsidian-marketplace": true,
+    "frontend-design@claude-plugins-official": true
+  }
+}

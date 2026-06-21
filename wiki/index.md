@@ -13,9 +13,13 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 ## The four branches
 
 1. **Art-school fundamentals** — the traditional rules of light, color, composition.
-2. **Computational aesthetics** — math that grades or generates beauty (Birkhoff, fractals, entropy).
+2. **Computational aesthetics** — math that grades or generates beauty ([[Birkhoff's Aesthetic Measure|Birkhoff measure]], [[Fractal Dimension]], [[Visual Entropy]]).
 3. **LLM techniques for visual reasoning** — strict structural criteria, JSON archetypes, multimodal eval loops.
 4. **Tools and libraries** — p5.js, Py5, colormath, chroma.js, OpenCV.
+
+## Process
+
+- [[Build Working Loop]] — the 6-step build SOP (understand → consult wiki → research gaps → aesthetics → build → evaluate). Sibling of [[Wiki Methodology]].
 
 ## Research syntheses
 
@@ -31,6 +35,7 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 - [[Research - Affect Foundations Sweep]] — clustered depth-dive (items 1+2+3): Russell circumplex, Plutchik, PAD, constructionism, appraisal, EVT, Goethe-Kandinsky, cross-cultural color, Berlyne, fluency, neuroaesthetics, cross-modal mapping.
 - [[Research - L1 Cleanup Sweep]] — clustered depth-dive (items 5+12): the 5 constancies, size/lightness/color illusions, Helmholtz-Gibson-Bayesian, cross-cultural perception, FFA, configural face processing, FACS, uncanny valley, face-recognition universality debate.
 - [[Research - Algorithmic Composition and Tools Sweep]] — clustered depth-dive (item 4 + tools): Galanter, Stuttgart-school history, procedural paradigms, L-systems, cellular automata, computational creativity, autonomy-control gradient, library evaluation rubric + 10 evaluated tools.
+- [[Research - Ink and Watercolor Simulation on Paper]] — autoresearch (2026-06-21): the three ink-on-paper algorithm families (Lattice Boltzmann/MoXi, shallow-water/Curtis, Stable Fluids/Stam) + Kubelka–Munk rendering + WebGL prior-art. Decision rule by target look; build-from-paper gap for sumi-e.
 
 ## Concepts (atomic ideas)
 
@@ -127,7 +132,7 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 #### Movement-Rhythm-Style-Symbolism cluster (items 8 + 9 + 14 + 15) — ✅ depth-dive complete 2026-05-17
 
 - **Time-based Composition (#8, complete)**: [[Time-based Composition]] *(parent)* — sub-pages: [[Eisenstein's Montage Theory]] · [[Murch's Six Editing Rules]] · [[McCloud's Panel Transitions and the Infinite Canvas]] · [[Disney Animation Principles]]
-- **Movement, Rhythm, and Repetition (#9, complete)**: [[Movement Rhythm and Repetition]] *(parent)* — sub-pages: [[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Islamic Geometric Patterns and the Polygonal Technique]] · [[Op-Art and Cross-Modal Rhythm]]
+- **Movement, Rhythm, and Repetition (#9, complete)**: [[Movement Rhythm and Repetition]] *(parent)* — sub-pages: [[Symmetry Groups and Tessellation]] · [[Aperiodic Tiling and the Hat Monotile]] · [[Islamic Geometric Patterns and the Polygonal Technique]] · [[The Variation Principle in Islamic Geometric Patterns]] · [[Op-Art and Cross-Modal Rhythm]]
 - **Style as System (#14, complete)**: [[Style as System]] *(parent)* — sub-pages: [[Wölfflin's Five Axes]] · [[Style as Rule-System]] · [[Diffusion-Era Style Transfer]] · [[Brand Style Guides as Rule-Systems]]
 - **Cultural and Symbolic Iconography (#15, complete)**: [[Cultural and Symbolic Iconography]] *(parent)* — sub-pages: [[Panofsky's Three-Level Iconology]] · [[Western Iconographic Systems]] · [[Non-Western Iconographic Systems]] · [[Jungian Archetypes and Brand Archetypes]]
 - Sweep synthesis: [[Research - Movement-Rhythm-Style-Symbolism Sweep]]
@@ -192,6 +197,13 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 - [[Symmetry-Group Pattern Generator]] *(17 wallpaper groups + Hat monotile + Bonner-IGP)*
 - [[Style Transfer Pipeline]] *(IP-Adapter + ControlNet + ICAS)*
 
+### Ink & fluid simulation
+- [[Chinese Brushwork Principles]] *(三步 stroke, bone method, centre/side tip, 墨分五色 — brush craft for ink generation)*
+- [[Lattice Boltzmann Method for Ink Dispersion]] *(MoXi — real-time sumi-e percolation)*
+- [[Shallow-Water Watercolor Simulation]] *(Curtis — three-layer watercolour)*
+- [[Stable Fluids and GPU Ink Advection]] *(Stam — browser ink-in-water default)*
+- [[Kubelka-Munk Optical Compositing]] *(translucent pigment-layer rendering)*
+
 ### Sweep synthesis
 - [[Research - Implementation-notes Pass]] *(c-000223)*
 
@@ -203,9 +215,20 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 
 ## Tools
 
-Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the comparative summary and [[AI Art Toolkit Map]] for the diffusion stack. `wiki/tools/` directory now contains 30 pages. Default color library: [[culori]].
+Surveyed across Sweeps 3, 3.5 (Phase 2), and 6. See [[Tools Map]] for the comparative summary and [[AI Art Toolkit Map]] for the diffusion stack. `wiki/tools/` directory now contains 31 pages. Default color library: [[culori]].
+
+- [[WebGL and WebGPU Fluid Simulation Libraries]] *(ink/dye fluid solvers to adapt — PavelDoGreat, kishimisu, loicmagne, …)*
 
 ## Sources
+
+### Ink & watercolor simulation
+- [[Chu Tai - MoXi Real-Time Ink Dispersion]] *(SIGGRAPH 2005 — LBM ink percolation)*
+- [[Curtis et al - Computer-Generated Watercolor]] *(SIGGRAPH 1997 — shallow-water + K–M)*
+- [[Stam - Stable Fluids]] *(SIGGRAPH 1999 — stable N–S, browser-fluid foundation)*
+- [[Animated Ink Bleeding with CFD]] *(2024 — LBM via TCLB)*
+
+### Islamic geometric patterns
+- [[Application-Based Principles of Islamic Geometric Patterns (Azari et al. 2023)]]
 
 ### Tonal foundations
 - [[The Art Story - Chiaroscuro Tenebrism Sfumato]]

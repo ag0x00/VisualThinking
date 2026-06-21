@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "visualthinking-wiki": {
+      "command": "node",
+      "args": ["mcp/dist/index.js"]
+    }
+  }
+}

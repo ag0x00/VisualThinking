@@ -45,6 +45,26 @@ A page earns its place only if it translates into a **prompt constraint, a metri
 
 > [!important] Before creating any page, ask: "Does this page exist to be a rule, metric, constraint, or pointer?" If no, fold the relevant facts into an existing concept page as plain-text attribution.
 
+### Operational readiness standard (2026-05-19)
+
+**The programmability principle is necessary but not sufficient.** A page can "translate into a rule, metric, or pointer" and still be a *superficial data point* — a definition plus history plus citations that names a concept without equipping a user to wield it. The 15-gap breadth sweeps (May 2026) produced many such pages: comprehensive coverage, shallow operational depth. The IGP page (c-000191) before 2026-05-18 was the canonical example — it described Bonner's polygonal technique but couldn't help anyone *build* an IGP until a library audit added an Implementation Landscape section.
+
+**Every concept page must equip three operations** (scaled to the concept's role — a perceptual concept weights Perceive/Evaluate; a generative concept weights Build):
+
+1. **Perceive** — the underlying perceptual / cognitive mechanism. *Why* does a viewer experience this effect? (For [[Directed Tension]]: the perceptual psychology of obliqueness, asymmetry, truncation that makes the eye read "force.")
+2. **Build** — the means to construct the effect: generative rules, parameter ranges, code patterns, library pointers, AND LLM prompt formulations. Both programmatic levers and prompt levers.
+3. **Evaluate** — the means to assess an artifact *(including an external image we did not create)* for this property and propose concrete improvements: metric-based scores AND code/prompt-level suggestions. Not just "this scores 0.4 on tension" but "increase obliqueness of the dominant diagonal; here's the code / here's the prompt."
+
+Plus the meta-capability:
+
+4. **Gap recognition.** A page that cannot yet support all three operations *declares the gap explicitly* (a "Gaps" callout) and, when prioritized against the four applications, is autoresearched **with the specific purpose of closing the operational gap** — not generic "learn more about X." The wiki will never have complete coverage; it must know what it is missing and how to fill it.
+
+> [!important] The new quality bar: before marking a concept page `status: developed`, run the Perceive/Build/Evaluate test. If a user wanting to *create tension*, *build it into a design*, or *critique an external image's tension and get code/prompt fixes* cannot do so from this page, the page is not done — it carries a Gaps callout and an autoresearch-queued marker.
+
+**The "Evaluate external images" capability** connects existing eval pages — [[Multimodal Evaluation Loops]], [[LLM-as-Judge for Visual Quality]], [[Photo Aesthetic Features]] — which must now be operationalized *per concept*, not left as standalone technique descriptions.
+
+**Rollout — the operational-readiness audit.** The next sweep type is not breadth coverage but operational depth: walk the concept pages in application-priority order, score each on Perceive/Build/Evaluate, queue targeted autoresearch for the gaps. This replaces "what fields are we missing?" with "which of the fields we have can actually be wielded?" Building concrete artifacts (e.g. the toolkit-screensaver) is a complementary gap-surfacing mechanism — the artifact exercises the wiki and exposes operationally shallow pages. (See `.claude/memory/feedback_operational-page-standard.md`.)
+
 ### Page-title conventions
 
 Natural-language capitalization (`The Munsell and CIELAB Color Systems`), not kebab-case. Math uses `$...$` / `$$...$$`. Citations as numbered footnotes with full URLs, matching the seed's style.
