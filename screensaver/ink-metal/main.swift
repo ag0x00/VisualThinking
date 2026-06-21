@@ -38,7 +38,19 @@ struct Register {
 }
 let GONGBI = Register(sideProb:0.16, water:0.014, ink:0.32, depletion:0.7, fw:0.22, rCentre:128, rSide:94, curve:0.32, permContrast:0.40)
 let XIEYI  = Register(sideProb:0.45, water:0.085, ink:0.27, depletion:1.9, fw:1.0,  rCentre:104, rSide:78, curve:0.50, permContrast:1.0)
-let REG = CommandLine.arguments.contains("--xieyi") ? XIEYI : GONGBI
+
+// Live-tunable settings (shared with the GUI). The renderer snapshots these at each painting
+// RESET, so edits never disturb the painting in progress — they take effect on the next one.
+final class Settings {
+    var register   = CommandLine.arguments.contains("--xieyi") ? 1 : 0   // 0 gongbi, 1 xieyi
+    var wetPercent: Float = 0.18     // size of the clear-water stroke (wet area on otherwise dry paper)
+    var strokeCount = 6              // black strokes before the red accent
+    var redOn = true
+    var avgSpeed:   Float = 0.62     // 0 slow/thick .. 1 fast/thin
+    var lengthScale:Float = 1.0      // stroke-length multiplier (≈0.6–1.4)
+    var holdSeconds:Float = 5.0      // how long the finished painting holds
+}
+let settings = Settings()
 
 // MARK: - Shaders
 
@@ -107,8 +119,7 @@ kernel void initWet(texture2d<float,access::read>  paper [[texture(0)]],
                     uint2 gid [[thread_position_in_grid]]) {
     uint w=paper.get_width(), h=paper.get_height();
     if(gid.x>=w||gid.y>=h) return;
-    float zone = paper.read(gid).y;
-    float r0 = zone * 0.55;                 // wet paper starts damp
+    float r0 = 0.0;                         // start fully DRY; wetness comes from a water stroke
     fA.write(float4(WT[0],WT[1],WT[2],WT[3])*r0, gid);
     fB.write(float4(WT[4],WT[5],WT[6],WT[7])*r0, gid);
     fC.write(float4(WT[8]*r0,0,0,0), gid);
@@ -234,9 +245,11 @@ kernel void lbe(texture2d<float,access::read>  fAi [[texture(0)]],
     uOut.write(float4(u,0,0), gid);
 }
 
-struct PigParams { float dt; float gammaMove; float velThr; float decay; float wetThr; };
+struct PigParams { float dt; float gammaMove; float velThr; float decay; float wetThr; float diff; };
 
-// pigment advection by method of characteristics, with flow-speed hindrance
+// pigment advection (method of characteristics, flow-speed hindrance) + wetness-gated diffusion
+// so that where two WET inks meet they blend/merge across the boundary instead of one's water
+// pushing the other back (a harsh backrun).
 kernel void pigment(texture2d<float,access::sample> pIn [[texture(0)]],
                     texture2d<float,access::read>   uIn [[texture(1)]],
                     texture2d<float,access::read>   rho [[texture(2)]],
@@ -249,11 +262,24 @@ kernel void pigment(texture2d<float,access::sample> pIn [[texture(0)]],
     float2 u = uIn.read(gid).xy;
     float2 coord = (float2(gid)+0.5) - pp.dt*u;
     float2 pStar = pIn.sample(samp, coord/size).xy;   // advected-in pigment (black, red)
-    float2 pHere = pIn.sample(samp, (float2(gid)+0.5)/size).xy;
+    float2 c = (float2(gid)+0.5)/size;
+    float2 pHere = pIn.sample(samp, c).xy;
     float speed = length(u);
     // gamma -> 1 (stay/pinned) when slow, -> gammaMove when fast
     float gamma = mix(1.0, pp.gammaMove, smoothstep(0.0, pp.velThr, speed));
-    float2 pNew = mix(pStar, pHere, gamma) * pp.decay; // slow fade / fast during the fade phase
+    float2 pNew = mix(pStar, pHere, gamma);
+    // diffusion: blend with neighbours, but ONLY where the paper is wet (so dry/settled ink keeps
+    // its shape). Lets inks merge where they meet; vanishes as the paper dries.
+    float wet = rho.read(gid).x;
+    float wgate = smoothstep(pp.wetThr, pp.wetThr+0.12, wet);
+    if (pp.diff > 0.0 && wgate > 0.0) {
+        float2 t = 1.0/size;
+        float2 lap = pIn.sample(samp, c+float2(-t.x,0)).xy + pIn.sample(samp, c+float2(t.x,0)).xy
+                   + pIn.sample(samp, c+float2(0,-t.y)).xy + pIn.sample(samp, c+float2(0,t.y)).xy
+                   - 4.0*pHere;
+        pNew += pp.diff * wgate * lap;
+    }
+    pNew *= pp.decay;                                  // slow fade / fast during the fade phase
     pOut.write(float4(pNew,0,0), gid);
 }
 
@@ -287,7 +313,7 @@ kernel void display(texture2d<float,access::sample> p   [[texture(0)]],
 
 struct DepositParams { var pos=SIMD2<Float>(0,0); var dir=SIMD2<Float>(1,0); var radius:Float=8; var water:Float=0.1; var ink:Float=0.06; var lambda:Float=1.0; var mbase:Float=0.12; var dryness:Float=0; var seed:Float=0; var nibAspect:Float=1.8; var fwIntensity:Float=1; var channel:Float=0 }
 struct LbeParams { var omega:Float=0.55; var alpha:Float=0.4; var evap:Float=0.0024; var boundEvap:Float=0.0030 }
-struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.03 }
+struct PigParams { var dt:Float=1.0; var gammaMove:Float=0.35; var velThr:Float=0.02; var decay:Float=0.99965; var wetThr:Float=0.04; var diff:Float=0.14 }
 
 // A calligraphic sumi stroke: a cubic Bézier centerline drawn over `life` frames. Carries
 // brush dynamics — three-phase pressure (起笔/行笔/收笔), centre/side-tip nib, ink tone
@@ -305,7 +331,6 @@ struct Stroke {
     var channel:Int=0            // 0 = black ink, 1 = red accent
     var even=false               // even thin line (red sweep) vs calligraphic belly
     var dir=SIMD2<Float>(1,0), len:Float=0   // overall gesture (for directed-tension accumulator)
-    var wash=false
 }
 func bezier(_ s:Stroke,_ t:Float)->SIMD2<Float> {
     let u=1-t; return u*u*u*s.p0 + 3*u*u*t*s.p1 + 3*u*t*t*s.p2 + t*t*t*s.p3
@@ -361,7 +386,12 @@ final class Renderer: NSObject, MTKViewDelegate {
     var dry = false                           // paper dried: pigment frozen (black stops growing)
     var inkDecay: Float = 0.9999              // driven by phase; fast during fade
     var paperSeed: Float = 0
-    let WAIT = 120, HOLD = 300, FADE = 130    // frames (~60fps): wait ~2s, hold ~5s, fade ~2.2s
+    let WAIT = 120, FADE = 130                // frames (~60fps): wait ~2s, fade ~2.2s
+
+    // snapshot of Settings, taken at each reset (so edits apply only to the next painting)
+    var reg = GONGBI
+    var aSpeed:Float = 0.62, aLen:Float = 1.0, aWet:Float = 0.18
+    var aRedOn = true, aHold = 300
 
     init(device: MTLDevice) {
         self.device = device
@@ -380,7 +410,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         fC=[tex(.r16Float),tex(.r16Float)]; rho=[tex(.r16Float),tex(.r16Float)]
         p=[tex(.rg16Float),tex(.rg16Float)]; uTex=tex(.rg16Float); paper=tex(.rgba16Float)  // p: x=black, y=red
         super.init()
-        seed()
+        resetPainting()      // first painting: snapshot settings, paper, water area
     }
 
     private func nextRand()->Float { rng ^= rng<<13; rng ^= rng>>7; rng ^= rng<<17; return Float(rng % 10000)/10000.0 }
@@ -389,7 +419,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         ff=0; rr=0; pp=0
         let cb=queue.makeCommandBuffer()!, enc=cb.makeComputeCommandEncoder()!
         enc.setComputePipelineState(pGen); enc.setTexture(paper,index:0)
-        var contrast = REG.permContrast, sd = paperSeed
+        var contrast = reg.permContrast, sd = paperSeed
         withUnsafeBytes(of:&contrast){ enc.setBytes($0.baseAddress!,length:4,index:0) }
         withUnsafeBytes(of:&sd){ enc.setBytes($0.baseAddress!,length:4,index:1) }
         enc.dispatchThreadgroups(groups,threadsPerThreadgroup:tg)
@@ -403,15 +433,45 @@ final class Renderer: NSObject, MTKViewDelegate {
         enc.endEncoding(); cb.commit()
     }
 
-    // begin a fresh painting: new paper, cleared ink, reset composition state
+    // snapshot the live Settings (so edits apply only to the NEXT painting, never mid-stroke)
+    private func applySettings() {
+        reg = settings.register == 1 ? XIEYI : GONGBI
+        aSpeed = settings.avgSpeed; aLen = settings.lengthScale; aWet = settings.wetPercent
+        aRedOn = settings.redOn; aHold = max(30, Int(settings.holdSeconds*60))
+        strokeTarget = max(1, settings.strokeCount)
+    }
+
+    // a single CLEAR-WATER stroke (ink-free) laid first → the one wet area on otherwise dry paper.
+    private func spawnWaterStroke(_ G:Float) {
+        if aWet < 0.01 { return }
+        let m:Float = 0.12, lo=m*G, hi=(1-m)*G
+        let ang = nextRand()*6.2832
+        let dir = SIMD2<Float>(cos(ang),sin(ang)), perp = SIMD2<Float>(-dir.y,dir.x)
+        let center = SIMD2<Float>(G/2,G/2) + perp*((nextRand()-0.5)*0.30*G)
+        let lenFrac = 0.30 + 1.4*aWet                 // wetPercent scales how far it reaches
+        let a = center - dir*edgeDist(center,-dir,lo,hi)*lenFrac
+        let b = center + dir*edgeDist(center, dir,lo,hi)*lenFrac
+        let bend = (nextRand()-0.5)*0.10*G
+        var s = Stroke()
+        s.p0=a; s.p1=a+(b-a)*0.33+perp*bend; s.p2=a+(b-a)*0.66+perp*bend*0.5; s.p3=b
+        s.start=frame; s.life=46
+        s.baseR = G*(0.025 + 0.12*aWet)               // width scales with wetPercent
+        s.water = 0.07; s.ink = 0; s.even = true; s.nibAspect = 1.7
+        s.depletion = 0.2; s.fwIntensity = 0; s.seed = nextRand()*60
+        s.dir=dir; s.len=simd_length(b-a)
+        strokes.append(s)
+    }
+
+    // begin a fresh painting: snapshot settings, new paper, cleared ink, lay the wet area
     private func resetPainting() {
+        applySettings()
         paperSeed += 13.7
         seed()
         for i in occ.indices { occ[i]=0 }
         tensionAcc = SIMD2<Float>(0,0)
         strokes.removeAll(); strokesDone = 0; dry = false
-        strokeTarget = 4 + Int(nextRand()*4)     // 4–7 strokes per painting
-        nextSpawn = frame + 20; burstLeft = 0
+        nextSpawn = frame + 30; burstLeft = 0
+        spawnWaterStroke(Float(GRID))            // the single wet area, before any ink
         phase = .painting; phaseStart = frame
     }
 
@@ -470,17 +530,17 @@ final class Renderer: NSObject, MTKViewDelegate {
         let tones:[Float]=[1.0, 0.74, 0.52, 0.36, 0.22]   // burnt→clear
         let start = chooseOrigin(G)
         let ang = nextRand()*6.2832
-        let len = G*(0.32+0.55*nextRand())
+        let len = G*(0.32+0.55*nextRand())*aLen
         let dir = SIMD2<Float>(cos(ang), sin(ang))
         let perp = SIMD2<Float>(-dir.y, dir.x)
-        let c1 = (nextRand()-0.5)*REG.curve*len, c2 = (nextRand()-0.5)*REG.curve*len
+        let c1 = (nextRand()-0.5)*reg.curve*len, c2 = (nextRand()-0.5)*reg.curve*len
         var s = Stroke()
         s.p0 = start
         s.p1 = start + dir*(len*0.33) + perp*c1
         s.p2 = start + dir*(len*0.66) + perp*c2
         s.p3 = start + dir*len + perp*((nextRand()-0.5)*0.15*len)   // small exit offset → resolved direction
-        // brush speed (biased fast): fast → thinner line, drawn quicker, drier & more chaotic ends
-        let speed = pow(nextRand(), 0.7)               // 0 slow .. 1 fast (biased toward fast)
+        // brush speed centred on the avg-speed dial: fast → thinner, quicker, drier & more chaotic
+        let speed = min(max(aSpeed + (nextRand()-0.5)*0.6, 0), 1)   // avg ± spread
         let widthScale = mix(1.15, 0.50, speed)        // fast → thin
         let lifeScale  = mix(1.35, 0.50, speed)        // fast → drawn quicker
         let fwScale    = mix(0.6,  1.7,  speed)        // fast → more flying-white / chaotic tail
@@ -488,15 +548,15 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.start = frame
         s.life = max(Int(len/G * 150 * lifeScale) + 14, 10)
         s.inkConc = tones[weightedTone()]
-        let side = nextRand() < REG.sideProb            // 侧锋 side-tip vs 中锋 centre-tip
+        let side = nextRand() < reg.sideProb            // 侧锋 side-tip vs 中锋 centre-tip
         s.nibAspect   = side ? (2.0 + 0.5*nextRand()) : (1.3 + 0.3*nextRand())
         s.drynessBias = side ? (0.07 + 0.08*nextRand()) : 0.0
-        s.baseR = G/(side ? REG.rSide : REG.rCentre) * (0.7 + 0.4*nextRand()) * widthScale
+        s.baseR = G/(side ? reg.rSide : reg.rCentre) * (0.7 + 0.4*nextRand()) * widthScale
         s.exitStyle = nextRand() < 0.35 ? 1 : 0
-        s.depletion = REG.depletion * deplScale
-        s.fwIntensity = REG.fw * fwScale * (0.8 + 0.4*nextRand())
-        s.ink = REG.ink * s.inkConc
-        s.water = REG.water * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
+        s.depletion = reg.depletion * deplScale
+        s.fwIntensity = reg.fw * fwScale * (0.8 + 0.4*nextRand())
+        s.ink = reg.ink * s.inkConc
+        s.water = reg.water * (0.6 + 0.4*s.inkConc)   // less carrier → crisper, less perpendicular bleed
         s.seed = nextRand()*60
         s.dir = dir; s.len = len
         strokes.append(s)
@@ -530,7 +590,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.p1 = a + (b-a)*0.33 + perp*bend
         s.p2 = a + (b-a)*0.66 + perp*bend*0.5
         s.p3 = b
-        s.start = frame; s.life = 85
+        s.start = frame; s.life = 55            // ≤ ~1s to paint
         s.baseR = G/300            // very thin
         s.inkConc = 1; s.nibAspect = 1.3; s.drynessBias = 0
         s.depletion = 0.45; s.fwIntensity = 0.18; s.exitStyle = 0
@@ -538,13 +598,6 @@ final class Renderer: NSObject, MTKViewDelegate {
         s.seed = nextRand()*60
         s.channel = 1; s.even = true     // RED, even thin sweep
         s.dir = dir; s.len = simd_length(b-a)
-        strokes.append(s)
-    }
-
-    private func spawnWash(_ G:Float) {
-        var s = Stroke()
-        let c = SIMD2<Float>(G*(0.25+0.5*nextRand()), G*(0.25+0.5*nextRand()))
-        s.p0=c; s.p1=c; s.p2=c; s.p3=c; s.start=frame; s.life=26; s.baseR=G/6; s.wash=true
         strokes.append(s)
     }
 
@@ -563,21 +616,21 @@ final class Renderer: NSObject, MTKViewDelegate {
                 nextSpawn = frame + (burstLeft>0 ? 10 + Int(nextRand()*16)    // within a burst
                                                  : 40 + Int(nextRand()*70))   // rest between bursts (ma)
             }
-            if REG.fw > 0.5 && frame % 500 == 250 && strokesDone < strokeTarget/2 { spawnWash(G) }   // wash only in xieyi
             if complete && strokes.isEmpty { phase = .waiting; phaseStart = frame }
         case .waiting:                                // black settles for ~2s (still bleeding)
             inkDecay = 0.99995
             if frame - phaseStart > WAIT {            // → dry the paper, then sweep the red
                 dry = true                            // pigment freezes: black spots stop growing
-                spawnRedStroke(G)
-                phase = .redding; phaseStart = frame
+                if aRedOn { spawnRedStroke(G); phase = .redding }
+                else { phase = .holding }
+                phaseStart = frame
             }
         case .redding:                               // red sweep draws onto now-dry paper
             inkDecay = 0.99997
             if strokes.isEmpty { phase = .holding; phaseStart = frame }
         case .holding:
             inkDecay = 0.99997                        // the finished painting rests (held image = ma)
-            if frame - phaseStart > HOLD { phase = .fading; phaseStart = frame }
+            if frame - phaseStart > aHold { phase = .fading; phaseStart = frame }
         case .fading:
             inkDecay = 0.955                          // dissolve ink → clean paper (~2s)
             if frame - phaseStart > FADE { resetPainting() }
@@ -596,11 +649,6 @@ final class Renderer: NSObject, MTKViewDelegate {
         for s in strokes {
             let age = frame - s.start
             if age < 0 || age > s.life { continue }
-            if s.wash {
-                var dp = DepositParams()
-                dp.pos = s.p0; dp.radius = s.baseR; dp.water = 0.16; dp.ink = 0
-                stampDeposit(enc, dp); continue
-            }
             // ease-in draw-speed: brush presses/dwells at the start (起笔) then accelerates and
             // lifts fast at the exit — keeps the tapered tail sharp (a clean 收笔), not blunted.
             let t0 = pow(max(0,Float(age-1)/Float(s.life)), 1.6)
@@ -753,6 +801,68 @@ final class InkView: MTKView {
     override func keyDown(with e: NSEvent) { if e.keyCode==53 || e.charactersIgnoringModifiers=="q" { NSApp.terminate(nil) } }
 }
 
+final class FlippedView: NSView { override var isFlipped: Bool { true } }
+
+// A small controls window for the parameters we keep tuning. Writes into the shared `settings`;
+// the renderer snapshots those at each painting reset, so edits take effect on the NEXT painting.
+final class ControlPanel: NSObject {
+    let s: Settings
+    let win: NSWindow
+    let content = FlippedView(frame: NSRect(x:0,y:0,width:280,height:430))
+    let reg = NSSegmentedControl(labels:["Gongbi","Xieyi"], trackingMode:.selectOne, target:nil, action:nil)
+    let red = NSButton(checkboxWithTitle:"Red accent", target:nil, action:nil)
+    var wet=NSSlider(), count=NSSlider(), speed=NSSlider(), length=NSSlider(), hold=NSSlider()
+    var vWet=NSTextField(), vCount=NSTextField(), vSpeed=NSTextField(), vLength=NSTextField(), vHold=NSTextField()
+
+    init(settings: Settings) {
+        s = settings
+        win = NSWindow(contentRect: content.frame, styleMask:[.titled,.closable], backing:.buffered, defer:false)
+        super.init()
+        win.title = "Ink controls"; win.contentView = content
+        func lbl(_ t:String,_ x:CGFloat,_ y:CGFloat,_ w:CGFloat,_ right:Bool=false)->NSTextField {
+            let l=NSTextField(labelWithString:t); l.font = .systemFont(ofSize:11)
+            l.frame = NSRect(x:x,y:y,width:w,height:16); if right { l.alignment = .right }
+            content.addSubview(l); return l
+        }
+        func slider(_ title:String,_ mn:Double,_ mx:Double,_ v:Double,_ y:CGFloat)->(NSSlider,NSTextField) {
+            _ = lbl(title, 14, y, 170); let vl = lbl("", 180, y, 86, true)
+            let sl = NSSlider(value:v, minValue:mn, maxValue:mx, target:self, action:#selector(changed))
+            sl.frame = NSRect(x:14, y:y+18, width:252, height:20); content.addSubview(sl)
+            return (sl, vl)
+        }
+        _ = lbl("Register", 14, 14, 80)
+        reg.frame = NSRect(x:14, y:32, width:160, height:24); reg.target=self; reg.action=#selector(changed)
+        reg.selectedSegment = s.register; content.addSubview(reg)
+        red.frame = NSRect(x:184, y:34, width:90, height:20); red.target=self; red.action=#selector(changed)
+        red.state = s.redOn ? .on : .off; content.addSubview(red)
+        (wet,   vWet)    = slider("Wet paper %",        0.0, 0.5, Double(s.wetPercent),  78)
+        (count, vCount)  = slider("Strokes before red", 1,  12,  Double(s.strokeCount),  130)
+        (speed, vSpeed)  = slider("Avg stroke speed",   0.0, 1.0, Double(s.avgSpeed),    182)
+        (length,vLength) = slider("Stroke length",      0.5, 1.5, Double(s.lengthScale), 234)
+        (hold,  vHold)   = slider("Hold seconds",       1.0, 10.0,Double(s.holdSeconds), 286)
+        _ = lbl("changes apply on the next painting", 14, 340, 252)
+        updateValues()
+        win.makeKeyAndOrderFront(nil)
+    }
+    private func updateValues() {
+        vWet.stringValue = String(format:"%.0f%%", s.wetPercent*100)
+        vCount.stringValue = "\(s.strokeCount)"
+        vSpeed.stringValue = String(format:"%.2f", s.avgSpeed)
+        vLength.stringValue = String(format:"%.2f×", s.lengthScale)
+        vHold.stringValue = String(format:"%.1fs", s.holdSeconds)
+    }
+    @objc func changed() {
+        s.register = reg.selectedSegment
+        s.redOn = (red.state == .on)
+        s.wetPercent = wet.floatValue
+        s.strokeCount = Int(count.doubleValue.rounded())
+        s.avgSpeed = speed.floatValue
+        s.lengthScale = length.floatValue
+        s.holdSeconds = hold.floatValue
+        updateValues()
+    }
+}
+
 let app = NSApplication.shared
 app.setActivationPolicy(.regular)
 let view = InkView(frame: NSRect(x:0,y:0,width:800,height:800), device: device)
@@ -765,5 +875,9 @@ let window = NSWindow(contentRect: view.frame, styleMask:[.titled,.closable,.res
 window.title = "Sumi ink-on-paper — Lattice Boltzmann (Esc to quit)"
 window.contentView = view
 window.center(); window.makeKeyAndOrderFront(nil)
+let panel = ControlPanel(settings: settings)
+let wf = window.frame
+panel.win.setFrameOrigin(NSPoint(x: wf.maxX + 12, y: wf.maxY - panel.win.frame.height))   // to the right
 app.activate(ignoringOtherApps: true)
 app.run()
+_ = panel

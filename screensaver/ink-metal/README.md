@@ -24,10 +24,20 @@ See wiki: [[Lattice Boltzmann Method for Ink Dispersion]], [[Stable Fluids and G
 swiftc -O inkwater.swift -o inkwater -framework Cocoa -framework Metal -framework MetalKit
 ```
 
-**Two registers** (see [[Chinese Brushwork Principles]]) selected by `--xieyi`, set in the
-`Register` block near the top: **工筆 gongbi** (default — controlled, even, clean spine, minimal
-bleed, almost no flying-white, smooth paper) vs **寫意 xieyi** (spontaneous, heavy bleed, strong
-飛白, high-contrast paper grain). Each tunes water/ink/depletion/flying-white/nib-width/paper-grain.
+**Two registers** (see [[Chinese Brushwork Principles]]): **工筆 gongbi** (default — controlled,
+even, clean spine, minimal bleed, almost no flying-white, smooth paper) vs **寫意 xieyi**
+(spontaneous, heavy bleed, strong 飛白, high-contrast paper grain). Each tunes
+water/ink/depletion/flying-white/nib-width/paper-grain.
+
+**Controls window** (windowed mode only): a second "Ink controls" window exposes the dials we tune
+most — register, red accent on/off, wet-paper %, strokes-before-red, avg stroke speed, stroke
+length, hold seconds. Edits write to a shared `Settings` and are **snapshotted at each painting
+reset**, so they never disturb the painting in progress — they take effect on the next one.
+
+**Wet vs dry paper.** The paper starts fully **dry**; a single **clear-water stroke** is laid first
+and defines the one wet area (sized by the wet-% dial). Black strokes that cross it bleed
+(wet-on-wet); elsewhere they stay crisp. Where two *wet* inks meet, a wetness-gated **diffusion**
+term lets them blend/merge instead of one's water shoving the other (a harsh backrun).
 
 Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 
