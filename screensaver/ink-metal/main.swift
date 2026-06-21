@@ -36,8 +36,8 @@ struct Register {
     var curve: Float       // centerline bend
     var permContrast: Float // paper-grain contrast → percolation edge roughening (low = smooth spine)
 }
-let GONGBI = Register(sideProb:0.18, water:0.014, ink:0.30, depletion:0.7, fw:0.22, rCentre:100, rSide:74, curve:0.30, permContrast:0.40)
-let XIEYI  = Register(sideProb:0.45, water:0.085, ink:0.26, depletion:1.9, fw:1.0,  rCentre:88, rSide:66, curve:0.50, permContrast:1.0)
+let GONGBI = Register(sideProb:0.16, water:0.014, ink:0.32, depletion:0.7, fw:0.22, rCentre:128, rSide:94, curve:0.32, permContrast:0.40)
+let XIEYI  = Register(sideProb:0.45, water:0.085, ink:0.27, depletion:1.9, fw:1.0,  rCentre:104, rSide:78, curve:0.50, permContrast:1.0)
 let REG = CommandLine.arguments.contains("--xieyi") ? XIEYI : GONGBI
 
 // MARK: - Shaders
@@ -322,10 +322,10 @@ func minJerk(_ x:Float)->Float { let t=max(0,min(1,x)); return t*t*t*(10 - 15*t 
 // Three-phase calligraphic pressure: 起笔 entry accent (hidden-tip press) → 行笔 modulated body →
 // 收笔 exit (taper to a point, or a pressed hook). seed drives organic body wobble.
 func pressure(_ t:Float,_ exitStyle:Int,_ seed:Float)->Float {
-    let entry = smoothstep(0, 0.12, t)
-    let taper = 1 - smoothstep(0.62, 1.0, t)
-    let accent = 0.22 * gauss(t, 0.06, 0.05)               // 藏锋 press at the start (subtle, not bulbous)
-    let wobble = 1 + 0.10*(sin(t*9+seed)*0.6 + sin(t*17+seed*1.7)*0.4)   // organic body variation
+    let entry = smoothstep(0, 0.09, t)                     // establish width fast
+    let taper = 1 - smoothstep(0.74, 1.0, t)               // long even body, taper only near the tip → leaner line
+    let accent = 0.18 * gauss(t, 0.06, 0.05)               // 藏锋 press at the start (subtle, not bulbous)
+    let wobble = 1 + 0.08*(sin(t*9+seed)*0.6 + sin(t*17+seed*1.7)*0.4)   // organic body variation
     var p = (entry*taper + accent*entry) * wobble
     if exitStyle == 1 { p += 0.5 * gauss(t, 0.85, 0.05) * taper }        // 收笔 hook
     return max(p, 0)
@@ -353,15 +353,15 @@ final class Renderer: NSObject, MTKViewDelegate {
     var nextSpawn = 0, burstLeft = 0
     var tensionAcc = SIMD2<Float>(0,0)        // decaying sum of stroke gesture vectors
 
-    // painting lifecycle: paint → hold (the complete image, temporal ma) → fade → new painting
-    enum Phase { case painting, holding, fading }
+    // painting lifecycle: paint black → wait (settle) → dry+red → hold → fade → new painting
+    enum Phase { case painting, waiting, redding, holding, fading }
     var phase: Phase = .painting
     var phaseStart = 0
     var strokesDone = 0, strokeTarget = 7
-    var redAdded = false                      // the final red accent stroke (after black completes)
+    var dry = false                           // paper dried: pigment frozen (black stops growing)
     var inkDecay: Float = 0.9999              // driven by phase; fast during fade
     var paperSeed: Float = 0
-    let HOLD = 300, FADE = 130, SETTLE = 45   // frames (~60fps): hold ~5s, fade ~2.2s
+    let WAIT = 120, HOLD = 300, FADE = 130    // frames (~60fps): wait ~2s, hold ~5s, fade ~2.2s
 
     init(device: MTLDevice) {
         self.device = device
@@ -409,7 +409,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         seed()
         for i in occ.indices { occ[i]=0 }
         tensionAcc = SIMD2<Float>(0,0)
-        strokes.removeAll(); strokesDone = 0; redAdded = false
+        strokes.removeAll(); strokesDone = 0; dry = false
         strokeTarget = 4 + Int(nextRand()*4)     // 4–7 strokes per painting
         nextSpawn = frame + 20; burstLeft = 0
         phase = .painting; phaseStart = frame
@@ -507,25 +507,37 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     // A single very-thin, very-long RED stroke swept across the whole canvas — the final accent,
     // added after the black painting meets its stop criteria. Crosses and sits on top of the ink.
+    // max t>0 such that C + t*dir stays inside the inner-margin box [lo,hi]²
+    private func edgeDist(_ C:SIMD2<Float>, _ dir:SIMD2<Float>, _ lo:Float, _ hi:Float)->Float {
+        var t:Float = 1e9
+        for i in 0..<2 {
+            let c = C[i], d = dir[i]
+            if abs(d) > 1e-4 { t = min(t, d>0 ? (hi-c)/d : (lo-c)/d) }
+        }
+        return max(t, 0)
+    }
+
     private func spawnRedStroke(_ G:Float) {
+        let m:Float = 0.08, lo = m*G, hi = (1-m)*G           // keep both ends inside the canvas
         let ang = nextRand()*6.2832
         let dir = SIMD2<Float>(cos(ang), sin(ang)), perp = SIMD2<Float>(-dir.y, dir.x)
-        let center = SIMD2<Float>(G/2,G/2) + perp*((nextRand()-0.5)*0.45*G)   // not always through centre
-        let half = 0.78*G
-        let bend = (nextRand()-0.5)*0.16*G
+        let center = SIMD2<Float>(G/2,G/2) + perp*((nextRand()-0.5)*0.30*G)
+        let tPos = edgeDist(center, dir, lo, hi), tNeg = edgeDist(center, -dir, lo, hi)
+        let a = center - dir*tNeg, b = center + dir*tPos    // chord spanning the canvas, endpoints inside
+        let bend = (nextRand()-0.5)*0.12*G
         var s = Stroke()
-        s.p0 = center - dir*half
-        s.p1 = center - dir*(half*0.4) + perp*bend
-        s.p2 = center + dir*(half*0.4) + perp*bend*0.5
-        s.p3 = center + dir*half
+        s.p0 = a
+        s.p1 = a + (b-a)*0.33 + perp*bend
+        s.p2 = a + (b-a)*0.66 + perp*bend*0.5
+        s.p3 = b
         s.start = frame; s.life = 85
-        s.baseR = G/285            // very thin
+        s.baseR = G/300            // very thin
         s.inkConc = 1; s.nibAspect = 1.3; s.drynessBias = 0
         s.depletion = 0.45; s.fwIntensity = 0.18; s.exitStyle = 0
-        s.ink = 0.30; s.water = 0.004   // saturated, almost no bleed → a clean thin line
+        s.ink = 0.30; s.water = 0.0      // dry paper: pure pigment, no bleed → a clean thin line
         s.seed = nextRand()*60
         s.channel = 1; s.even = true     // RED, even thin sweep
-        s.dir = dir; s.len = 2*half
+        s.dir = dir; s.len = simd_length(b-a)
         strokes.append(s)
     }
 
@@ -552,11 +564,17 @@ final class Renderer: NSObject, MTKViewDelegate {
                                                  : 40 + Int(nextRand()*70))   // rest between bursts (ma)
             }
             if REG.fw > 0.5 && frame % 500 == 250 && strokesDone < strokeTarget/2 { spawnWash(G) }   // wash only in xieyi
-            // black painting done → add the final red sweep → then hold the finished image
-            if complete && strokes.isEmpty {
-                if !redAdded { spawnRedStroke(G); redAdded = true }
-                else { phase = .holding; phaseStart = frame }
+            if complete && strokes.isEmpty { phase = .waiting; phaseStart = frame }
+        case .waiting:                                // black settles for ~2s (still bleeding)
+            inkDecay = 0.99995
+            if frame - phaseStart > WAIT {            // → dry the paper, then sweep the red
+                dry = true                            // pigment freezes: black spots stop growing
+                spawnRedStroke(G)
+                phase = .redding; phaseStart = frame
             }
+        case .redding:                               // red sweep draws onto now-dry paper
+            inkDecay = 0.99997
+            if strokes.isEmpty { phase = .holding; phaseStart = frame }
         case .holding:
             inkDecay = 0.99997                        // the finished painting rests (held image = ma)
             if frame - phaseStart > HOLD { phase = .fading; phaseStart = frame }
@@ -616,6 +634,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
         // 2. LBE step (stream+collide), f[ff]->f[1-ff], rho[rr]->rho[1-rr], u
         var lp = LbeParams()
+        if dry { lp.evap = 0.08 }                 // dry the paper fast → no more percolation
         enc.setComputePipelineState(pLbe)
         enc.setTexture(fA[ff],index:0); enc.setTexture(fB[ff],index:1); enc.setTexture(fC[ff],index:2)
         enc.setTexture(paper,index:3); enc.setTexture(rho[rr],index:4)
@@ -627,6 +646,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
         // 3. pigment advection p[pp]->p[1-pp]  (decay driven by painting phase: frozen → fade)
         var pgp = PigParams(); pgp.decay = inkDecay
+        if dry { pgp.dt = 0 }                     // freeze pigment: black spots stop growing
         enc.setComputePipelineState(pPigment)
         enc.setTexture(p[pp],index:0); enc.setTexture(uTex,index:1); enc.setTexture(rho[rr],index:2)
         enc.setTexture(p[1-pp],index:3)
