@@ -13,7 +13,7 @@ A knowledge base translating intuitive visual beauty into logical, programmable 
 ## The four branches
 
 1. **Art-school fundamentals** — the traditional rules of light, color, composition.
-2. **Computational aesthetics** — math that grades or generates beauty (Birkhoff, fractals, entropy).
+2. **Computational aesthetics** — math that grades or generates beauty ([[Birkhoff's Aesthetic Measure|Birkhoff measure]], [[Fractal Dimension]], [[Visual Entropy]]).
 3. **LLM techniques for visual reasoning** — strict structural criteria, JSON archetypes, multimodal eval loops.
 4. **Tools and libraries** — p5.js, Py5, colormath, chroma.js, OpenCV.
 
