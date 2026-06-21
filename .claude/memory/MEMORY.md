@@ -1,5 +1,9 @@
 # Memory index for VisualThinking
 
+- [Always commit after big updates](feedback_commit-after-big-updates.md) — commit completed features/builds/sweeps without being asked; split logical commits; stage only my files.
+
+- [Native Metal ink screensaver spikes](project_ink-water-spike.md) — `screensaver/ink-metal/`: **`main.swift` = LBM ink-on-paper (MoXi, black sumi ink, dry/wet paper — PRIMARY)** + `inkwater.swift` = Stable-Fluids ink-in-water (reference). Single Swift files, runtime-compiled shaders, `./build.sh`, headless-PNG verify. Built & verified 2026-06-21 (Apple Silicon). User: don't over-index on JS, Metal for macOS. Separate from the girih web harness; drops into a `.saver` later.
+
 - [Girih line-art screensaver: build state](project_girih-screensaver-state.md) — **READ FIRST for current screensaver work.** Dense interlocking-star girih (8/12-fold), travelling-wave θ field on a fixed grid, per-edge-angle continuity. OPEN: wave reads static (amp too small / morph-vs-discrete-replacement question). Craft rules: intricacy = more tiles not nesting; girih decoration = PIC@54°/edge; decagonal = quasiperiodic
 
 - [Programmability principle for wiki pages](feedback_programmability-principle.md) — only create pages for content that translates to a rule/metric/constraint; people don't get pages

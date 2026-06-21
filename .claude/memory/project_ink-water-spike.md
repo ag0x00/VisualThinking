@@ -1,0 +1,18 @@
+---
+name: project_ink-water-spike
+description: Native Metal ink screensaver spikes (LBM ink-on-paper + Stable-Fluids ink-in-water) — built & verified 2026-06-21
+metadata:
+  node_type: memory
+  type: project
+  originSessionId: 0923fda0-593d-4150-956a-da5282eec127
+---
+
+Native **Metal** ink screensaver spikes at `screensaver/ink-metal/`, branch `research-ink-animation`, built 2026-06-21. Single-Swift-file builds; shaders compiled at runtime from a string (no Xcode project, no `.metallib`). Build: `./build.sh`. Verify/iterate via headless PNG: `./inkspike --headless N out.png` (also the ponytail self-check). Verified working on Apple Silicon (Swift 6.3, arm64).
+
+**Two models (user iterated from one to the other):**
+- **`main.swift` = LBM ink-on-paper (CURRENT / PRIMARY).** Faithful reduced **MoXi** (Chu & Tai 2005): D2Q9 lattice-Boltzmann water percolation with variable permeability via half-way **bounce-back** off a paper-grain texture (→ feathery/branching), advection modulation `psi=smoothstep(0,α,ρ)`, uneven evaporation (edge darkening); **pigment** advected by method-of-characteristics with flow-speed **hindrance** (water leads, ink lags → fringe). Black Chinese ink, slow dispersion, **dry vs wet paper zones** (dry=crisp strokes; wet wash=blooms into bristle fingers — visibly works). Autonomous **calligraphic brushstrokes** (cubic Bézier centerline, sub-stamped; pressure profile = soft entry → dark body → tapered point; ink-load depletion wet→dry; direction-aligned bristle texture → dry-brush flying-white 飛白) + occasional water wash; slow pigment fade = screensaver loop (only non-MoXi knob). Brush params in `spawnStrokes`/`pressure()`/deposit shader. See [[Lattice Boltzmann Method for Ink Dispersion]].
+- **`inkwater.swift` = Stable Fluids ink-in-water (reference).** Stam '99 N–S (advect / divergence / 30× Jacobi / subtract-gradient / splat), coloured swirling ink, autonomous Lissajous emitters. Kept; not built by default. See [[Stable Fluids and GPU Ink Advection]].
+
+**User feedback that drove this:** (1) *don't over-index on JS — take whatever works (Rust/Go/Metal); use Metal for macOS.* Native Metal chosen over the WebView+JS `.saver` path. The existing `screensaver/` dir is a web/TS preview harness for the girih work ([[project_girih-screensaver-state]]) — unrelated; ink-metal is a separate native track. (2) Wanted **slow black ink on dry/wet paper** → pivoted free-fluid → **LBM** (the explicitly-requested build). This is the "don't simplify away what's requested" case: LBM momentum gives feathery/pinned edges pure diffusion can't.
+
+**Deliberate gaps (README upgrade paths):** dynamic σ-pinning reduced to static permeability; implicit pigment fixture; flat `mix()` not [[Kubelka-Munk Optical Compositing]]; fixed 384² square grid. `Renderer.encode(target:cb:)` is display-agnostic → drops into a `ScreenSaverView`/`.saver` unchanged. Next options: wrap as `.saver` bundle; tune stroke aesthetics; K–M colour ink. See [[Research - Ink and Watercolor Simulation on Paper]].
