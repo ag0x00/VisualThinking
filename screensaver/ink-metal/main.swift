@@ -815,7 +815,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         pp = 1-pp
 
         // 4. display
-        var gain: Float = 2.1   // lower → only the dense stroke core reads dark (thin, crisp lines)
+        let gain: Float = 2.1   // lower → only the dense stroke core reads dark (thin, crisp lines)
         enc.setComputePipelineState(pDisplay)
         enc.setTexture(p[pp],index:0); enc.setTexture(rho[rr],index:1); enc.setTexture(paper,index:2)
         enc.setTexture(target,index:3)
@@ -843,7 +843,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         d.usage=[.shaderRead,.shaderWrite]; d.storageMode = .shared
         let tex=device.makeTexture(descriptor:d)!
         let cb=queue.makeCommandBuffer()!, enc=cb.makeComputeCommandEncoder()!
-        var gain: Float = 2.1
+        let gain: Float = 2.1
         enc.setComputePipelineState(pDisplay)
         enc.setTexture(p[pp],index:0); enc.setTexture(rho[rr],index:1); enc.setTexture(paper,index:2); enc.setTexture(tex,index:3)
         let gb=bytes(gain); gb.withUnsafeBytes{ enc.setBytes($0.baseAddress!,length:gb.count,index:0) }
