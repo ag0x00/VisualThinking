@@ -1,6 +1,7 @@
 # Memory index for VisualThinking
 
 - [Build working loop (6 steps)](feedback_build-working-loop.md) — **mandatory for build tasks.** Understand → consult wiki FIRST → research gaps (file pages) → work aesthetics into knobs BEFORE coding → build → evaluate+commit. Canonical: `wiki/meta/Build Working Loop.md`. Adopted after building the ink demo with aesthetics ad-hoc + wiki unconsulted.
+- [Plans live in the project](feedback_plans-in-project.md) — save plan docs to `docs/superpowers/plans/`, not user-global `~/.claude/plans/`; commit them.
 - [Always commit after big updates](feedback_commit-after-big-updates.md) — commit completed features/builds/sweeps without being asked; split logical commits; stage only my files.
 
 - [Native Metal ink screensaver spikes](project_ink-water-spike.md) — `screensaver/ink-metal/`: **`main.swift` = LBM ink-on-paper (MoXi, black sumi ink, dry/wet paper — PRIMARY)** + `inkwater.swift` = Stable-Fluids ink-in-water (reference). Single Swift files, runtime-compiled shaders, `./build.sh`, headless-PNG verify. Built & verified 2026-06-21 (Apple Silicon). User: don't over-index on JS, Metal for macOS. Separate from the girih web harness; drops into a `.saver` later.
