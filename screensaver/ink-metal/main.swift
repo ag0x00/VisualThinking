@@ -155,8 +155,13 @@ kernel void deposit(texture2d<float,access::read_write> fA [[texture(0)]],
     float2 loc = float2(dot(rel,t), dot(rel,n));        // brush-local (along, across)
     // elongated nib along travel; aspect sets centre-tip (round, even) vs side-tip (flat, broad)
     float2 e = float2(loc.x/(dp.radius*dp.nibAspect), loc.y/dp.radius);
-    float g = exp(-dot(e,e)*3.0);     // tight falloff → crisp thin stroke (not a wide soft halo)
-    if(g<0.012) return;
+    float ee = dot(e,e);
+    // Tight gaussian falloff → crisp thin stroke (not a wide soft halo). A hard `g < cutoff`
+    // truncation would show its elliptical boundary as a hard geometric edge whenever the stamp is
+    // heavily loaded (the value AT the cutoff still reads as ink). So window g smoothly to zero at
+    // the rim instead — the footprint always fades out, regardless of how dark the core is.
+    float g = exp(-ee*3.0) * smoothstep(2.2, 1.1, ee);
+    if(g < 0.0015) return;
 
     // Flying-white (飛白): organic, BROKEN streaks — not regular combs ("tire tracks").
     // Two irregular octaves across the stroke + breakup ALONG its length, only at the dry tail,
