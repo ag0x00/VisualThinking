@@ -10,6 +10,7 @@ no `.metallib`.
 | `inkwater.swift` (reference) | swirling coloured ink in water | Stable Fluids (Stam 1999) |
 
 See wiki: [[Lattice Boltzmann Method for Ink Dispersion]], [[Stable Fluids and GPU Ink Advection]],
+[[Programmatic Stroke Rendering]], [[Chinese Brushwork Principles]],
 [[Research - Ink and Watercolor Simulation on Paper]].
 
 ## Run
@@ -38,12 +39,15 @@ speed, **Vigor** (speed + flying-white + curvature + splatter for the dynamic st
 **snapshotted at each painting reset**, so they never disturb the painting in progress — they take
 effect on the next one.
 
-**Wet vs dry paper.** The paper starts fully **dry**, and an ink stroke deposits almost no water of
-its own, so on dry paper it stays **crisp**. Wetness comes only from **clear-water strokes** laid
-first (count 0–5 and size are both dials). A black stroke that crosses a wet area bleeds
-(wet-on-wet); elsewhere it stays crisp. Where two *wet* inks meet, a wetness-gated **diffusion**
-term lets them blend/merge instead of one's water shoving the other (a harsh backrun). With
-`waterN = 0` the whole painting is crisp/dry; raise it (or the wet size) for more bleed.
+**Wet vs dry paper.** The paper starts fully **dry**, and an ink stroke deposits **zero** water of its
+own, so on dry paper it stays **crisp**. (Injecting a per-frame self-water pulse at the brush tip
+modulates the wet-gated pigment into per-frame "rung" bands — the trap documented in
+[[Programmatic Stroke Rendering]]; so wetness is kept a *stable* field.) Wetness comes only from
+**clear-water strokes** laid first (count 0–5 and size are both dials), which settle into a steady wet
+zone. A black stroke that crosses that zone bleeds (wet-on-wet); elsewhere it stays crisp. Where two
+*wet* inks meet, a wetness-gated **diffusion** term lets them blend/merge instead of one's water
+shoving the other (a harsh backrun). With `waterN = 0` the whole painting is crisp/dry; raise it (or
+the wet size) for more bleed. (淡 gray washes keep a touch of self-water so they can still soften.)
 
 Each launch starts a **different** painting (the RNG is seeded from entropy per run). Pass
 `--seed=N` for a reproducible run (same N → same painting), e.g. to re-inspect or report one.
@@ -59,21 +63,21 @@ magnitude — mirroring the wiki's `Negative Space` / `Directed Tension` techniq
 negative-space metric feeds back into stroke placement.
 
 Flying-white (飛白) reads as **continuous parallel hairs running along the stroke** (like a real dry
-brush dragging until the ink runs out), not beaded "railroad tracks". The key: a bristle sits at a
-fixed offset *across* the width, so the streak pattern is keyed to the **perpendicular** coordinate
-(`loc.y`) and held constant along the length — and because `loc.y` is consistent between overlapping
-sub-stamps, the hairs come out continuous. (Keying on the *along-travel* axis, as an earlier version
-did, re-randomised the texture down the length → the beaded tracks.) It needs **width** to show as
-*parallel* hairs, so it lives on the broad side-tip 枯 *dry-drag* archetype; thin "bone" lines stay
-solid.
+brush dragging until the ink runs out), not beaded "railroad tracks". The streak pattern is keyed to
+the **local-segment perpendicular** (signed distance across the stroke), so the hairs follow the
+stroke even where it curves and stay continuous across overlapping deposits. It needs **width** to
+read as *parallel* hairs (a one-hair-wide line can only bead), so it is width-gated to the broad
+side-tip 枯 *dry-drag* archetype; thin "bone" lines stay solid.
 
 ## The LBM ink-on-paper model (`main.swift`)
 
 Faithful reduction of MoXi. Per frame:
 
 1. **deposit (brush dynamics)** — autonomous calligraphic *strokes* grounded in
-   [[Chinese Brushwork Principles]]: a **cubic Bézier** centerline, sub-stamped for a continuous
-   ribbon, with **three-phase pressure** 起笔/行笔/收笔 (entry accent → modulated body → taper or
+   [[Chinese Brushwork Principles]]: a **cubic Bézier** centerline laid as **SDF coverage capsules**
+   (solid core + ~1.4px AA rim) **unioned with `max`** — not additive stamps — so overlapping deposits
+   never double-count and thin lines anti-alias cleanly (see [[Programmatic Stroke Rendering]]); with
+   **three-phase pressure** 起笔/行笔/收笔 (entry accent → modulated body → taper or
    hook), **ease-in draw-speed** (dwell at start, fast clean lift), **centre vs side-tip** nib
    中锋/侧锋 (round even line vs broad textured sweep), **five ink tones** 墨分五色 (burnt→clear
    per stroke), and direction-aligned **dry-brush flying-white** 飛白. Occasional **water wash**
@@ -85,9 +89,9 @@ Faithful reduction of MoXi. Per frame:
    (淡) laid first as background tone, then crisp dark **thin-line "bones"** (焦), solid **darks**
    (濃), and fast **dry strokes** (枯) with strong flying-white + **潑墨 splatter** specks — ending
    with the red accent. **Speed↔moisture↔value are coupled** (fast→thin/dry/light); a **Vigor** dial
-   pushes the dynamic archetypes (speed, flying-white, curvature, entry-snap, splatter). Ink is
-   **dosed by distance the nib moves**, not per-frame, so slow/short strokes stay crisp instead of
-   blooming into oversaturated blobs. *Composition (Ma):* placement is **anti-clustering** — strokes
+   pushes the dynamic archetypes (speed, flying-white, curvature, entry-snap, splatter). Pigment is laid as
+   **distance-field coverage unioned with `max`**, so darkness comes from the brush load (not from how
+   many stamps overlap), thin lines stay crisp, and there is no "rung" banding. *Composition (Ma):* placement is **anti-clustering** — strokes
    spread apart with a gentle off-centre bias (occupancy grid), for contiguous blank space.
 
    *Painting lifecycle:* the canvas is **not** an endless accumulation. A painting builds to a few
