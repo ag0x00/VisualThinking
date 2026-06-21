@@ -23,6 +23,17 @@ import simd
 let GRID = 600     // sim resolution; higher = crisper edges in the window (was 384 → pixelated when upscaled)
 let DT: Float = 1.0
 
+// Per-run seed: RANDOM each launch, so every run starts a DIFFERENT painting (otherwise the fixed
+// RNG state made the first painting identical every time). Pass --seed=N for a reproducible run.
+func parseSeed() -> UInt64 {
+    for a in CommandLine.arguments where a.hasPrefix("--seed=") {
+        if let v = UInt64(a.dropFirst(7)) { return v | 1 }     // |1: xorshift state must be non-zero
+    }
+    var g = SystemRandomNumberGenerator()
+    return g.next() | 1
+}
+let RUN_SEED = parseSeed()
+
 // Brush register — 工筆 gongbi (controlled, even, clean spine, minimal bleed) is the default;
 // 寫意 xieyi (spontaneous, splashed, strong flying-white) via `--xieyi`.
 struct Register {
@@ -403,7 +414,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     var frame = 0
     var paused = false                        // Space toggles; freezes the animation on the current frame
-    var rng: UInt64 = 0x9e3779b97f4a7c15
+    var rng: UInt64 = RUN_SEED                // random per launch (or --seed=N) → different painting each run
     var strokes: [Stroke] = []
     let tg = MTLSize(width:16, height:16, depth:1)
     let groups = MTLSize(width:(GRID+15)/16, height:(GRID+15)/16, depth:1)
@@ -422,7 +433,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     var strokesDone = 0, strokeTarget = 7
     var dry = false                           // paper dried: pigment frozen (black stops growing)
     var inkDecay: Float = 0.9999              // driven by phase; fast during fade
-    var paperSeed: Float = 0
+    var paperSeed: Float = Float(RUN_SEED % 1000)   // vary the paper grain per run too
     let WAIT = 120, FADE = 130                // frames (~60fps): wait ~2s, fade ~2.2s
 
     // snapshot of Settings, taken at each reset (so edits apply only to the next painting)

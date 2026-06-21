@@ -45,8 +45,11 @@ first (count 0–5 and size are both dials). A black stroke that crosses a wet a
 term lets them blend/merge instead of one's water shoving the other (a harsh backrun). With
 `waterN = 0` the whole painting is crisp/dry; raise it (or the wet size) for more bleed.
 
-For headless tuning: `--waterN=N`, `--wet=X`, `--speed=X`, `--vigor=X`, `--splatter=X`, `--count=N`
-override the defaults.
+Each launch starts a **different** painting (the RNG is seeded from entropy per run). Pass
+`--seed=N` for a reproducible run (same N → same painting), e.g. to re-inspect or report one.
+
+For headless tuning: `--waterN=N`, `--wet=X`, `--speed=X`, `--vigor=X`, `--splatter=X`, `--count=N`,
+`--seed=N` override the defaults.
 
 Requires Apple Silicon + Xcode command-line tools (`swiftc`, Metal).
 
